@@ -38,12 +38,42 @@ async function cargarTickets() {
   const csv = SHEET_CSV_URL
     ? await (await fetch(SHEET_CSV_URL)).text()
     : fs.readFileSync(path.join(__dirname, 'data', 'tickets-ejemplo.csv'), 'utf8');
-  return parseCSV(csv).map(t => ({
-    ...t,
-    horas: parseFloat(String(t.horas || '0').replace(',', '.')) || 0,
-    nps: t.nps === '' || t.nps == null ? null : Number(t.nps),
-  }));
+  return parseCSV(csv).map(normalizar).filter(esHolded);
 }
+
+// "13/01/2026 18:05:46" o "2/02/2026" → ISO local "2026-01-13T18:05"
+function fecha(s) {
+  const m = String(s || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s+(\d{1,2}):(\d{2}))?/);
+  if (!m) return '';
+  const p = n => String(n).padStart(2, '0');
+  return `${m[3].length === 2 ? '20' + m[3] : m[3]}-${p(m[2])}-${p(m[1])}T${p(m[4] || 0)}:${p(m[5] || 0)}`;
+}
+
+// Columnas del Google Form de incidencias. Servicio, tipo de cliente, canal y
+// primera respuesta aún no existen en el Sheet: se usan si algún día se añaden.
+function normalizar(r) {
+  const g = (...k) => k.map(x => r[x]).find(v => v != null && v !== '') || '';
+  const nps = g('Puntuación', 'nps');
+  return {
+    cliente: g('Nombre de la empresa / autónomo', 'cliente'),
+    tipo_incidencia: g('Tipo de Incidencia', 'tipo_incidencia'),
+    descripcion: g('Describe la incidencia técnica'),
+    tecnico: g('Técnico', 'tecnico'),
+    estado: g('Estado', 'estado') || 'Nuevo',
+    entrada: fecha(g('Marca temporal')) || g('entrada'),
+    cierre: fecha(g('Cierre')) || g('cierre'),
+    primera_respuesta: g('Primera respuesta', 'primera_respuesta'),
+    horas: parseFloat(g('T', 'horas').replace(',', '.')) || 0,
+    nps: nps === '' ? null : Number(nps),
+    mejora: g('Mejora', 'mejora'),
+    servicio: g('Servicio', 'servicio') || 'Soporte Holded',
+    tipo_cliente: g('Tipo de cliente', 'tipo_cliente') || 'Sin clasificar',
+    canal: g('Canal', 'canal') || 'Formulario',
+  };
+}
+
+// Solo lo de Holded: tipo Holded, o cualquier ticket de Blanch (todos los suyos son Holded).
+const esHolded = t => t.cliente && (/holded/i.test(t.tipo_incidencia) || /blanch/i.test(t.tecnico));
 
 // Presupuestos de Holded. En teoría status 1 = aceptado; el cobro sale de la factura enlazada.
 async function cargarComercial() {
@@ -80,7 +110,12 @@ function resumen(tickets, comercial, ahora = new Date()) {
     const fueraSla = lista.filter(t => minutos(t.entrada, t.primera_respuesta || ahora) > SLA_MIN).length;
     const notas = lista.map(t => t.nps).filter(n => n != null);
     const mes = ahora.toISOString().slice(0, 7);
+    const cerrados = lista.filter(t => t.estado === 'Cerrado' && t.cierre && t.entrada);
+    const dias = cerrados.map(t => minutos(t.entrada, t.cierre) / 1440).filter(d => d >= 0);
     return {
+      total: lista.length,
+      cerradosMes: cerrados.filter(t => t.cierre.startsWith(mes)).length,
+      diasCierre: dias.length ? +(dias.reduce((a, b) => a + b, 0) / dias.length).toFixed(1) : null,
       abiertas: abiertas.length,
       fueraSla,
       excedidoMin: excedido,
@@ -88,26 +123,23 @@ function resumen(tickets, comercial, ahora = new Date()) {
       horasTotal: +lista.reduce((s, t) => s + t.horas, 0).toFixed(1),
       valoracion: notas.length ? +(notas.reduce((a, b) => a + b, 0) / notas.length / 2).toFixed(1) : null, // NPS 0–10 → /5
       casos: abiertas.map(t => ({
-        cliente: t.cliente, origen: t.tipo_cliente, canal: t.canal, tipo: t.tipo_incidencia,
+        cliente: t.cliente, origen: t.tipo_cliente, canal: t.canal, tipo: t.tipo_incidencia, tecnico: t.tecnico, estado: t.estado,
         entrada: t.entrada, esperaMin: minutos(t.entrada, t.primera_respuesta || ahora),
         respondido: !!t.primera_respuesta, horas: t.horas,
       })),
     };
   };
-  const por = (srv, tipo) => tickets.filter(t => t.servicio === srv && (!tipo || t.tipo_cliente === tipo));
+  const agrupar = clave => Object.entries(tickets.reduce((m, t) => ((m[clave(t)] ||= []).push(t), m), {}));
+  const horasPor = clave => agrupar(clave)
+    .map(([nombre, l]) => ({ nombre, tickets: l.length, horas: +l.reduce((s, t) => s + t.horas, 0).toFixed(1) }))
+    .sort((a, b) => b.horas - a.horas);
   return {
     actualizado: ahora.toISOString(),
     sla: SLA_MIN,
-    implementacion: bloque(por('Implementación')),
-    premium: bloque(por('Premium')),
-    porTipo: {
-      'Premium · Gestoría / Asesoría': bloque(por('Premium', 'Gestoría')),
-      'Premium · Cliente directo': bloque(por('Premium', 'Directo')),
-      'Implementación · Referenciado por gestoría': bloque(por('Implementación', 'Gestoría')),
-      'Implementación · Cliente directo': bloque(por('Implementación', 'Directo')),
-    },
-    horasPorCliente: Object.entries(tickets.reduce((m, t) => (m[t.cliente] = (m[t.cliente] || 0) + t.horas, m), {}))
-      .map(([cliente, horas]) => ({ cliente, horas: +horas.toFixed(1) })).sort((a, b) => b.horas - a.horas),
+    servicios: agrupar(t => t.servicio).map(([nombre, l]) => ({ nombre, ...bloque(l) })),
+    porTipo: Object.fromEntries(agrupar(t => `${t.servicio} · ${t.tipo_cliente}`).map(([n, l]) => [n, bloque(l)])),
+    horasPorCliente: horasPor(t => t.cliente),
+    horasPorTecnico: horasPor(t => t.tecnico || 'Sin asignar'),
     mejoras: tickets.filter(t => t.mejora).map(t => ({ cliente: t.cliente, nps: t.nps, mejora: t.mejora })),
     comercial: comercial.map(c => ({ ...c, dias: Math.floor((ahora - new Date(c.fecha)) / 86400000) })),
     diasRespuesta: RESPUESTA_CLIENTE,

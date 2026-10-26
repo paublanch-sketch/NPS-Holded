@@ -1,14 +1,13 @@
-id,cliente,servicio,tipo_cliente,canal,tipo_incidencia,entrada,primera_respuesta,cierre,horas,estado,nps,mejora
-1,Gestoría Martí & Soler,Implementación,Gestoría,Email,Alta y configuración,2026-10-26T09:14,2026-10-26T09:36,,1.5,Abierto,,
-2,Bufete Roca (ex-AKIRA),Implementación,Directo,Teléfono,Importación de datos,2026-10-26T10:02,2026-10-26T10:10,,0.5,Abierto,,
-3,Asesoría Vilanova,Implementación,Gestoría,Formulario web,Alta y configuración,2026-10-26T11:40,,,0,Abierto,,
-4,Gestoría Puig SLP,Premium,Gestoría,WhatsApp,Facturación,2026-10-26T08:50,,,0,Abierto,,
-5,Clínica Dental Bonavista,Premium,Directo,Teléfono,Contabilidad,2026-10-26T10:20,2026-10-26T11:08,,0.75,Abierto,,
-6,Asesoría Fontclara,Premium,Gestoría,Email,Modelos AEAT,2026-10-26T11:05,2026-10-26T11:20,,0.25,Abierto,,
-7,Restaurant Can Ferrer,Premium,Directo,Formulario web,Bancos,2026-10-26T11:52,,,0,Abierto,,
-8,Gestoría Puig SLP,Premium,Gestoría,Email,Modelos AEAT,2026-10-14T09:00,2026-10-14T09:20,2026-10-14T12:00,2.5,Cerrado,9,
-9,Clínica Dental Bonavista,Premium,Directo,Teléfono,Facturación,2026-10-08T16:00,2026-10-08T17:30,2026-10-09T10:00,3,Cerrado,6,Que respondan antes por teléfono
-10,Asesoría Fontclara,Premium,Gestoría,WhatsApp,Bancos,2026-10-20T10:00,2026-10-20T10:15,2026-10-20T11:00,1,Cerrado,10,
-11,Gestoría Martí & Soler,Implementación,Gestoría,Email,Formación,2026-10-02T09:00,2026-10-02T09:10,2026-10-05T13:00,4,Cerrado,10,
-12,Restaurant Can Ferrer,Premium,Directo,Email,Contabilidad,2026-09-22T12:00,2026-09-22T12:40,2026-09-23T09:00,2,Cerrado,8,Más vídeos tutoriales
-13,Bufete Roca (ex-AKIRA),Implementación,Directo,Teléfono,Alta y configuración,2026-09-29T10:00,2026-09-29T11:20,2026-10-01T18:00,6,Cerrado,9,
+Marca temporal,Nombre de la empresa / autónomo,Correo electrónico de contacto,Tipo de Incidencia,Describe la incidencia técnica,Puntuación,Estado,Técnico,Cierre,T,Comentarios internos
+15/09/2026 13:15:55,OLMO CLIMATIZACION SL,,Holded,"Formación, plantilla de factura y productos genéricos",,Cerrado,Blanch,08/10/2026,2,Plantillas y formación hechas
+23/09/2026 12:43:57,Elena Candorcio,,Holded,Necesito soporte para que me expliquen cómo funciona Holded,,Cerrado,Blanch,05/10/2026,1,Formación casi hecha
+7/10/2026 14:51:13,SISTEMES DE COMUNICACIÓ GRÀFICA SL,,Holded,Necessito que m'expliqueu Holded abans que acabi,,Cerrado,Blanch,16/10/26,3,Formación e importación
+9/10/2026 13:34:41,MERCEDES CORA CALABUIG,,Holded,Explicarme cómo se usa Holded,,Cerrado,Blanch,20/10/2026,"1,2",Formación hecha
+13/10/2026 12:47:09,Sergi (INETA),,Holded,Migración de datos y formación,,Cerrado,Blanch,15/10/2026,2,
+19/10/2026 9:26:04,Mari Carmen Soportes metálicos Fragoso,,Holded,Llamar urgente por una incidencia de Holded,,Cerrado,Blanch,19/10/2026,"0,3",
+22/10/2026 21:03:09,RCVCOMPUTER,,Otra diferente,No puedo degradar a la versión básica,,Cerrado,Blanch,23/10/2026,0.1,
+22/10/2026 15:05:40,CUBO BASE ORGANIZATIVA DE CONSUMIDORES Y USUARIOS,,Holded,Necesito formación e importar mis facturas,,Nuevo,Blanch,,,No tengo acceso a la cuenta
+6/10/2026 12:11:55,LUMINOSOS MARTILUZ SL,,Holded,Caducada suscripción de Holded,,Cerrado,Blanch,07/10/2026,0.1,
+18/09/2026 11:42:19,Mariano UTS PRESOTERAPIA,,Holded,Llamar para una consulta de Holded,,Cerrado,Pablo,,,
+15/10/2026 11:55:21,CONSERVAS LA QUINCANA S.L,,Hosting,No funciona el correo,,Pendiente cliente,David,,,
+21/10/2026 10:49:03,ESTUCADOS VEGA BAJA S.L.,,Otra diferente,No sé entrar en Business Intelligence,,Nuevo,David,,,
