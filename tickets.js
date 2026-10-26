@@ -29,7 +29,7 @@ const vistaCliente = t => ({
   nps: t.nps,
   video: activa(t)?.tipo === 'video' ? t.video : null,
   citas: (t.citas || []).filter(c => c.estado === 'prevista' && c.origen !== 'ahora' && c.fin > ahora()).map(c => ({ inicio: c.inicio, fin: c.fin, enlace: c.enlace })),
-  reservar: google.activo() && t.estado !== 'Cerrado',
+  reservar: google.disponible() && t.estado !== 'Cerrado',
 });
 
 const vistaTecnico = t => ({ ...t, horas: horas(t), activa: activa(t) || null });
@@ -313,11 +313,13 @@ async function rutasPublicas(req, res, ruta) {
 
   // Videollamada: huecos libres del calendario de soporte y reserva de uno.
   if (m[2] === '/huecos' && req.method === 'GET') {
-    if (!google.activo() || t.estado === 'Cerrado') return json(res, { activo: false, huecos: [] }), true;
-    return json(res, { activo: true, minutos: google.resumen().minutosCita, huecos: await google.huecos() }), true;
+    if (!google.disponible() || t.estado === 'Cerrado') return json(res, { activo: false, huecos: [] }), true;
+    // Si Google falla, al cliente solo se le dice que ahora no hay agenda; el detalle va a Canales.
+    try { return json(res, { activo: true, minutos: google.resumen().minutosCita, huecos: await google.huecos() }), true; }
+    catch (e) { console.error('Google (huecos):', e.message); return json(res, { error: 'Ahora no podemos mostrar la agenda.' }, 502), true; }
   }
   if (m[2] === '/reservar' && req.method === 'POST') {
-    if (!google.activo() || t.estado === 'Cerrado') return json(res, { error: 'Ahora no se pueden reservar videollamadas.' }, 400), true;
+    if (!google.disponible() || t.estado === 'Cerrado') return json(res, { error: 'Ahora no se pueden reservar videollamadas.' }, 400), true;
     const prevista = (t.citas || []).find(c => c.estado === 'prevista' && c.origen !== 'ahora' && c.fin > ahora());
     if (prevista) return json(res, { error: `Ya tienes una videollamada el ${cuando(prevista.inicio)}.` }, 409), true;
     const { inicio } = await leerCuerpo(req);

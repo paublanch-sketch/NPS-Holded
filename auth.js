@@ -1,6 +1,7 @@
 // Acceso al panel interno: un único usuario de administración (ADMIN_USUARIO y
-// ADMIN_CLAVE) y una cookie de sesión firmada. Los clientes no tienen login: abren y
-// siguen sus incidencias desde el portal con su enlace privado.
+// ADMIN_CLAVE) o «Continuar con Google» con una cuenta de ADMIN_GOOGLE (correos o
+// dominios; por defecto, interactivos.net), y una cookie de sesión firmada. Los clientes
+// no tienen login: abren y siguen sus incidencias desde el portal con su enlace privado.
 const crypto = require('crypto');
 
 const COOKIE = 'sh_sesion';
@@ -35,8 +36,19 @@ function sesionValida(req) {
 
 function ponerCookie(req, res, valor, maxAge) {
   const segura = req.headers['x-forwarded-proto'] === 'https' || /^https:/.test(process.env.PUBLIC_URL || '');
-  res.setHeader('Set-Cookie', `${COOKIE}=${valor}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${segura ? '; Secure' : ''}`);
+  // Se añade a las que ya lleve la respuesta (la vuelta de Google también borra la suya).
+  const previas = [].concat(res.getHeader('Set-Cookie') || []);
+  res.setHeader('Set-Cookie', [...previas, `${COOKIE}=${valor}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${segura ? '; Secure' : ''}`]);
 }
+
+function abrirSesion(req, res) {
+  const datos = Buffer.from(JSON.stringify({ h: HUELLA, exp: Date.now() + DURACION_DIAS * 864e5 })).toString('base64url');
+  ponerCookie(req, res, `${datos}.${firmar(datos)}`, DURACION_DIAS * 86400);
+}
+
+// Cuentas de Google que pueden entrar: correos exactos o dominios enteros.
+const GOOGLE = (process.env.ADMIN_GOOGLE || 'interactivos.net').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+const permitidoGoogle = email => GOOGLE.some(p => p.includes('@') ? email === p : email.endsWith('@' + p));
 
 // El panel no distingue personas: devuelve el admin si la sesión es buena.
 async function usuarioDe(req) {
@@ -62,8 +74,7 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
     const ok = CLAVE && iguales(String(b.usuario || '').trim().toLowerCase(), USUARIO) & iguales(b.clave || '', CLAVE);
     if (!ok) return json(res, { error: 'Usuario o contraseña incorrectos.' }, 401), true;
     intentos.delete(ip);
-    const datos = Buffer.from(JSON.stringify({ h: HUELLA, exp: Date.now() + DURACION_DIAS * 864e5 })).toString('base64url');
-    ponerCookie(req, res, `${datos}.${firmar(datos)}`, DURACION_DIAS * 86400);
+    abrirSesion(req, res);
     return json(res, { usuario: USUARIO }), true;
   }
   if (req.method === 'POST' && ruta === '/api/logout') {
@@ -73,4 +84,4 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
   return false;
 }
 
-module.exports = { usuarioDe, rutas, TECNICOS };
+module.exports = { usuarioDe, rutas, abrirSesion, permitidoGoogle, TECNICOS };

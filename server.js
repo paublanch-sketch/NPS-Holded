@@ -80,28 +80,46 @@ function imagen(res, nombre) {
   fs.createReadStream(fichero).pipe(res);
 }
 
-// «Continuar con Google»: ida a Google con un estado de un solo uso y vuelta con el permiso.
+// «Continuar con Google», con un estado de un solo uso en cookie y una misma vuelta:
+//   /admin/google/entrar    desde el login: entra al panel; si el calendario aún no está
+//                           conectado, pide también sus permisos y lo deja conectado.
+//   /admin/google/conectar  desde Canales (con sesión): conecta o cambia la cuenta del calendario.
 const base = req => (process.env.PUBLIC_URL || `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`).replace(/\/+$/, '');
-async function conectarGoogle(req, res, ruta, url) {
+async function rutasGoogle(req, res, ruta, url, yo) {
   const vuelta = `${base(req)}/admin/google/vuelta`;
   const cookie = v => `g_estado=${v}; Path=/admin/google; HttpOnly; SameSite=Lax; Max-Age=${v ? 600 : 0}${vuelta.startsWith('https:') ? '; Secure' : ''}`;
-  const volver = motivo => redirigir(res, `/admin?google=${encodeURIComponent(motivo)}#/canales`);
-  if (ruta === '/admin/google/conectar') {
-    if (!google.modoOAuth()) return volver('Faltan GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET en Render');
+  const alPanel = (motivo, hash = '#/canales') => redirigir(res, `/admin?google=${encodeURIComponent(motivo)}${hash}`);
+  const alLogin = motivo => redirigir(res, `/admin/login?google=${encodeURIComponent(motivo)}`);
+  if (ruta !== '/admin/google/vuelta') {
+    const entrar = ruta === '/admin/google/entrar';
+    if (!entrar && !yo) return redirigir(res, '/admin/login');
+    if (!google.modoOAuth()) return entrar ? alLogin('sin-configurar') : alPanel('sin-configurar');
     const estado = crypto.randomBytes(16).toString('hex');
-    res.setHeader('Set-Cookie', cookie(estado));
-    return redirigir(res, google.urlConectar(vuelta, estado));
+    res.setHeader('Set-Cookie', cookie(`${estado}.${entrar ? 'e' : 'c'}`));
+    return redirigir(res, google.urlConectar(vuelta, estado, { soloEntrar: entrar && google.activo() }));
   }
   res.setHeader('Set-Cookie', cookie(''));
-  const esperado = (req.headers.cookie || '').match(/(?:^|;\s*)g_estado=([a-f0-9]{32})/)?.[1];
+  const [, esperado, modo] = (req.headers.cookie || '').match(/(?:^|;\s*)g_estado=([a-f0-9]{32})\.([ec])/) || [];
+  const volver = modo === 'c' ? alPanel : alLogin;
   const p = k => url.searchParams.get(k) || '';
   if (p('error')) return volver(p('error') === 'access_denied' ? 'cancelado' : p('error'));
-  if (!esperado || p('state') !== esperado) return volver('caducado');
-  try { await google.completarConexion(p('code'), vuelta); }
-  catch (e) { return volver(e.message); }
-  // Se comprueba ya, para que Canales diga «Conectado» o el error de verdad (p. ej., la API apagada).
-  try { await google.probar(); return volver('ok'); }
-  catch (e) { return volver(`Cuenta conectada, pero Google da este error: ${e.message}`); }
+  if (!esperado || p('state') !== esperado) return (yo ? alPanel : alLogin)('caducado');
+  if (modo === 'c') {
+    if (!yo) return redirigir(res, '/admin/login');
+    try { await google.completarConexion(p('code'), vuelta); }
+    catch (e) { return alPanel(e.message); }
+    // Se comprueba ya, para que Canales diga «Conectado» o el error de verdad (p. ej., la API apagada).
+    try { await google.probar(); return alPanel('ok'); }
+    catch (e) { return alPanel(`Cuenta conectada, pero Google da este error: ${e.message}`); }
+  }
+  let r;
+  try { r = await google.intercambiar(p('code'), vuelta); }
+  catch (e) { return alLogin(e.message); }
+  if (!auth.permitidoGoogle(r.email)) return alLogin(`La cuenta ${r.email} no tiene acceso al panel`);
+  auth.abrirSesion(req, res);
+  if (!google.conPermisoCalendario(r.d)) return alPanel('entrado', '');
+  try { await google.guardarConexion(r.email, r.d); await google.probar(); return alPanel('entrado-calendario', ''); }
+  catch (e) { return alPanel(`Has entrado, pero el calendario no ha quedado conectado: ${e.message}`); }
 }
 
 // Formularios del panel desde otra web: fuera (la cookie ya es SameSite=Lax; esto es el cinturón).
@@ -144,7 +162,7 @@ http.createServer(async (req, res) => {
     if (await auth.rutas(req, res, ruta, { json, leerCuerpo })) return;
 
     const yo = await auth.usuarioDe(req);
-    if (ruta === '/admin/google/conectar' || ruta === '/admin/google/vuelta') return yo ? conectarGoogle(req, res, ruta, url) : redirigir(res, '/admin/login');
+    if (['/admin/google/entrar', '/admin/google/conectar', '/admin/google/vuelta'].includes(ruta)) return rutasGoogle(req, res, ruta, url, yo);
     if (ruta === '/admin' || ruta.startsWith('/admin/')) return yo ? pagina(res, 'admin.html') : redirigir(res, '/admin/login');
     if (!ruta.startsWith('/api/')) { res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); return res.end('No encontrado'); }
     if (!yo) return json(res, { error: 'Sesión caducada' }, 401);
@@ -177,5 +195,5 @@ http.createServer(async (req, res) => {
 }).listen(PORT, () => {
   console.log(`Servicio Holded en http://localhost:${PORT}`);
   canales.iniciar();
-  google.cargar().then(() => tickets.iniciarReuniones());
+  google.cargar().then(() => { tickets.iniciarReuniones(); google.vigilar(); });
 });

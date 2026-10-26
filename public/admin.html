@@ -701,11 +701,11 @@ function tarjetaCitas(t) {
 }
 
 function dialogoVideo(t) {
-  const g = googleInfo.activo;
+  const g = googleInfo.activo && googleInfo.ok !== false;
   const manana = new Date(Date.now() + 864e5);
   const fechaDef = new Date(manana - manana.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
   dialogo(`<h3>Videollamada con Google Meet</h3>
-    <p class="sub">${g ? 'La reunión se crea en el calendario de soporte y el enlace le llega al cliente por su canal.' : 'Google no está conectado (panel → Canales). Crea la reunión en meet.new y pega aquí el enlace.'}</p>
+    <p class="sub">${g ? 'La reunión se crea en el calendario de soporte y el enlace le llega al cliente por su canal.' : `${googleInfo.activo ? 'Google da error' : 'Google no está conectado'} (panel → Canales). Crea la reunión en meet.new y pega aquí el enlace.`}</p>
     ${g ? `<div class="filtros" style="position:static;padding:8px 0 0;border:0;background:none"><div class="seg" id="vModo"><button type="button" data-v="ahora" class="on">Ahora</button><button type="button" data-v="agendar">Agendar</button><button type="button" data-v="pegar">Pegar enlace</button></div></div>` : ''}
     <div data-panel="ahora" class="${g ? '' : 'oculto'}"><p style="font-size:13px;color:var(--bruma);margin:12px 0 0">Crea la reunión, te la abre y arranca el cronómetro. Cuando termine, Meet nos dirá cuánto duró de verdad.</p></div>
     <div data-panel="agendar" class="oculto"><div class="dos">
@@ -1209,19 +1209,12 @@ async function cargarCanales(r) {
         <div class="estado-linea"><span class="k">Reservas</span><span>El cliente puede reservar huecos de ${r.google.minutosCita} min en horario laboral desde su incidencia.</span></div>
         <div class="estado-linea"><span class="k">Duración real</span><span>${r.google.permisoMeet === false ? 'Sin permiso de Meet: vuelve a conectar y marca también el permiso de las reuniones de Meet para que la duración se apunte sola.' : r.google.meet ? '✓ Meet devuelve la duración de las reuniones: se apuntan solas.' : 'Se comprueba cuando acabe la primera reunión.'}</span></div>
         ${r.google.error ? `<div class="estado-linea"><span class="k">Último error</span><span style="color:var(--cr-t)">${esc(r.google.error)}</span></div>` : ''}
-        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="boton sec" id="probarGoogle">Probar la conexión</button>${r.google.modo === 'oauth' ? '<a class="boton sec" style="text-decoration:none" href="/admin/google/conectar">Cambiar de cuenta</a><button class="boton sec" id="desconectarGoogle">Desconectar</button>' : ''}</div>`
-      : r.google.modo === 'oauth' ? `
-        <p style="margin:6px 0 0;color:var(--bruma)">Conecta la cuenta de Google cuyo calendario se usará para las videollamadas. Google te pedirá permiso para crear reuniones de Meet y ver tus horas ocupadas; no hace falta ningún administrador.</p>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="boton sec" id="probarGoogle">Probar la conexión</button>${r.google.modo === 'oauth' ? '<a class="boton sec" style="text-decoration:none" href="/admin/google/conectar">Cambiar de cuenta</a><button class="boton sec" id="desconectarGoogle">Desconectar</button>' : ''}</div>
+        ${r.google.modo === 'cuenta' && r.google.ok === false ? `<p style="margin:14px 0 0;font-size:13px;color:var(--bruma)">La cuenta de servicio solo funciona con la delegación de dominio de Workspace. Sin ella, usa <b>Continuar con Google</b>: crea el cliente (pasos de abajo) y quita <code>GOOGLE_SA_JSON</code> de Render.</p>${pasosGoogle(r)}` : ''}`
+      : `<p style="margin:6px 0 0;color:var(--bruma)">Conecta la cuenta de Google cuyo calendario se usará para las videollamadas: se crean las reuniones de Meet solas, el cliente reserva huecos libres y la duración real se apunta sola. No hace falta ningún administrador. Sin Google, el botón de videollamada pide pegar un enlace de Meet.</p>
         ${r.google.error ? `<div class="estado-linea" style="margin-top:8px"><span class="k">Último error</span><span style="color:var(--cr-t)">${esc(r.google.error)}</span></div>` : ''}
-        <a class="boton-google" href="/admin/google/conectar"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Continuar con Google</span></a>`
-      : `<p style="margin:6px 0 0;color:var(--bruma)">Sin Google, el botón de videollamada pide pegar un enlace de Meet. Conectado, crea las reuniones solo, el cliente reserva huecos libres y la duración real se apunta sola.</p>
-        ${r.google.modo === 'cuenta' && r.google.falta?.length ? `<div class="estado-linea" style="margin-top:8px"><span class="k">Falta en Render</span><span style="color:var(--cr-t)">${r.google.falta.map(esc).join(' · ')}</span></div>` : ''}
-        <ol class="pasos-ayuda">
-          <li>En console.cloud.google.com, proyecto <b>support-holded-interactivos</b>: activa <b>Google Calendar API</b> y <b>Google Meet REST API</b>.</li>
-          <li>En Google Auth Platform → Clientes → <b>Crear cliente</b> → Aplicación web, con este URI de redireccionamiento autorizado:<br><code>${esc((r.publica || location.origin) + '/admin/google/vuelta')}</code></li>
-          <li>En Render: <code>GOOGLE_CLIENT_ID</code> y <code>GOOGLE_CLIENT_SECRET</code> de ese cliente.</li>
-          <li>Vuelve aquí y pulsa <b>Continuar con Google</b> con la cuenta cuyo calendario quieras usar.</li>
-        </ol>`}
+        ${botonGoogle('/admin/google/conectar')}
+        ${r.google.modo === 'oauth' ? '' : `<p style="margin:10px 0 0;font-size:13px;color:var(--cr-t)">Antes hay que crear el cliente de Google y ponerlo en Render:</p>${pasosGoogle(r)}`}`}
     </section>
     <section class="tarjeta">
       <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px"><h2 style="margin:0;font-size:18px">WhatsApp</h2>${r.whatsapp ? '<span class="pastilla ok">✓ Activo</span>' : '<span class="pastilla">Sin configurar</span>'}</div>
@@ -1255,6 +1248,15 @@ async function cargarCanales(r) {
     catch (e) { fallo(e); p.disabled = false; }
   };
 }
+const botonGoogle = href => `<a class="boton-google" href="${href}"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Continuar con Google</span></a>`;
+// Cómo crear el cliente de Google (el mismo proyecto que el login de Google de Super Gemas).
+const pasosGoogle = r => `<ol class="pasos-ayuda">
+  <li>En console.cloud.google.com, proyecto <b>support-holded-interactivos</b>: activa <b>Google Calendar API</b> y <b>Google Meet REST API</b>.</li>
+  <li>Google Auth Platform → Clientes → <b>Crear cliente</b> → Aplicación web, con este URI de redireccionamiento autorizado:<br><code>${esc((r.publica || location.origin) + '/admin/google/vuelta')}</code></li>
+  <li>En Render: <code>GOOGLE_CLIENT_ID</code> y <code>GOOGLE_CLIENT_SECRET</code> de ese cliente, y guarda con «Save, rebuild and deploy».</li>
+  <li>Vuelve aquí (o al login) y pulsa <b>Continuar con Google</b> con la cuenta cuyo calendario quieras usar.</li>
+</ol>`;
+
 // Aviso rojo en el menú si el buzón está configurado pero falla.
 function marcarCanales(r) {
   googleInfo = r.google || googleInfo;
@@ -1278,8 +1280,16 @@ function marcarCanales(r) {
   const vueltaGoogle = new URLSearchParams(location.search).get('google');
   if (vueltaGoogle !== null) {
     history.replaceState(null, '', '/admin' + location.hash);
-    if (vueltaGoogle === 'ok') aviso('Google conectado: ya se pueden crear videollamadas y el cliente puede reservar.');
-    else aviso(vueltaGoogle === 'cancelado' ? 'Has cancelado la conexión con Google.' : vueltaGoogle === 'caducado' ? 'La conexión ha caducado: vuelve a pulsar «Continuar con Google».' : vueltaGoogle, true);
+    const bien = {
+      ok: 'Google conectado: ya se pueden crear videollamadas y el cliente puede reservar.',
+      entrado: 'Has entrado con Google.',
+      'entrado-calendario': 'Has entrado con Google y tu calendario queda conectado para las videollamadas.',
+    }[vueltaGoogle];
+    aviso(bien || {
+      cancelado: 'Has cancelado la conexión con Google.',
+      caducado: 'La conexión ha caducado: vuelve a pulsar «Continuar con Google».',
+      'sin-configurar': 'Falta crear el cliente de Google y poner GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET en Render: los pasos están en Canales.',
+    }[vueltaGoogle] || vueltaGoogle, !bien);
   }
   ruta();
   if (!yo()) $('yo').classList.add('falta');

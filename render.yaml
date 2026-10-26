@@ -17,6 +17,8 @@ services:
         sync: false
       - key: ADMIN_CLAVE
         sync: false
+      - key: ADMIN_GOOGLE     # quién entra con «Continuar con Google»: correos o dominios; por defecto interactivos.net
+        sync: false
       - key: SESSION_SECRET   # texto largo aleatorio; si cambia, se cierran las sesiones abiertas
         generateValue: true
       - key: TECNICOS         # nombres del desplegable «Trabajando como», p. ej. Blanch,David,Pablo,Pako

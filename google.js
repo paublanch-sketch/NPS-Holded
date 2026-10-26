@@ -60,6 +60,16 @@ const activo = () => {
 
 const estado = { ok: null, ultimo: null, error: null, meet: null };
 const marcar = (ok, error) => Object.assign(estado, { ok, error: error || null, ultimo: new Date().toISOString() });
+// Para el cliente: solo se ofrece reservar si Google está puesto y la última llamada no falló.
+const disponible = () => activo() && estado.ok !== false;
+
+// Comprobación al arrancar y cada 10 minutos, para que un fallo no deje al cliente
+// con un «Reservar» que no funciona, y para que se vea en Canales.
+function vigilar() {
+  const mirar = () => { if (activo()) probar().catch(e => console.error('Google:', e.message)); };
+  mirar();
+  setInterval(mirar, 10 * 60000).unref();
+}
 
 let token = { valor: null, hasta: 0 };
 async function accessToken() {
@@ -107,35 +117,49 @@ async function tokenConexion() {
   return token.valor;
 }
 
-// Dirección de Google donde la persona elige su cuenta y acepta los permisos.
-function urlConectar(vuelta, estadoOAuth) {
-  return `${URLS.auth}?${new URLSearchParams({
-    client_id: clienteId(), redirect_uri: vuelta, response_type: 'code', state: estadoOAuth,
-    scope: `openid email ${ALCANCES}`, access_type: 'offline', prompt: 'consent', include_granted_scopes: 'true',
-  })}`;
+// Dirección de Google donde la persona elige su cuenta. Para entrar al panel basta la identidad;
+// para el calendario se piden además los permisos de Calendar y Meet, con permiso permanente.
+function urlConectar(vuelta, estadoOAuth, { soloEntrar = false } = {}) {
+  const p = { client_id: clienteId(), redirect_uri: vuelta, response_type: 'code', state: estadoOAuth };
+  Object.assign(p, soloEntrar
+    ? { scope: 'openid email', prompt: 'select_account' }
+    : { scope: `openid email ${ALCANCES}`, access_type: 'offline', prompt: 'consent', include_granted_scopes: 'true' });
+  return `${URLS.auth}?${new URLSearchParams(p)}`;
 }
 
-// Vuelta de Google: cambia el código por el permiso y lo guarda.
-async function completarConexion(codigo, vuelta) {
+// Vuelta de Google: cambia el código por los tokens y dice qué cuenta es.
+async function intercambiar(codigo, vuelta) {
   if (!modoOAuth()) throw new Error('Faltan GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET en Render');
   if (!codigo) throw new Error('Google no ha devuelto el código');
   const { ok, d } = await pedirToken({ grant_type: 'authorization_code', code: codigo, redirect_uri: vuelta });
   if (!ok) throw new Error(d.error_description || d.error || 'Google no ha aceptado el código');
+  // El id_token llega directo de Google por HTTPS con nuestro secreto: basta con leerlo.
+  let id = {};
+  try { id = JSON.parse(Buffer.from(d.id_token.split('.')[1], 'base64url')); } catch {}
+  if (!id.email || id.email_verified === false) throw new Error('Google no ha dicho qué cuenta se ha conectado');
+  return { email: id.email.toLowerCase(), d };
+}
+
+const conPermisoCalendario = d => (d.scope || '').split(' ').includes('https://www.googleapis.com/auth/calendar.events');
+
+// Guarda el permiso del calendario de esa cuenta.
+async function guardarConexion(email, d) {
   const dados = (d.scope || '').split(' ');
   const falta = ALCANCES.split(' ').filter(a => !a.includes('meetings') && !dados.includes(a));
   if (falta.length) throw new Error('Hay que marcar los permisos de Google Calendar: vuelve a conectar y acéptalos todos');
   if (!d.refresh_token) throw new Error('Google no ha dado un permiso permanente: vuelve a conectar');
-  // El id_token llega directo de Google por HTTPS: basta con leer el correo.
-  let email = '';
-  try { email = JSON.parse(Buffer.from(d.id_token.split('.')[1], 'base64url')).email || ''; } catch {}
-  if (!email) throw new Error('Google no ha dicho qué cuenta se ha conectado');
   const viejo = (await store.ajustes.donde('clave', 'google'))[0];
-  const doc = { ...(viejo || {}), clave: 'google', email: email.toLowerCase(), refresh: cifrar(d.refresh_token), conectado: new Date().toISOString(), alcances: dados };
+  const doc = { ...(viejo || {}), clave: 'google', email, refresh: cifrar(d.refresh_token), conectado: new Date().toISOString(), alcances: dados };
   await store.ajustes.guardar(doc);
   conexion = { email: doc.email, refresh: d.refresh_token, conectado: doc.conectado, alcances: dados };
   token = { valor: d.access_token, hasta: Date.now() + (d.expires_in || 3600) * 1000 };
   Object.assign(estado, { ok: null, error: null, meet: null });
   return doc.email;
+}
+
+async function completarConexion(codigo, vuelta) {
+  const { email, d } = await intercambiar(codigo, vuelta);
+  return guardarConexion(email, d);
 }
 
 async function desconectar() {
@@ -273,4 +297,7 @@ const resumen = () => {
   };
 };
 
-module.exports = { activo, crearReunion, anularReunion, huecos, duracionReal, probar, resumen, local, organizador, modoOAuth, urlConectar, completarConexion, desconectar, cargar };
+module.exports = {
+  activo, disponible, vigilar, crearReunion, anularReunion, huecos, duracionReal, probar, resumen, local, organizador,
+  modoOAuth, urlConectar, intercambiar, conPermisoCalendario, guardarConexion, completarConexion, desconectar, cargar,
+};
