@@ -4,6 +4,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const tickets = require('./tickets');
+const canales = require('./canales');
 
 const PORT = process.env.PORT || 3000;
 const SHEET_CSV_URL = process.env.SHEET_CSV_URL || '';
@@ -160,11 +161,13 @@ const pagina = (res, nombre) => {
 };
 
 http.createServer(async (req, res) => {
-  const ruta = req.url.split('?')[0];
+  const url = new URL(req.url, 'http://x');
+  const ruta = url.pathname;
   try {
-    // Público: el portal del cliente y su API por token.
+    // Público: el portal del cliente, su API por token y el webhook de WhatsApp.
     if (ruta === '/salud') { res.writeHead(200); return res.end('ok'); }
     if (ruta === '/soporte') return pagina(res, 'soporte.html');
+    if (await canales.rutasWhatsApp(req, res, ruta, url)) return;
     if (await tickets.rutasPublicas(req, res, ruta)) return;
 
     if (!autorizado(req)) {
@@ -183,4 +186,7 @@ http.createServer(async (req, res) => {
     console.error(e);
     tickets.json(res, { error: e.message }, e.status || 500);
   }
-}).listen(PORT, () => console.log(`Dashboard en http://localhost:${PORT}`));
+}).listen(PORT, () => {
+  console.log(`Dashboard en http://localhost:${PORT}`);
+  canales.iniciar();
+});

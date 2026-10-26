@@ -38,6 +38,77 @@ async function porId(id) {
 }
 
 const CANALES = ['Portal', 'WhatsApp', 'Correo', 'Teléfono'];
+
+// Funciones (ticket, evento, datos) que avisan al cliente por su canal; las registra canales.js.
+// Un fallo de envío no tumba la petición: queda como nota interna en el ticket.
+const avisos = [];
+function avisar(t, evento, datos = {}) {
+  for (const f of avisos) {
+    Promise.resolve().then(() => f(t, evento, datos)).catch(async e => {
+      console.error(`Aviso ${evento} #${t.id}:`, e.message);
+      const actual = await porId(t.id);
+      if (!actual) return;
+      actual.mensajes.push({ de: 'nota', autor: 'Sistema', texto: `No se pudo avisar al cliente (${evento}): ${e.message}`, fecha: ahora() });
+      await store.guardar(actual);
+    });
+  }
+}
+
+// "600 11 12 22" o "+34600111222" → "34600111222", el formato de WhatsApp.
+const telefonoWa = s => {
+  const d = String(s || '').replace(/\D/g, '');
+  return /^[6-9]\d{8}$/.test(d) ? '34' + d : d;
+};
+
+const NPS_DIAS = 7; // un número 0–10 hasta una semana después del cierre se toma como valoración
+
+// Mensaje entrante de WhatsApp o correo: lo añade al ticket abierto de ese contacto,
+// recoge la valoración si el ticket acaba de cerrarse, o abre uno nuevo.
+async function recibir(r) {
+  const todos = await store.todos();
+  if (r.idExterno && todos.some(t => t.mensajes.some(m => m.idExterno === r.idExterno))) return null;
+  const mismo = t => r.canal === 'WhatsApp'
+    ? t.telefono && telefonoWa(t.telefono) === telefonoWa(r.telefono)
+    : t.email && t.email.toLowerCase() === String(r.email).toLowerCase();
+  const recientes = todos.filter(mismo).sort((a, b) => b.entrada.localeCompare(a.entrada));
+  const texto = String(r.texto || '').trim().slice(0, 5000) || '(mensaje sin texto)';
+  const msg = { de: 'cliente', texto, fecha: ahora(), idExterno: r.idExterno };
+
+  const citado = r.ticketId && recientes.find(x => x.id === r.ticketId);
+  let t = citado && citado.estado !== 'Cerrado' ? citado : recientes.find(x => x.estado !== 'Cerrado');
+  const recienCerrado = x => x && x.estado === 'Cerrado' && (new Date() - new Date(x.cierre)) / 864e5 < NPS_DIAS;
+  const cerrado = !t && (recienCerrado(citado) ? citado : recientes.find(recienCerrado));
+  if (cerrado && cerrado.esperaMejora) {
+    cerrado.mejora = texto;
+    cerrado.esperaMejora = false;
+    cerrado.mensajes.push(msg);
+    await store.guardar(cerrado);
+    avisar(cerrado, 'gracias');
+    return cerrado;
+  }
+  if (cerrado && cerrado.nps == null && /^\s*(10|[0-9])\s*$/.test(texto)) {
+    cerrado.nps = Number(texto);
+    cerrado.esperaMejora = true;
+    cerrado.mensajes.push(msg);
+    await store.guardar(cerrado);
+    avisar(cerrado, 'pideMejora');
+    return cerrado;
+  }
+  if (t) {
+    if (t.estado === 'Cerrado') ACCIONES.reabrir(t);
+    if (t.estado === 'Pendiente cliente') t.estado = 'En curso';
+    t.mensajes.push(msg);
+    return store.guardar(t);
+  }
+  t = await crear({
+    canal: r.canal, empresa: r.nombre || r.email || r.telefono, contacto: r.nombre,
+    email: r.email, telefono: r.telefono, tipo: 'Sin clasificar', descripcion: texto,
+  });
+  t.mensajes[0].idExterno = r.idExterno;
+  await store.guardar(t);
+  avisar(t, 'nuevo');
+  return t;
+}
 const ENTRADA_KEY = process.env.ENTRADA_KEY || '';
 
 async function crear(b) {
@@ -127,12 +198,14 @@ async function rutasPublicas(req, res, ruta) {
   if (req.method === 'POST' && ruta === '/api/soporte') {
     const b = await leerCuerpo(req);
     const t = await crear({ ...b, canal: 'Portal' });
+    avisar(t, 'nuevo');
     return json(res, { token: t.token }, 201), true;
   }
   // Entrada automática para WhatsApp o correo (Make, Zapier, webhook de Meta...) con clave compartida.
   if (req.method === 'POST' && ruta === '/api/entrada') {
     if (!ENTRADA_KEY || req.headers['x-entrada-key'] !== ENTRADA_KEY) return json(res, { error: 'Clave no válida' }, 401), true;
     const t = await crear(await leerCuerpo(req));
+    avisar(t, 'nuevo');
     return json(res, { id: t.id, enlace: `/soporte?t=${t.token}` }, 201), true;
   }
   const m = ruta.match(/^\/api\/soporte\/([a-f0-9]{32})(\/mensaje|\/nps)?$/);
@@ -171,6 +244,7 @@ async function rutasConsola(req, res, ruta) {
     const t = await crear(b);
     if (b.tecnico) ACCIONES.asignar(t, b);
     await store.guardar(t);
+    avisar(t, 'nuevo');
     return json(res, vistaTecnico(t), 201), true;
   }
   const m = ruta.match(/^\/api\/tickets\/(\d+)\/(\w+)$/);
@@ -178,8 +252,10 @@ async function rutasConsola(req, res, ruta) {
   const t = await porId(m[1]);
   if (!t) return json(res, { error: 'Ticket no encontrado' }, 404), true;
   if (!ACCIONES[m[2]]) return json(res, { error: 'Acción desconocida' }, 400), true;
-  ACCIONES[m[2]](t, await leerCuerpo(req));
+  const b = await leerCuerpo(req);
+  ACCIONES[m[2]](t, b);
   await store.guardar(t);
+  avisar(t, m[2], b);
   return json(res, vistaTecnico(t)), true;
 }
 
@@ -192,4 +268,4 @@ async function paraDashboard() {
   }));
 }
 
-module.exports = { rutasPublicas, rutasConsola, paraDashboard, json };
+module.exports = { rutasPublicas, rutasConsola, paraDashboard, json, recibir, avisos, telefonoWa };

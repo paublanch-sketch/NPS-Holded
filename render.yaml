@@ -21,6 +21,26 @@ services:
         sync: false
       - key: ENTRADA_KEY      # clave para crear tickets desde WhatsApp o correo (cabecera x-entrada-key)
         sync: false
+      - key: PUBLIC_URL       # https://<servicio>.onrender.com, para los enlaces que reciben los clientes
+        sync: false
+      # WhatsApp Cloud API. Webhook en Meta: <PUBLIC_URL>/whatsapp/webhook
+      - key: WA_TOKEN
+        sync: false
+      - key: WA_PHONE_ID
+        sync: false
+      - key: WA_VERIFY_TOKEN  # cualquier texto; el mismo que se pone en Meta al suscribir el webhook
+        sync: false
+      - key: WA_APP_SECRET    # secreto de la app de Meta, para comprobar la firma
+        sync: false
+      # Buzón de soporte: IMAP para leer, SMTP para responder
+      - key: MAIL_USER
+        sync: false
+      - key: MAIL_PASS
+        sync: false
+      - key: IMAP_HOST
+        sync: false
+      - key: SMTP_HOST
+        sync: false
       - key: SHEET_CSV_URL    # histórico del Google Sheet publicado como CSV (opcional)
         sync: false
       - key: HOLDED_API_KEY   # vacía = datos comerciales de ejemplo
