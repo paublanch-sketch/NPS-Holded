@@ -1,3 +1,5 @@
 node_modules/
 .env
 data/tickets.json
+data/historico-sheet.csv
+data/alias-clientes.json

@@ -1,5 +1,5 @@
 // Servicio Holded: portal de soporte, consola del técnico y dashboard (Node 18+).
-// Fuentes: tickets de la app, histórico del Google Sheet (CSV, opcional) y comercial (API de Holded).
+// Fuentes: tickets de la app (con el histórico del Sheet importado con importar.js) y comercial (API de Holded).
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -7,7 +7,6 @@ const tickets = require('./tickets');
 const canales = require('./canales');
 
 const PORT = process.env.PORT || 3000;
-const SHEET_CSV_URL = process.env.SHEET_CSV_URL || '';
 const HOLDED_API_KEY = process.env.HOLDED_API_KEY || '';
 const DASH_USER = process.env.DASH_USER || '';
 const DASH_PASS = process.env.DASH_PASS || '';
@@ -16,67 +15,10 @@ const TECNICOS = (process.env.TECNICOS || 'Blanch,David,Pablo,Pako').split(',').
 const SLA_MIN = 60;           // primera respuesta en menos de 1h
 const RESPUESTA_CLIENTE = 15; // días máximos para que el cliente firme/pague
 
-function parseCSV(text) {
-  const rows = [];
-  let row = [], cell = '', q = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (q) {
-      if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
-      else if (c === '"') q = false;
-      else cell += c;
-    } else if (c === '"') q = true;
-    else if (c === ',') { row.push(cell); cell = ''; }
-    else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
-    else if (c !== '\r') cell += c;
-  }
-  if (cell || row.length) { row.push(cell); rows.push(row); }
-  const [head, ...body] = rows;
-  return body.filter(r => r.some(Boolean))
-    .map(r => Object.fromEntries(head.map((h, i) => [h.trim(), (r[i] || '').trim()])));
-}
-
-// Tickets de la app más el histórico del Sheet, si se ha publicado su CSV.
+// Tickets de la app, histórico importado incluido. Los internos de AKIRA no cuentan.
 async function cargarTickets() {
-  const historico = SHEET_CSV_URL
-    ? parseCSV(await (await fetch(SHEET_CSV_URL)).text()).map(normalizar).filter(esHolded)
-    : [];
-  return [...historico, ...(await tickets.paraDashboard())];
+  return (await tickets.paraDashboard()).filter(t => !t.interno);
 }
-
-// "13/01/2026 18:05:46" o "2/02/2026" → ISO local "2026-01-13T18:05"
-function fecha(s) {
-  const m = String(s || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s+(\d{1,2}):(\d{2}))?/);
-  if (!m) return '';
-  const p = n => String(n).padStart(2, '0');
-  return `${m[3].length === 2 ? '20' + m[3] : m[3]}-${p(m[2])}-${p(m[1])}T${p(m[4] || 0)}:${p(m[5] || 0)}`;
-}
-
-// Columnas del Google Form de incidencias. Servicio, tipo de cliente, canal y
-// primera respuesta aún no existen en el Sheet: se usan si algún día se añaden.
-function normalizar(r) {
-  const g = (...k) => k.map(x => r[x]).find(v => v != null && v !== '') || '';
-  const nps = g('Puntuación', 'nps');
-  return {
-    cliente: g('Nombre de la empresa / autónomo', 'cliente'),
-    tipo_incidencia: g('Tipo de Incidencia', 'tipo_incidencia'),
-    descripcion: g('Describe la incidencia técnica'),
-    tecnico: g('Técnico', 'tecnico'),
-    estado: g('Estado', 'estado') || 'Nuevo',
-    entrada: fecha(g('Marca temporal')) || g('entrada'),
-    cierre: fecha(g('Cierre')) || g('cierre'),
-    primera_respuesta: g('Primera respuesta', 'primera_respuesta'),
-    horas: parseFloat(g('T', 'horas').replace(',', '.')) || 0,
-    nps: nps === '' ? null : Number(nps),
-    mejora: g('Mejora', 'mejora'),
-    servicio: g('Servicio', 'servicio') || 'Soporte Holded',
-    tipo_cliente: g('Tipo de cliente', 'tipo_cliente') || 'Sin clasificar',
-    canal: g('Canal', 'canal') || 'Formulario',
-  };
-}
-
-// Solo lo de Holded: tipo Holded, o cualquier ticket de Blanch (todos los suyos son Holded).
-const esHolded = t => t.cliente && (/holded/i.test(t.tipo_incidencia) || /blanch/i.test(t.tecnico));
 
 // Presupuestos de Holded. En teoría status 1 = aceptado; el cobro sale de la factura enlazada.
 async function cargarComercial() {

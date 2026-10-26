@@ -8,8 +8,9 @@ const ahora = () => {
   return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 19);
 };
 
-// Horas sumando las sesiones del cronómetro; la que sigue abierta cuenta hasta ahora.
-const horas = t => +((t.sesiones || []).reduce((s, x) => s + (new Date(x.fin || ahora()) - new Date(x.inicio)), 0) / 3600000).toFixed(2);
+// Horas sumando las sesiones del cronómetro (la abierta cuenta hasta ahora) más las
+// apuntadas a mano en el Sheet para los tickets importados.
+const horas = t => +((t.horas_previas || 0) + (t.sesiones || []).reduce((s, x) => s + (new Date(x.fin || ahora()) - new Date(x.inicio)), 0) / 3600000).toFixed(2);
 
 const activa = t => (t.sesiones || []).find(s => !s.fin);
 
@@ -76,7 +77,8 @@ async function recibir(r) {
 
   const citado = r.ticketId && recientes.find(x => x.id === r.ticketId);
   let t = citado && citado.estado !== 'Cerrado' ? citado : recientes.find(x => x.estado !== 'Cerrado');
-  const recienCerrado = x => x && x.estado === 'Cerrado' && (new Date() - new Date(x.cierre)) / 864e5 < NPS_DIAS;
+  // Los importados del Sheet nunca pidieron valoración: un número suyo no es un NPS.
+  const recienCerrado = x => x && x.origen !== 'Sheet' && x.estado === 'Cerrado' && (new Date() - new Date(x.cierre)) / 864e5 < NPS_DIAS;
   const cerrado = !t && (recienCerrado(citado) ? citado : recientes.find(recienCerrado));
   if (cerrado && cerrado.esperaMejora) {
     cerrado.mejora = texto;
@@ -265,6 +267,7 @@ async function paraDashboard() {
     cliente: t.cliente, tipo_incidencia: t.tipo_incidencia, tecnico: t.tecnico, estado: t.estado,
     entrada: t.entrada, cierre: t.cierre, primera_respuesta: t.primera_respuesta, horas: horas(t),
     nps: t.nps, mejora: t.mejora, servicio: t.servicio, tipo_cliente: t.tipo_cliente, canal: t.canal,
+    interno: !!t.interno,
   }));
 }
 
