@@ -1,6 +1,7 @@
 // Tickets de soporte Holded: portal del cliente (público, por token) y consola del técnico.
 const crypto = require('crypto');
 const { tickets: store } = require('./store');
+const adjuntos = require('./adjuntos');
 
 // Hora local sin zona, el mismo formato que las fechas del Sheet ("2026-10-26T15:04:05").
 const ahora = () => {
@@ -68,6 +69,18 @@ const telefonoWa = s => {
   return /^[6-9]\d{8}$/.test(d) ? '34' + d : d;
 };
 
+// Guarda los archivos que vienen con un mensaje (correo) y los deja en el hilo del ticket.
+async function adjuntar(t, lista = [], origen = 'correo') {
+  for (const f of lista.slice(0, 5)) {
+    try {
+      const a = await adjuntos.guardar({ ticket: t.id, nombre: f.nombre, buffer: f.buffer, origen });
+      t.mensajes.push({ de: 'cliente', texto: `Ha adjuntado «${a.nombre}»`, adjunto: a, fecha: ahora() });
+    } catch (e) {
+      t.mensajes.push({ de: 'nota', autor: 'Sistema', texto: `No se ha guardado el adjunto «${f.nombre}»: ${e.message}`, fecha: ahora() });
+    }
+  }
+}
+
 const NPS_DIAS = 7; // un número 0–10 hasta una semana después del cierre se toma como valoración
 
 // Mensaje entrante de WhatsApp o correo: lo añade al ticket abierto de ese contacto,
@@ -107,13 +120,15 @@ async function recibir(r) {
     if (t.estado === 'Cerrado') ACCIONES.reabrir(t);
     if (t.estado === 'Pendiente cliente') t.estado = 'En curso';
     t.mensajes.push(msg);
+    await adjuntar(t, r.adjuntos);
     return store.guardar(t);
   }
   t = await crear({
     canal: r.canal, empresa: r.nombre || r.email || r.telefono, contacto: r.nombre,
-    email: r.email, telefono: r.telefono, tipo: 'Sin clasificar', descripcion: texto,
+    email: r.email, telefono: r.telefono, tipo: 'Sin clasificar', descripcion: texto, asunto: r.asunto,
   });
   t.mensajes[0].idExterno = r.idExterno;
+  await adjuntar(t, r.adjuntos);
   await store.guardar(t);
   avisar(t, 'nuevo');
   return t;
@@ -132,6 +147,7 @@ async function crear(b) {
     email: String(b.email || '').trim().slice(0, 200),
     telefono: String(b.telefono || '').trim().slice(0, 40),
     tipo_incidencia: String(b.tipo || 'Duda de uso').slice(0, 80),
+    asunto: String(b.asunto || b.tipo || texto.split(/\r?\n/)[0]).trim().slice(0, 120),
     descripcion: texto.slice(0, 5000),
     servicio: 'Sin clasificar',
     tipo_cliente: 'Sin clasificar',
@@ -222,6 +238,11 @@ const json = (res, data, status = 200) => {
 };
 
 // Rutas públicas del portal. Devuelve true si ha atendido la petición.
+// Estado que ve el cliente en «Tus incidencias».
+const estadoCliente = e => ({ 'Nuevo': 'Abierta', 'En curso': 'En curso', 'Pendiente cliente': 'Te esperamos', 'Cerrado': 'Resuelta' }[e] || e);
+const recuperaciones = new Map(); // IP → intentos de «envíame mis incidencias» en la última hora
+const ipDe = req => String(req.headers['x-forwarded-for'] || req.socket.remoteAddress).split(',')[0].trim();
+
 async function rutasPublicas(req, res, ruta) {
   if (req.method === 'POST' && ruta === '/api/soporte') {
     const b = await leerCuerpo(req);
@@ -229,18 +250,59 @@ async function rutasPublicas(req, res, ruta) {
     avisar(t, 'nuevo');
     return json(res, { token: t.token, id: t.id }, 201), true;
   }
-  // Entrada automática para WhatsApp o correo (Make, Zapier, webhook de Meta...) con clave compartida.
+  // Entrada automática desde otros sistemas (Make, Zapier...) con clave compartida.
   if (req.method === 'POST' && ruta === '/api/entrada') {
     if (!ENTRADA_KEY || req.headers['x-entrada-key'] !== ENTRADA_KEY) return json(res, { error: 'Clave no válida' }, 401), true;
     const t = await crear(await leerCuerpo(req));
     avisar(t, 'nuevo');
     return json(res, { id: t.id, enlace: `/t/${t.token}` }, 201), true;
   }
-  const m = ruta.match(/^\/api\/soporte\/([a-f0-9]{32})(\/mensaje|\/nps)?$/);
+  // Estado de las incidencias que el navegador del cliente recuerda (solo las de sus enlaces).
+  if (req.method === 'POST' && ruta === '/api/soporte/estado') {
+    const pedidos = new Set((await leerCuerpo(req)).tokens?.filter(x => /^[a-f0-9]{32}$/.test(x)).slice(0, 40));
+    const l = (await store.todos()).filter(t => pedidos.has(t.token)).map(t => ({
+      token: t.token, id: t.id, titulo: t.asunto || t.tipo_incidencia, estado: estadoCliente(t.estado),
+      fecha: t.entrada, actualizado: t.mensajes.at(-1)?.fecha || t.entrada,
+    })).sort((a, b) => b.fecha.localeCompare(a.fecha));
+    return json(res, l), true;
+  }
+  // «Envíame mis incidencias»: siempre responde lo mismo, haya o no tickets con ese correo.
+  if (req.method === 'POST' && ruta === '/api/soporte/recuperar') {
+    const ip = ipDe(req), ahoraMs = Date.now();
+    const r = (recuperaciones.get(ip) || []).filter(x => ahoraMs - x < 3600000);
+    if (r.length >= 5) return json(res, { error: 'Demasiadas peticiones. Prueba dentro de un rato.' }, 429), true;
+    recuperaciones.set(ip, [...r, ahoraMs]);
+    const email = String((await leerCuerpo(req)).email || '').trim().toLowerCase();
+    if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) && alRecuperar.fn) {
+      const l = (await store.todos()).filter(t => t.email?.toLowerCase() === email && t.origen !== 'Sheet')
+        .sort((a, b) => b.entrada.localeCompare(a.entrada)).slice(0, 15);
+      if (l.length) alRecuperar.fn(email, l).catch(e => console.error('Recuperar:', e.message));
+    }
+    return json(res, { ok: true, correo: !!alRecuperar.fn }), true;
+  }
+
+  const m = ruta.match(/^\/api\/soporte\/([a-f0-9]{32})(\/mensaje|\/nps|\/adjunto(?:\/(\d+))?)?$/);
   if (!m) return false;
   const t = await porToken(m[1]);
   if (!t) return json(res, { error: 'Ticket no encontrado' }, 404), true;
   if (req.method === 'GET' && !m[2]) return json(res, vistaCliente(t)), true;
+
+  // Adjuntos: el cliente sube archivos a su incidencia y puede volver a abrirlos.
+  if (m[2]?.startsWith('/adjunto')) {
+    if (req.method === 'GET' && m[3]) {
+      const a = await adjuntos.adjuntos.uno(m[3]);
+      if (!a || a.ticket !== t.id) return json(res, { error: 'No encontrado' }, 404), true;
+      return adjuntos.servir(res, a), true;
+    }
+    if (req.method !== 'POST' || m[3]) return false;
+    const nombre = decodeURIComponent(String(req.headers['x-nombre'] || 'archivo'));
+    const a = await adjuntos.guardar({ ticket: t.id, nombre, buffer: await adjuntos.leerCrudo(req), origen: 'portal' });
+    t.mensajes.push({ de: 'cliente', texto: `Ha adjuntado «${a.nombre}»`, adjunto: a, fecha: ahora() });
+    if (t.estado === 'Pendiente cliente') t.estado = 'En curso';
+    await store.guardar(t);
+    return json(res, a, 201), true;
+  }
+
   const b = await leerCuerpo(req);
   if (m[2] === '/mensaje') {
     const texto = String(b.texto || '').trim();
@@ -255,15 +317,25 @@ async function rutasPublicas(req, res, ruta) {
     const n = Number(b.nps);
     if (Number.isInteger(n) && n >= 0 && n <= 10) t.nps = n;
     t.mejora = String(b.mejora || '').trim().slice(0, 2000);
+    t.esperaMejora = false;
     await store.guardar(t);
   }
   return json(res, vistaCliente(t)), true;
 }
 
+// La pone canales.js si hay correo: envía al cliente los enlaces de sus incidencias.
+const alRecuperar = { fn: null };
+
 // Rutas de la consola (ya autenticadas).
 async function rutasConsola(req, res, ruta, equipo) {
   // Con un solo acceso de admin, el técnico lo elige el panel; solo vale si es del equipo.
   const quien = b => ({ ...b, tecnico: equipo.includes(b.tecnico) ? b.tecnico : '', asignado: equipo.includes(b.asignado) ? b.asignado : '' });
+  const ma = ruta.match(/^\/api\/adjuntos\/(\d+)$/);
+  if (req.method === 'GET' && ma) {
+    const a = await adjuntos.adjuntos.uno(ma[1]);
+    if (!a) return json(res, { error: 'No encontrado' }, 404), true;
+    return adjuntos.servir(res, a), true;
+  }
   if (req.method === 'GET' && ruta === '/api/tickets') {
     const l = (await store.todos()).map(vistaTecnico).sort((a, b) => b.entrada.localeCompare(a.entrada));
     return json(res, l), true;
@@ -299,4 +371,4 @@ async function paraDashboard() {
   }));
 }
 
-module.exports = { rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };
+module.exports = { alRecuperar, porId, rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };

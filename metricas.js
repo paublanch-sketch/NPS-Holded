@@ -84,6 +84,8 @@ function resumen(todos, { desde, hasta, servicio, tecnico, tipo_cliente }, comer
   const espera = t => minutosLaborables(t.entrada, t.primera_respuesta || ahoraLocal);
   // El SLA solo se mide en tickets de la app: el Sheet no guardaba la primera respuesta.
   const conSla = t => t.origen !== 'Sheet';
+  // Juzgable: ya tiene respuesta, o lleva más de la hora sin ella (un ticket de hace 5 minutos aún no cuenta).
+  const juzgable = t => conSla(t) && (t.primera_respuesta || espera(t) > SLA_MIN);
 
   const horasDe = lista => r1(lista.reduce((s, t) => s + t.trabajo
     .filter(w => w.fecha >= desde && w.fecha <= hasta && (!tecnico || w.tecnico === tecnico))
@@ -92,7 +94,7 @@ function resumen(todos, { desde, hasta, servicio, tecnico, tipo_cliente }, comer
   const bloque = (lista, nombre) => {
     const abiertas = lista.filter(t => t.estado !== 'Cerrado');
     const periodo = lista.filter(enPeriodo);
-    const medibles = periodo.filter(conSla);
+    const medibles = periodo.filter(juzgable);
     const fuera = medibles.filter(t => espera(t) > SLA_MIN).length;
     const excedido = abiertas.filter(t => conSla(t) && !t.primera_respuesta).reduce((s, t) => s + Math.max(0, espera(t) - SLA_MIN), 0);
     const val = nps(lista.filter(cerradoEnPeriodo));
@@ -155,11 +157,11 @@ function resumen(todos, { desde, hasta, servicio, tecnico, tipo_cliente }, comer
   const cerrados = filtrados.filter(cerradoEnPeriodo);
   const resolucion = cerrados.map(t => (new Date(t.cierre) - new Date(t.entrada)) / 864e5).filter(d => d >= 0);
   const primeras = delPeriodo.filter(t => conSla(t) && t.primera_respuesta).map(espera);
-  const medibles = delPeriodo.filter(conSla);
+  const medibles = delPeriodo.filter(juzgable);
   const valoracion = nps(cerrados);
   const satisfechos = new Set(cerrados.filter(t => t.nps >= 9).map(t => t.cliente));
   const clientesPeriodo = agrupar(delPeriodo, t => t.cliente);
-  const porOrigen = [...agrupar([...clientesPeriodo.values()].map(l => l[0]), t => t.tipo_cliente)]
+  const porOrigen = [...agrupar([...clientesPeriodo.values()].map(l => l[0]).filter(t => t.servicio === 'Implementación' || t.servicio === 'Premium'), t => t.tipo_cliente)]
     .map(([nombre, l]) => ({ nombre, clientes: l.length })).sort((a, b) => b.clientes - a.clientes);
 
   return {
@@ -184,8 +186,24 @@ function resumen(todos, { desde, hasta, servicio, tecnico, tipo_cliente }, comer
     servicios: SERVICIOS.filter(s => s !== 'Sin clasificar' || filtrados.some(t => t.servicio === s))
       .filter(s => !servicio || s === servicio)
       .map(s => bloque(filtrados.filter(t => t.servicio === s), s)),
-    porTipo: [...agrupar(filtrados.filter(t => t.servicio !== 'Sin clasificar' && t.servicio !== 'Kit Digital'), t => `${t.servicio} · ${t.tipo_cliente}`)]
-      .map(([n, l]) => bloque(l, n)).sort((a, b) => a.nombre.localeCompare(b.nombre)),
+    // Los grupos de la página 2 del mockup. Los clientes sin origen no entran en ninguno.
+    porTipo: [
+      { servicio: 'Premium', grupos: [
+        { nombre: 'Gestoría / Asesoría', origenes: ['Gestoría / asesoría'] },
+        { nombre: 'Cliente directo', precio: '499 €', origenes: ['Directo', 'Antiguo cliente AKIRA', 'Referido por gestoría'] },
+      ] },
+      { servicio: 'Implementación', grupos: [
+        { nombre: 'Referenciado por gestoría', origenes: ['Referido por gestoría', 'Gestoría / asesoría'] },
+        { nombre: 'Cliente directo', origenes: ['Directo', 'Antiguo cliente AKIRA'] },
+      ] },
+    ].map(s => {
+      const del = filtrados.filter(t => t.servicio === s.servicio);
+      return {
+        servicio: s.servicio,
+        sinOrigen: new Set(del.filter(t => t.tipo_cliente === 'Sin clasificar').map(t => t.cliente)).size,
+        grupos: s.grupos.map(g => ({ ...bloque(del.filter(t => g.origenes.includes(t.tipo_cliente)), g.nombre), precio: g.precio || null })),
+      };
+    }),
     serie,
     porTipoIncidencia: [...agrupar(delPeriodo, t => t.tipo_incidencia || 'Sin tipo')].map(([nombre, l]) => ({ nombre, tickets: l.length })).sort((a, b) => b.tickets - a.tickets),
     porCanal: [...agrupar(delPeriodo, t => t.canal || 'Formulario')].map(([nombre, l]) => ({ nombre, tickets: l.length })).sort((a, b) => b.tickets - a.tickets),

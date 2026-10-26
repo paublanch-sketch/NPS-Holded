@@ -87,13 +87,17 @@ http.createServer(async (req, res) => {
     if (ruta === '/salud') { res.writeHead(200); return res.end('ok'); }
     if (ruta === '/' || /^\/t\/[a-f0-9]{32}$/.test(ruta)) return pagina(res, 'portal.html');
     if (ruta === '/soporte') return redirigir(res, /^[a-f0-9]{32}$/.test(url.searchParams.get('t') || '') ? `/t/${url.searchParams.get('t')}` : '/');
-    if (ruta === '/api/portal') return json(res, {
-      whatsapp: (process.env.WA_NUMERO_PUBLICO || '').replace(/\D/g, ''),
-      email: process.env.SOPORTE_EMAIL || process.env.MAIL_USER || '',
-      google: process.env.GOOGLE_RESENA_URL || '',
-      horario: process.env.HORARIO_LABORAL || '09:00-18:00',
-      avisosCorreo: !!(process.env.SMTP_HOST && process.env.MAIL_USER),
-    });
+    if (ruta === '/api/portal') {
+      const c = canales.correo.resumen().correo;
+      return json(res, {
+        whatsapp: (process.env.WA_NUMERO_PUBLICO || '').replace(/\D/g, ''),
+        email: process.env.SOPORTE_EMAIL || process.env.MAIL_USER || '',
+        telefono: process.env.SOPORTE_TELEFONO || '',
+        google: process.env.GOOGLE_RESENA_URL || '',
+        horario: process.env.HORARIO_LABORAL || '09:00-18:00',
+        avisosCorreo: !!(c.configurado && c.smtp),
+      });
+    }
     if (await canales.rutasWhatsApp(req, res, ruta, url)) return;
     if (await tickets.rutasPublicas(req, res, ruta)) return;
 
@@ -118,6 +122,7 @@ http.createServer(async (req, res) => {
       return res.end(metricas.csvHoras(r));
     }
     if (await clientes.rutas(req, res, ruta, { json, leerCuerpo })) return;
+    if (await canales.correo.rutas(req, res, ruta, { json, leerCuerpo })) return;
     if (await tickets.rutasConsola(req, res, ruta, auth.TECNICOS)) return;
     json(res, { error: 'No encontrado' }, 404);
   } catch (e) {

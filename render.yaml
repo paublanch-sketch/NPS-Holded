@@ -30,6 +30,8 @@ services:
         sync: false
       - key: SOPORTE_EMAIL      # correo de soporte visible; si falta, se usa MAIL_USER
         sync: false
+      - key: SOPORTE_TELEFONO   # teléfono que se muestra en «Otras formas de contactar»
+        sync: false
       - key: GOOGLE_RESENA_URL  # enlace para dejar reseña en Google (se ofrece a quien puntúa 9 o 10)
         sync: false
       - key: ENTRADA_KEY      # clave para crear tickets desde otros sistemas (cabecera x-entrada-key)
@@ -43,7 +45,8 @@ services:
         sync: false
       - key: WA_APP_SECRET    # secreto de la app de Meta, para comprobar la firma
         sync: false
-      # Buzón de soporte: IMAP para leer, SMTP para responder
+      # Buzón de soporte. Con Google Workspace bastan MAIL_USER y MAIL_PASS (contraseña de
+      # aplicación): IMAP_HOST y SMTP_HOST se deducen del MX. Estado en el panel → Canales.
       - key: MAIL_USER
         sync: false
       - key: MAIL_PASS
@@ -51,6 +54,8 @@ services:
       - key: IMAP_HOST
         sync: false
       - key: SMTP_HOST
+        sync: false
+      - key: MANTENER_DESPIERTO # 0 para no visitarse cada 10 min (solo hace falta en el plan gratuito)
         sync: false
       - key: HOLDED_API_KEY   # vacía = datos comerciales de ejemplo
         sync: false

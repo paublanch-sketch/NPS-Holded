@@ -1,4 +1,4 @@
-// Almacén por colecciones (tickets y clientes). Con DATABASE_URL usa Postgres,
+// Almacén por colecciones (tickets, clientes y adjuntos). Con DATABASE_URL usa Postgres,
 // una tabla por colección con una fila JSONB por documento; sin ella, ficheros JSON en
 // data/ para desarrollo. Render borra el disco en cada despliegue: en producción, Postgres.
 const fs = require('fs');
@@ -19,6 +19,9 @@ function coleccionFichero(nombre) {
       return d;
     },
     async borrar(id) { escribir(leer().filter(x => x.id !== id)); },
+    async uno(id) { return leer().find(x => x.id === Number(id)) || null; },
+    // Documentos cuyo campo vale lo indicado, sin el campo pesado «datos» (los adjuntos).
+    async donde(campo, valor) { return leer().filter(x => x[campo] === valor).map(({ datos, ...x }) => x); },
   };
 }
 
@@ -50,9 +53,19 @@ function coleccionPostgres(url, nombre) {
       await preparar();
       await pool.query(`DELETE FROM ${nombre} WHERE id = $1`, [id]);
     },
+    async uno(id) {
+      await preparar();
+      const { rows } = await pool.query(`SELECT id, doc FROM ${nombre} WHERE id = $1`, [Number(id)]);
+      return rows[0] ? { ...rows[0].doc, id: rows[0].id } : null;
+    },
+    async donde(campo, valor) {
+      await preparar();
+      const { rows } = await pool.query(`SELECT id, doc - 'datos' AS doc FROM ${nombre} WHERE doc->>$1 = $2 ORDER BY id`, [campo, String(valor)]);
+      return rows.map(r => ({ ...r.doc, id: r.id }));
+    },
   };
 }
 
 const crear = nombre => process.env.DATABASE_URL ? coleccionPostgres(process.env.DATABASE_URL, nombre) : coleccionFichero(nombre);
 
-module.exports = { tickets: crear('tickets'), clientes: crear('clientes') };
+module.exports = { tickets: crear('tickets'), clientes: crear('clientes'), adjuntos: crear('adjuntos') };

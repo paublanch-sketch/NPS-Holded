@@ -79,7 +79,7 @@
   .tabla { overflow-x: auto; }
 
   /* Bandeja */
-  .bandeja { display: grid; grid-template-columns: 380px minmax(0, 1fr); height: 100vh; }
+  .bandeja { display: grid; grid-template-columns: clamp(300px, 25vw, 380px) minmax(0, 1fr); height: 100vh; }
   .bandeja > *, .detalle > *, .conv, .lista .top > * { min-width: 0; }
   .lista { border-right: 1px solid var(--linea); background: var(--blanco); display: flex; flex-direction: column; min-height: 0; }
   .lista .top { padding: 16px 14px 10px; border-bottom: 1px solid var(--linea); }
@@ -101,7 +101,7 @@
   .item .l2 { font-size: 12px; color: var(--bruma); margin-top: 2px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
   .item .l3 { font-size: 13px; color: var(--bruma); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .punto { width: 8px; height: 8px; border-radius: 50%; background: var(--rojo); flex: none; display: inline-block; }
-  .detalle { display: grid; grid-template-columns: minmax(0, 1fr) 300px; min-height: 0; height: 100vh; }
+  .detalle { display: grid; grid-template-columns: minmax(0, 1fr) clamp(250px, 20vw, 300px); min-height: 0; height: 100vh; }
   .conv { display: flex; flex-direction: column; min-height: 0; }
   .conv .cab { padding: 18px 24px 14px; background: var(--blanco); border-bottom: 1px solid var(--linea); }
   .conv .cab h2 { font-size: 19px; margin: 0; letter-spacing: -.01em; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -118,7 +118,8 @@
   .m.sistema { align-self: center; background: none; color: var(--muted); font-size: 12px; text-align: center; padding: 2px 8px; }
   .redactar { background: var(--blanco); border-top: 1px solid var(--linea); padding: 10px 24px 14px; }
   .redactar .modos { display: flex; gap: 4px; margin-bottom: 8px; align-items: center; }
-  .redactar .modos button { border: 0; background: none; font-size: 13px; font-weight: 600; color: var(--muted); padding: 5px 9px; border-radius: 8px; cursor: pointer; }
+  .redactar .modos button { border: 0; background: none; font-size: 13px; font-weight: 600; color: var(--muted); padding: 5px 9px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+  .redactar .modos select { min-width: 0; flex: 0 1 190px; }
   .redactar .modos button.on { color: var(--pizarra); background: var(--suave); }
   .redactar .modos button.on.nota { background: var(--nota); }
   .redactar .modos select { margin-left: auto; font-size: 13px; padding: 5px 8px; }
@@ -132,12 +133,26 @@
   .reloj.on { color: var(--ok-t); }
   .reloj-sub { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
   .botones { display: flex; gap: 6px; flex-wrap: wrap; }
+  .botones.tiempo { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .botones.tiempo .boton:first-child { grid-column: 1 / -1; }
+  .botones.tiempo .boton { padding: 8px 6px; }
   .botones .boton { flex: 1; }
   .prop { display: grid; grid-template-columns: 92px 1fr; gap: 8px 10px; align-items: center; font-size: 13px; }
   .prop span { color: var(--bruma); }
   .prop select, .prop input[type=text] { width: 100%; padding: 6px 8px; font-size: 13px; }
   .historial a { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 6px 0; border-top: 1px solid var(--linea); text-decoration: none; }
   .historial a span { color: var(--muted); white-space: nowrap; }
+  .adj { display: flex; gap: 10px; align-items: center; text-decoration: none; color: inherit; }
+  .adj img { max-width: 220px; max-height: 160px; border-radius: 8px; display: block; border: 1px solid var(--linea); }
+  .adj .ico { width: 34px; height: 34px; border-radius: 8px; background: var(--suave); display: grid; place-items: center; font-size: 11px; font-weight: 700; color: var(--bruma); flex: none; }
+  .adj b { display: block; font-weight: 600; }
+  .adj small { margin: 0 !important; }
+  .estado-linea { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-top: 1px solid var(--linea); font-size: 13px; }
+  .estado-linea:first-of-type { border-top: 0; }
+  .estado-linea .k { width: 150px; color: var(--bruma); flex: none; }
+  .pasos-ayuda { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--bruma); }
+  .pasos-ayuda li { margin: 4px 0; }
+  code { background: var(--suave); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
 
   /* Métricas */
   .filtros { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 14px 28px; position: sticky; top: 0; z-index: 5; background: rgba(249,249,248,.92); backdrop-filter: blur(6px); border-bottom: 1px solid var(--linea); }
@@ -179,6 +194,87 @@
   .aviso { background: var(--at-f); color: var(--at-t); border-radius: 10px; padding: 10px 14px; font-size: 13px; }
   #tip { position: fixed; pointer-events: none; z-index: 50; background: var(--pizarra); color: #fff; font-size: 12px; padding: 6px 9px; border-radius: 7px; white-space: nowrap; opacity: 0; transition: opacity .1s; }
 
+  /* Métricas con el diseño del mockup (PDF) */
+  .mk { --mk-ok: #16a34a; --mk-ok-t: #15803d; --mk-ok-f: #e8f7ee; --mk-ok-p: #d6f2df;
+        --mk-at: #f59e0b; --mk-at-t: #b45309; --mk-at-f: #fff4e0; --mk-at-p: #fdeccc;
+        --mk-cr: #dc2626; --mk-cr-t: #b91c1c; --mk-cr-f: #fdecec; --mk-cr-p: #fbdada;
+        --mk-azul: #2f6fed; --mk-azul-f: #eef3fd; --mk-gris: #f7f7f8; }
+  .mk-cab { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 22px 28px 4px; }
+  .mk-logo { width: 40px; height: 40px; border-radius: 10px; background: var(--mk-azul); color: #fff; display: grid; place-items: center; flex: none; }
+  .mk-cab h1 { font-size: 22px; margin: 0; letter-spacing: -.01em; }
+  .mk-cab p { margin: 0; color: var(--bruma); font-size: 13px; }
+  .mk-chips { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .mk-chip { font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 99px; border: 1px solid var(--linea2); background: var(--blanco); white-space: nowrap; }
+  .mk-chip.ejemplo { background: #fff7e0; border-color: #f6dc9b; color: #8a5a00; }
+  .mk-leyenda { display: flex; gap: 22px; flex-wrap: wrap; align-items: center; background: var(--blanco); border: 1px solid var(--linea); border-radius: 12px; padding: 12px 18px; font-size: 13px; color: var(--bruma); }
+  .mk-leyenda .tit { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--muted); }
+  .mk-leyenda b { color: var(--pizarra); }
+  .mk-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+  .mk-sec { background: var(--blanco); border: 1px solid var(--linea); border-radius: 16px; padding: 22px 24px; }
+  .mk-sec-cab { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 18px; }
+  .mk-ico { width: 36px; height: 36px; border-radius: 10px; background: var(--mk-azul-f); color: var(--mk-azul); display: grid; place-items: center; flex: none; }
+  .mk-sec-cab h2 { font-size: 17px; margin: 0 0 2px; }
+  .mk-sec-cab p { margin: 0; color: var(--bruma); font-size: 13px; max-width: 460px; }
+  .mk-estado { margin-left: auto; display: inline-flex; gap: 6px; align-items: center; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 99px; border: 1px solid; white-space: nowrap; }
+  .mk-estado.ok { color: var(--mk-ok-t); border-color: #b7e4c4; background: var(--mk-ok-f); }
+  .mk-estado.atencion { color: var(--mk-at-t); border-color: #f5d49a; background: var(--mk-at-f); }
+  .mk-estado.critico { color: var(--mk-cr-t); border-color: #f3b4b4; background: var(--mk-cr-f); }
+  .mk-estado.nada { color: var(--muted); border-color: var(--linea2); background: var(--blanco); }
+  .mk-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .mk-tile { background: var(--mk-gris); border: 1px solid #ececee; border-radius: 12px; padding: 14px 16px 16px; }
+  .mk-tile .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .mk-tile .top svg { width: 18px; height: 18px; }
+  .mk-tile .v { font-size: 30px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+  .mk-tile .v small { font-size: 15px; font-weight: 600; color: var(--muted); }
+  .mk-tile .l { font-size: 13px; color: var(--bruma); margin-top: 4px; }
+  .mk-pill { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+  .mk-pill.ok { background: var(--mk-ok-p); color: var(--mk-ok-t); }
+  .mk-pill.atencion { background: var(--mk-at-p); color: var(--mk-at-t); }
+  .mk-pill.critico { background: var(--mk-cr-p); color: var(--mk-cr-t); }
+  .mk-pill.nada { background: #ececee; color: var(--muted); }
+  .mk-pill.resp { background: #e9eefb; color: #2a4fa8; }
+  .c-ok { color: var(--mk-ok); } .c-atencion { color: var(--mk-at); } .c-critico { color: var(--mk-cr); } .c-nada { color: var(--muted); }
+  .mk-casos { margin-top: 20px; }
+  .mk-casos .tit { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--muted); margin-bottom: 4px; }
+  .mk-casos th { font-size: 11px; }
+  .mk-casos td { padding: 10px; }
+  .mk-tipos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 20px; }
+  .mk-grupo + .mk-grupo { border-top: 1px solid var(--linea); margin-top: 16px; padding-top: 16px; }
+  .mk-grupo .nom { font-weight: 700; font-size: 14px; display: flex; gap: 8px; align-items: center; }
+  .mk-precio { font-size: 11px; font-weight: 700; color: var(--mk-azul); background: var(--mk-azul-f); padding: 2px 8px; border-radius: 99px; }
+  .mk-aros { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .mk-aro { text-align: center; }
+  .mk-aro .max { font-size: 11px; color: var(--muted); }
+  .mk-aro svg { width: 92px; height: 92px; display: block; margin: 2px auto 6px; }
+  .mk-aro .l { font-size: 12px; color: var(--bruma); line-height: 1.35; min-height: 32px; }
+  .mk-aro .e { font-size: 12px; font-weight: 700; margin-top: 2px; }
+  .mk-detalle { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 10px 0 -6px; }
+  .mk-sec-cab .mk-ico svg { width: 18px; height: 18px; }
+  @media (max-width: 760px) {
+    .mk-sec { padding: 18px 16px; } .mk-cab { padding: 18px 16px 4px; } .mk-estado { margin-left: 0; } .mk-sec-cab { flex-wrap: wrap; }
+    /* Tarjetas en filas compactas: icono · valor y etiqueta · semáforo */
+    .mk-tiles { grid-template-columns: 1fr; gap: 8px; }
+    .mk-tile { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; grid-template-areas: "i v p" "i l p"; column-gap: 12px; align-items: center; padding: 12px 14px; }
+    .mk-tile .top { display: contents; }
+    .mk-tile .top > span:first-child { grid-area: i; align-self: start; padding-top: 4px; }
+    .mk-tile .top .mk-pill { grid-area: p; }
+    .mk-tile .v { grid-area: v; font-size: 22px; }
+    .mk-tile .l { grid-area: l; margin-top: 0; font-size: 12px; }
+    /* Casos abiertos como fichas: cliente y estado arriba, el resto debajo */
+    .mk-casos .tabla { overflow: visible; }
+    .mk-casos thead { display: none; }
+    .mk-casos table, .mk-casos tbody { display: block; }
+    .mk-casos tr { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; padding: 10px 0; border-bottom: 1px solid var(--linea); }
+    .mk-casos td { border: 0; padding: 0; }
+    .mk-casos td:first-child { flex: 1 1 60%; min-width: 0; }
+    .mk-casos td:last-child { order: 2; }
+    .mk-casos td:nth-child(2), .mk-casos td:nth-child(3), .mk-casos td:nth-child(4) { order: 3; font-size: 12px; color: var(--bruma); }
+    .mk-casos td:nth-child(3)::before { content: "· "; }
+    .mk-casos td:nth-child(4)::before { content: "· "; }
+    .mk-aro svg { width: 76px; height: 76px; }
+    .mk-aro .l { font-size: 11px; }
+  }
+
   /* Modal y avisos */
   dialog { border: 0; border-radius: 16px; padding: 0; width: min(520px, 94vw); box-shadow: 0 24px 60px rgba(0,0,0,.25); }
   dialog::backdrop { background: rgba(28,28,28,.4); }
@@ -194,12 +290,13 @@
   .toast.error { background: var(--cr-t); }
   @keyframes entra { from { transform: translateY(8px); opacity: 0; } }
 
-  @media (max-width: 1180px) { .detalle { grid-template-columns: 1fr; height: auto; } .lado { border-left: 0; border-top: 1px solid var(--linea); } .conv { height: 100vh; } }
+  @media (max-width: 1180px) { .detalle { grid-template-columns: 1fr; height: auto; } .lado { border-left: 0; border-top: 1px solid var(--linea); display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); align-items: start; } .conv { height: auto; } .hilo { max-height: 60vh; min-height: 220px; } }
   @media (max-width: 900px) {
     body { grid-template-columns: 1fr; }
     .nav { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px; padding: 10px 12px; }
     .nav .sub { display: none; } .nav .marca { margin-right: 8px; }
-    .nav .abajo { margin: 0 0 0 auto; border: 0; padding: 0; display: flex; gap: 10px; align-items: center; }
+    .nav .abajo { margin: 4px 0 0; border: 0; padding: 0; display: flex; gap: 12px; align-items: center; width: 100%; }
+    .nav .abajo select { flex: 1; width: auto; min-width: 0; }
     .nav .abajo label, .nav .portal { display: none; } .nav .salir { margin: 0; }
     .nav a.ir.on::before { display: none; }
     .bandeja { grid-template-columns: 1fr; height: auto; }
@@ -207,6 +304,20 @@
     .lista { height: calc(100vh - 56px); }
     .cabeza, .filtros, .contenido { padding-left: 16px; padding-right: 16px; }
     .volver-movil { display: inline-block !important; }
+  }
+  @media (max-width: 760px) {
+    #ctabla thead { display: none; }
+    #ctabla table, #ctabla tbody { display: block; }
+    #ctabla tr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; padding: 12px 6px; border-bottom: 1px solid var(--linea); }
+    #ctabla td { border: 0; padding: 0; }
+    #ctabla td:first-child { grid-column: 1 / -1; }
+    #ctabla td select { width: 100%; }
+    #ctabla td.num, #ctabla td:nth-child(6) { font-size: 12px; color: var(--bruma); text-align: left; }
+    #ctabla td:nth-child(4)::after { content: " tickets"; }
+    #ctabla td:nth-child(5):not(:empty)::after { content: " abiertos"; }
+    #ctabla td:nth-child(7) { grid-column: 1 / -1; }
+    #ctabla td:last-child { grid-column: 1 / -1; }
+    .filtros input#cq { min-width: 0 !important; width: 100%; }
   }
   .volver-movil { display: none; font-size: 13px; color: var(--bruma); text-decoration: none; margin-bottom: 6px; }
 </style>
@@ -218,6 +329,7 @@
   <a class="ir" href="#/bandeja" data-v="bandeja"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h5l2 3h4l2-3h5"/><path d="M5 5h14l2 8v6H3v-6z"/></svg>Bandeja<span class="cuenta oculto" id="cuentaBandeja"></span></a>
   <a class="ir" href="#/metricas" data-v="metricas"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Métricas</a>
   <a class="ir" href="#/clientes" data-v="clientes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.6 2.6 3 5.2"/></svg>Clientes</a>
+  <a class="ir" href="#/canales" data-v="canales"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>Canales<span class="cuenta oculto" id="alertaCanales">!</span></a>
   <div class="abajo">
     <label for="yo">Trabajando como</label>
     <select id="yo" aria-label="Técnico"></select>
@@ -317,7 +429,7 @@ function ruta() {
   if (v === 'bandeja' && $('items')) return seleccionar(Number(arg) || null);
   pararVista();
   pararVista = () => {};
-  ({ bandeja: vistaBandeja, metricas: vistaMetricas, clientes: vistaClientes }[v] || vistaBandeja)(arg);
+  ({ bandeja: vistaBandeja, metricas: vistaMetricas, clientes: vistaClientes, canales: vistaCanales }[v] || vistaBandeja)(arg);
 }
 addEventListener('hashchange', ruta);
 
@@ -458,7 +570,7 @@ function pintarDetalle(t) {
           <button id="copiar">Copiar enlace del cliente</button>
         </div>
       </div>
-      <div class="hilo" id="hilo">${t.mensajes.map(m => `<div class="m ${m.de}">${esc(m.texto)}${m.enlace ? `<br><a href="${esc(m.enlace)}" target="_blank" rel="noopener">${esc(m.enlace)}</a>` : ''}${m.de === 'sistema' ? '' : `<small>${m.de === 'nota' ? 'Nota interna · ' : ''}${m.autor ? esc(m.autor) + ' · ' : m.de === 'cliente' ? esc(t.contacto || t.cliente) + ' · ' : ''}${fechaHora(m.fecha)}</small>`}</div>`).join('')}</div>
+      <div class="hilo" id="hilo">${t.mensajes.map(m => `<div class="m ${m.de}">${m.adjunto ? adjuntoHtml(m.adjunto) : esc(m.texto)}${m.enlace ? `<br><a href="${esc(m.enlace)}" target="_blank" rel="noopener">${esc(m.enlace)}</a>` : ''}${m.de === 'sistema' ? '' : `<small>${m.de === 'nota' ? 'Nota interna · ' : ''}${m.autor ? esc(m.autor) + ' · ' : m.de === 'cliente' ? esc(t.contacto || t.cliente) + ' · ' : ''}${fechaHora(m.fecha)}</small>`}</div>`).join('')}</div>
       <form class="redactar ${modoNota ? 'es-nota' : ''}" id="redactar">
         <div class="modos">
           <button type="button" data-m="cliente" class="${modoNota ? '' : 'on'}">Responder al cliente</button>
@@ -474,7 +586,7 @@ function pintarDetalle(t) {
         <h3>Tiempo</h3>
         <div class="reloj ${t.activa ? 'on' : ''}" id="reloj">${hms(segundos(t))}</div>
         <div class="reloj-sub">${t.activa ? `${t.activa.tipo === 'video' ? 'Videollamada' : 'Cronómetro'} en marcha · ${esc(t.activa.tecnico || '')}` : `${horasTxt(horasCliente)} con este cliente en total`}</div>
-        ${cerrado ? '' : `<div class="botones">
+        ${cerrado ? '' : `<div class="botones tiempo">
           ${t.activa ? `<button class="boton rojo" data-a="parar">Pausar</button>` : `<button class="boton verde" data-a="iniciar">Iniciar</button>`}
           <button class="boton sec" data-t="15">+15′</button><button class="boton sec" data-t="30">+30′</button><button class="boton sec" data-t="otro">+…</button>
         </div>`}
@@ -659,13 +771,25 @@ const PERIODOS = {
 };
 let fm = leer('filtrosMetricas', { periodo: 'trim', servicio: '', tecnico: '', tipo_cliente: '' });
 const DESC = {
-  'Implementación': 'Clientes fuera de Kit Digital: referidos por una gestoría/asesoría o antiguos clientes de AKIRA sin Holded que lo solicitan.',
+  'Implementación': 'Clientes fuera de Kit Digital: referidos por una gestoría/asesoría, o antiguos clientes de AKIRA sin Holded que lo solicitan.',
   'Premium': 'Gestorías y asesorías con servicio Premium, más cualquier cliente que lo contrate directamente.',
   'Kit Digital': 'Soporte del año de servicio del Kit Digital (el histórico del antiguo formulario).',
   'Sin clasificar': 'Clientes a los que aún no se ha asignado servicio. Clasifícalos en Clientes.',
 };
+const TITULO = { 'Implementación': 'Implementación Holded', 'Premium': 'Servicio Premium Holded', 'Kit Digital': 'Kit Digital (histórico)', 'Sin clasificar': 'Sin clasificar' };
 const NIVEL = { ok: ['ok', '✓ OK'], atencion: ['atencion', '! Atención'], critico: ['critico', '✕ Crítico'], null: ['', 'Sin datos'] };
-const COLOR = { ok: 'var(--ok)', atencion: 'var(--at)', critico: 'var(--cr)' };
+const PALABRA = { ok: 'OK', atencion: 'Atención', critico: 'Crítico' };
+const ICO = {
+  pulso: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></svg>',
+  capas: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg>',
+  boya: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="m5.6 5.6 3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6"/></svg>',
+  arroba: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/></svg>',
+  historial: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2"/></svg>',
+  alerta: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/></svg>',
+  reloj: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  estrella: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg>',
+};
+const ICONO_SERVICIO = { 'Implementación': ICO.capas, 'Premium': ICO.boya, 'Kit Digital': ICO.historial, 'Sin clasificar': ICO.alerta };
 
 function rango() {
   if (fm.periodo === 'custom' && fm.desde && fm.hasta) return [fm.desde, fm.hasta];
@@ -675,16 +799,24 @@ function rango() {
 function vistaMetricas() {
   const [d, h] = rango();
   $('vista').innerHTML = `
-    <div class="cabeza"><h1>Métricas del servicio</h1><span style="color:var(--muted);font-size:13px" id="actualizado"></span></div>
-    <div class="filtros">
-      <div class="seg" id="seg">${Object.entries(PERIODOS).map(([k, [n]]) => `<button data-p="${k}" class="${fm.periodo === k ? 'on' : ''}">${n}</button>`).join('')}<button data-p="custom" class="${fm.periodo === 'custom' ? 'on' : ''}">Fechas…</button></div>
-      <span id="fechas" class="${fm.periodo === 'custom' ? '' : 'oculto'}"><input type="date" class="campo" id="fDesde" value="${d}"> – <input type="date" class="campo" id="fHasta" value="${h}"></span>
-      <select class="campo" id="fServ"><option value="">Todos los servicios</option></select>
-      <select class="campo" id="fOrig"><option value="">Todos los orígenes</option></select>
-      <select class="campo" id="fTec"><option value="">Todo el equipo</option></select>
-      <a class="boton sec peq der" id="csv">Descargar horas (CSV)</a>
-    </div>
-    <div class="contenido" id="met"><div class="vacio">Cargando métricas…</div></div>`;
+    <div class="mk">
+      <div class="mk-cab">
+        <div class="mk-logo">${ICO.pulso}</div>
+        <div><h1>Servicio Holded</h1><p>Dashboard operativo — Implementación y Soporte Premium</p></div>
+        <div class="mk-chips"><span class="mk-chip oculto ejemplo" id="chipEjemplo">Comercial: datos de ejemplo</span><span class="mk-chip" id="chipHoy"></span></div>
+      </div>
+      <div class="filtros">
+        <div class="seg" id="seg">${Object.entries(PERIODOS).map(([k, [n]]) => `<button data-p="${k}" class="${fm.periodo === k ? 'on' : ''}">${n}</button>`).join('')}<button data-p="custom" class="${fm.periodo === 'custom' ? 'on' : ''}">Fechas…</button></div>
+        <span id="fechas" class="${fm.periodo === 'custom' ? '' : 'oculto'}"><input type="date" class="campo" id="fDesde" value="${d}"> – <input type="date" class="campo" id="fHasta" value="${h}"></span>
+        <select class="campo" id="fServ"><option value="">Todos los servicios</option></select>
+        <select class="campo" id="fOrig"><option value="">Todos los orígenes</option></select>
+        <select class="campo" id="fTec"><option value="">Todo el equipo</option></select>
+        <span class="der" style="font-size:12px;color:var(--muted)" id="actualizado"></span>
+        <a class="boton sec peq" id="csv">Descargar horas (CSV)</a>
+      </div>
+      <div class="contenido" id="met"><div class="vacio">Cargando métricas…</div></div>
+    </div>`;
+  $('chipHoy').textContent = 'Hoy · ' + new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
   const opts = (sel, l, v) => { $(sel).innerHTML = $(sel).options[0].outerHTML + l.map(x => `<option ${x === v ? 'selected' : ''}>${esc(x)}</option>`).join(''); };
   cargarClientes().then(c => { opts('fServ', c.servicios, fm.servicio); opts('fOrig', c.origenes, fm.tipo_cliente); });
   opts('fTec', equipo, fm.tecnico);
@@ -715,21 +847,30 @@ async function cargarMetricas() {
   try { r = await api('/api/resumen?' + q); } catch (e) { return fallo(e); }
   if (!$('met')) return;
   $('actualizado').textContent = `${fecha(d)} – ${fecha(h)} · actualizado ${new Date(r.actualizado).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+  $('chipEjemplo').classList.toggle('oculto', !r.comercialEjemplo);
   const s = r.resumen, n = r.nps;
   const kpi = (et, v, sub = '') => `<div class="kpi"><div class="et">${et}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`;
+  // Primero lo del mockup (Implementación y Premium); después los demás servicios si tienen datos.
+  const principales = ['Implementación', 'Premium'];
+  const otros = r.servicios.filter(b => !principales.includes(b.nombre) && !b.vacio);
   $('met').innerHTML = `
+    <div class="mk-leyenda"><span class="tit">LEYENDA</span>
+      <span><i class="mk-dot" style="background:var(--mk-ok)"></i><b>OK</b> — dentro de la calidad de servicio</span>
+      <span><i class="mk-dot" style="background:var(--mk-at)"></i><b>Atención</b> — hay riesgo, requiere seguimiento</span>
+      <span><i class="mk-dot" style="background:var(--mk-cr)"></i><b>Crítico</b> — servicio mal hecho o SLA superado</span></div>
+    ${principales.map(nombre => bloqueServicio(r.servicios.find(b => b.nombre === nombre) || { nombre, vacio: true, casos: [] })).join('')}
+    ${otros.map(bloqueServicio).join('')}
+    ${bloqueTipos(r)}
+    <div class="mk-detalle">Más detalle del periodo</div>
     <div class="kpis">
       ${kpi('Abiertas ahora', num(s.abiertas), s.sinAsignar ? `${s.sinAsignar} sin asignar` : 'todas asignadas')}
-      ${kpi('Entradas', num(s.entradas ?? s.entrados), `${num(s.cerrados)} cerradas en el periodo`)}
+      ${kpi('Entradas', num(s.entrados), `${num(s.cerrados)} cerradas en el periodo`)}
       ${kpi('Horas de soporte', `${num(s.horas, 1)}<small>h</small>`, s.cerrados ? `${num(s.horas / Math.max(1, s.cerrados), 1)} h por ticket cerrado` : '')}
       ${kpi('1.ª respuesta', s.primeraRespuestaMediana == null ? '—' : dur(s.primeraRespuestaMediana), s.slaCumplido == null ? 'sin datos aún (se mide desde la app)' : `${s.slaCumplido}% en menos de 1 h · ${s.slaMedibles} tickets`)}
       ${kpi('Resolución media', s.diasResolucion == null ? '—' : `${num(s.diasResolucion, 1)}<small>días</small>`, 'de la entrada al cierre')}
       ${kpi('NPS', n.score == null ? '—' : (n.score > 0 ? '+' : '') + n.score, n.respuestas ? `${num(n.media5, 1)}/5 de media · ${n.respuestas} respuestas` : 'aún sin valoraciones')}
       ${kpi('Clientes atendidos', num(s.clientes), `${num(s.satisfechos)} satisfechos (9–10)`)}
     </div>
-    <div class="leyenda"><span><span class="pastilla ok">✓ OK</span> dentro de la calidad de servicio</span><span><span class="pastilla atencion">! Atención</span> hay riesgo, requiere seguimiento</span><span><span class="pastilla critico">✕ Crítico</span> servicio mal hecho o SLA superado</span><span>SLA: 1.ª respuesta en menos de 1 h laborable (L–V ${esc(r.horario)})</span></div>
-    ${r.servicios.map(bloqueServicio).join('')}
-    ${r.porTipo.length ? `<section class="tarjeta"><h3>KPI por tipo de cliente</h3><div class="dosc">${r.porTipo.map(b => `<div><div style="display:flex;gap:8px;align-items:center;font-weight:600">${esc(b.nombre)} <span class="pastilla ${NIVEL[b.estado][0]}">${NIVEL[b.estado][1]}</span></div><div class="medidores" style="margin-top:10px">${medidor(b.abiertas, 20, 'Incidencias abiertas', b.niveles.abiertas)}${medidor(b.fueraSla, 10, 'Fuera de SLA', b.niveles.fueraSla)}${medidor(b.valoracion == null ? '—' : num(b.valoracion, 1), 5, 'Valoración /5', b.niveles.valoracion, b.valoracion)}</div></div>`).join('')}</div></section>` : ''}
     <div class="dosc">
       <section class="tarjeta grafico"><h3>Incidencias entradas por ${r.periodo.porMes ? 'mes' : 'semana'}</h3>${columnas(r.serie, 'tickets', r.periodo.porMes, v => `${num(v)} incidencias`)}</section>
       <section class="tarjeta grafico"><h3>Horas de soporte por ${r.periodo.porMes ? 'mes' : 'semana'}</h3>${columnas(r.serie, 'horas', r.periodo.porMes, v => `${num(v, 1)} h`)}</section>
@@ -743,42 +884,83 @@ async function cargarMetricas() {
       <section class="tarjeta"><h3>Satisfacción (NPS)</h3>${bloqueNps(r)}</section>
     </div>
     <div class="dosc">
-      <section class="tarjeta"><h3>De dónde vienen los clientes</h3>${barras(r.porOrigen, 'clientes', x => num(x.clientes), x => `${x.nombre}: ${x.clientes} clientes con tickets en el periodo`)}<p style="font-size:12px;color:var(--muted);margin:8px 0 0">Clientes distintos con incidencias en el periodo, según su ficha.</p></section>
+      <section class="tarjeta"><h3>De dónde vienen los clientes</h3>${r.porOrigen.length ? barras(r.porOrigen, 'clientes', x => num(x.clientes), x => `${x.nombre}: ${x.clientes} clientes con tickets en el periodo`) : '<div class="vacio">Se llena cuando clasifiques clientes de Implementación o Premium con su origen.</div>'}</section>
       <section class="tarjeta"><h3>Canales de entrada</h3>${barras(r.porCanal, 'tickets', x => num(x.tickets), x => `${x.nombre}: ${x.tickets}`)}</section>
     </div>
     <section class="tarjeta"><h3>Comercial · contratos, licencias y presupuestos</h3>${bloqueComercial(r)}</section>`;
   $('met').querySelectorAll('tr[data-id]').forEach(tr => tr.onclick = () => { location.hash = `#/bandeja/${tr.dataset.id}`; });
 }
 
-function medidor(valor, max, et, nivel, numero = Number(valor)) {
-  const r = 40, c = 2 * Math.PI * r, f = Math.max(0, Math.min(1, (numero || 0) / max));
-  const [cls, txt] = nivel ? NIVEL[nivel] : ['', 'Sin datos'];
-  return `<div class="medidor"><svg viewBox="0 0 100 100" role="img" aria-label="${esc(et)}: ${esc(valor)}">
-      <circle cx="50" cy="50" r="${r}" fill="none" stroke="#ecebe7" stroke-width="8"/>
-      ${f ? `<circle cx="50" cy="50" r="${r}" fill="none" stroke="${nivel ? COLOR[nivel] : 'var(--eje)'}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${c * f} ${c}" transform="rotate(-90 50 50)"/>` : ''}
-      <text x="50" y="56" text-anchor="middle" font-size="19" font-weight="700" fill="#1C1C1C" font-family="Inter, system-ui">${esc(valor)}</text></svg>
-    <div class="et">${esc(et)}</div><span class="pastilla ${cls}">${txt}</span></div>`;
+// Tarjeta de número grande, como las del mockup: icono y semáforo arriba, valor y etiqueta.
+function tile(icono, nivel, valor, sufijo, etiqueta) {
+  const n = nivel || 'nada';
+  return `<div class="mk-tile"><div class="top"><span class="c-${n}">${icono}</span><span class="mk-pill ${n}">${nivel ? PALABRA[nivel] : 'Sin datos'}</span></div>
+    <div class="v">${valor}${sufijo ? `<small>${sufijo}</small>` : ''}</div><div class="l">${etiqueta}</div></div>`;
 }
 
+const exceso = m => !m ? '0 min' : m < 60 ? `+${m} min` : `+${Math.floor(m / 60)} h${m % 60 ? ' ' + (m % 60) + ' min' : ''}`;
+const horaEntrada = isoTxt => {
+  const d = new Date(isoTxt), hoy = new Date();
+  const hm = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  return d.toDateString() === hoy.toDateString() ? hm : `${fecha(isoTxt)} · ${hm}`;
+};
+
 function bloqueServicio(b) {
-  const [cls, txt] = NIVEL[b.estado];
-  if (b.vacio) return `<section class="tarjeta bloque"><div class="cab"><h2>${esc(b.nombre)}</h2><span class="pastilla">Sin datos</span></div><p class="desc">${esc(DESC[b.nombre] || '')}</p><div style="font-size:13px;color:var(--muted);margin-top:12px">Aún no hay incidencias de clientes con este servicio. Asígnalo a cada cliente en <a href="#/clientes">Clientes</a> o desde el propio ticket.</div></section>`;
-  return `<section class="tarjeta bloque">
-    <div class="cab"><h2>${esc(b.nombre)}</h2><span class="pastilla ${cls}">${txt}</span></div>
-    <p class="desc">${esc(DESC[b.nombre] || '')}</p>
-    <div class="medidores">
-      ${medidor(b.abiertas, 20, 'Incidencias abiertas', b.niveles.abiertas)}
-      ${medidor(b.fueraSla, 10, b.slaMedibles ? `Fuera de SLA (de ${b.slaMedibles})` : 'Fuera de SLA', b.niveles.fueraSla)}
-      ${medidor(b.excedidoMin ? '+' + dur(b.excedidoMin) : '0', 60, 'Tiempo excedido sobre la 1 h de SLA', b.niveles.excedido, b.excedidoMin)}
-      ${medidor(b.valoracion == null ? '—' : num(b.valoracion, 1), 5, `Valoración media /5${b.respuestasNps ? ` (${b.respuestasNps})` : ''}`, b.niveles.valoracion, b.valoracion)}
+  const estado = b.vacio ? null : b.estado;
+  const chip = !estado ? '<span class="mk-estado nada">Sin datos</span>'
+    : estado === 'ok' ? '<span class="mk-estado ok">✓ Todo OK</span>'
+    : estado === 'atencion' ? '<span class="mk-estado atencion">! Atención</span>' : '<span class="mk-estado critico">⊗ Crítico</span>';
+  const niveles = b.niveles || {};
+  const conCanal = b.nombre === 'Premium';
+  const casos = b.casos || [];
+  return `<section class="mk-sec">
+    <div class="mk-sec-cab"><span class="mk-ico">${ICONO_SERVICIO[b.nombre] || ICO.capas}</span><div><h2>${esc(TITULO[b.nombre] || b.nombre)}</h2><p>${esc(DESC[b.nombre] || '')}</p></div>${chip}</div>
+    <div class="mk-tiles">
+      ${tile(ICO.alerta, niveles.abiertas, num(b.abiertas || 0), '', 'Incidencias abiertas')}
+      ${tile(ICO.reloj, niveles.excedido, exceso(b.excedidoMin || 0), '', 'Tiempo excedido sobre la 1h de SLA')}
+      ${tile(ICO.estrella, niveles.valoracion, b.valoracion == null ? '—' : num(b.valoracion, 1), b.valoracion == null ? '' : '/5', `Valoración media (NPS / Google)${b.respuestasNps ? ` · ${b.respuestasNps} resp.` : ''}`)}
     </div>
-    <div class="extra"><span><b>${num(b.tickets)}</b> incidencias en el periodo</span><span><b>${num(b.horas, 1)} h</b> de soporte</span></div>
-    ${b.casos.length ? `<h3 style="margin-top:14px">Casos abiertos ahora</h3><div class="tabla"><table><thead><tr><th>Cliente</th><th>Origen</th><th>Canal</th><th>Entrada</th><th>Espera 1.ª resp.</th><th>Estado</th></tr></thead><tbody>
-      ${b.casos.map(c => {
-        const [n, t] = c.respondido ? ['oscura', 'Respondido'] : c.esperaMin == null ? ['', c.estado] : c.esperaMin > 60 ? ['critico', 'Fuera de SLA'] : c.esperaMin > 45 ? ['atencion', 'Cerca del límite'] : ['ok', 'En plazo'];
-        return `<tr class="clic" data-id="${c.id}"><td><b>${esc(c.cliente)}</b></td><td>${esc(c.origen)}</td><td>${esc(c.canal)}</td><td>${fechaHora(c.entrada)}</td><td>${c.esperaMin == null ? '—' : dur(c.esperaMin)}</td><td><span class="pastilla ${n}">${t}</span></td></tr>`;
-      }).join('')}</tbody></table></div>` : '<div style="font-size:13px;color:var(--muted);margin-top:10px">Ningún caso abierto.</div>'}
+    <div class="mk-casos">
+      <div class="tit">CASOS ABIERTOS AHORA</div>
+      ${casos.length ? `<div class="tabla"><table><thead><tr><th>Cliente</th><th>${conCanal ? 'Canal' : 'Origen'}</th><th>Entrada</th><th>Tiempo</th><th>Estado</th></tr></thead><tbody>
+        ${casos.map(c => {
+          const [cls, txt] = c.respondido ? ['resp', 'Respondido'] : c.esperaMin == null ? ['nada', c.estado] : c.esperaMin > 60 ? ['critico', 'Fuera de SLA'] : c.esperaMin > 45 ? ['atencion', 'Cerca del límite'] : ['ok', 'En plazo'];
+          return `<tr class="clic" data-id="${c.id}"><td><b>${esc(c.cliente)}</b></td><td>${esc(conCanal ? c.canal : c.origen)}</td><td>${horaEntrada(c.entrada)}</td><td>${c.esperaMin == null ? '—' : dur(c.esperaMin)}</td><td><span class="mk-pill ${cls}">${txt}</span></td></tr>`;
+        }).join('')}</tbody></table></div>`
+      : `<div style="font-size:13px;color:var(--muted);padding:8px 0">${b.vacio ? 'Aún no hay clientes con este servicio. Asígnalo en <a href="#/clientes">Clientes</a> o desde el propio ticket.' : 'Ningún caso abierto ahora.'}</div>`}
+    </div>
   </section>`;
+}
+
+// Aro de la página 2 del mockup: pista y arco del color del estado, máximo arriba.
+function aro(valor, max, etiqueta, nivel, numero) {
+  const n = nivel || 'nada';
+  const color = { ok: 'var(--mk-ok)', atencion: 'var(--mk-at)', critico: 'var(--mk-cr)', nada: '#d4d3ce' }[n];
+  const pista = { ok: 'var(--mk-ok-p)', atencion: 'var(--mk-at-p)', critico: 'var(--mk-cr-p)', nada: '#efeeea' }[n];
+  const r = 38, c = 2 * Math.PI * r, f = Math.max(0, Math.min(1, (numero ?? Number(valor) ?? 0) / max));
+  return `<div class="mk-aro"><div class="max">/ ${max}</div>
+    <svg viewBox="0 0 100 100" role="img" aria-label="${esc(etiqueta)}: ${esc(valor)} de ${max}">
+      <circle cx="50" cy="50" r="${r}" fill="none" stroke="${pista}" stroke-width="9"/>
+      ${f ? `<circle cx="50" cy="50" r="${r}" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${c * f} ${c}" transform="rotate(-90 50 50)"/>` : ''}
+      <text x="50" y="58" text-anchor="middle" font-size="24" font-weight="700" fill="#1C1C1C" font-family="Inter, system-ui">${esc(valor)}</text></svg>
+    <div class="l">${etiqueta}</div><div class="e c-${n}">${nivel ? PALABRA[nivel] : 'Sin datos'}</div></div>`;
+}
+
+function bloqueTipos(r) {
+  const tarjeta = s => {
+    const impl = s.servicio === 'Implementación';
+    return `<section class="mk-sec">
+      <div class="mk-sec-cab" style="margin-bottom:12px"><span class="mk-ico">${impl ? ICO.capas : ICO.arroba}</span><div><h2>${esc(TITULO[s.servicio])}</h2>${s.sinOrigen ? `<p>${s.sinOrigen} cliente${s.sinOrigen > 1 ? 's' : ''} sin origen asignado no entra${s.sinOrigen > 1 ? 'n' : ''} aquí.</p>` : ''}</div></div>
+      ${s.grupos.map(g => `<div class="mk-grupo"><div class="nom">${esc(g.nombre)}${g.precio ? `<span class="mk-precio">${esc(g.precio)}</span>` : ''}</div>
+        <div class="mk-aros">
+          ${aro(num(g.abiertas || 0), impl ? 10 : 20, impl ? 'Casos<br>activos' : 'Incidencias<br>abiertas', g.vacio ? null : g.niveles.abiertas, g.abiertas || 0)}
+          ${aro(num(g.fueraSla || 0), impl ? 5 : 10, 'Incidencias<br>fuera de SLA', g.vacio ? null : g.niveles.fueraSla, g.fueraSla || 0)}
+          ${aro(g.valoracion == null ? '—' : num(g.valoracion, 1), 5, 'Valoración<br>NPS / Google', g.vacio ? null : g.niveles.valoracion, g.valoracion || 0)}
+        </div></div>`).join('')}
+    </section>`;
+  };
+  return `<div><div class="mk-cab" style="padding:8px 0 12px"><div class="mk-logo">${ICO.pulso}</div><div><h1 style="font-size:19px">KPI por tipo de cliente</h1><p>Cada servicio separado por el origen del cliente.</p></div></div>
+    <div class="mk-tipos">${r.porTipo.map(tarjeta).join('')}</div></div>`;
 }
 
 // Columnas verticales: una serie, barras ≤24 px con remate redondeado, rejilla discreta.
@@ -909,6 +1091,80 @@ function pintarClientes() {
   };
 }
 
+// ================= Adjuntos =================
+const pesoTxt = b => b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${num(b / 1048576, 1)} MB`;
+function adjuntoHtml(a) {
+  const url = `/api/adjuntos/${a.id}`;
+  const ext = (a.nombre.match(/\.([a-z0-9]+)$/i)?.[1] || '').toUpperCase().slice(0, 4);
+  if (/^image\/(png|jpeg|gif|webp)$/.test(a.tipo)) return `<a class="adj" href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="${esc(a.nombre)}" loading="lazy"></a><small>📎 ${esc(a.nombre)} · ${pesoTxt(a.tamano)}</small>`;
+  return `<a class="adj" href="${url}" target="_blank" rel="noopener"><span class="ico">${esc(ext)}</span><span><b>${esc(a.nombre)}</b><small>${pesoTxt(a.tamano)} · abrir</small></span></a>`;
+}
+
+// ================= Canales (buzón y WhatsApp) =================
+function vistaCanales() {
+  $('vista').innerHTML = `
+    <div class="cabeza"><h1>Canales</h1><span style="color:var(--muted);font-size:13px">Cómo entran y salen los mensajes de los clientes.</span></div>
+    <div class="contenido" id="can"><div class="vacio">Cargando…</div></div>`;
+  cargarCanales();
+  const i = setInterval(() => !document.hidden && cargarCanales(), 30000);
+  pararVista = () => clearInterval(i);
+}
+async function cargarCanales(r) {
+  try { r = r || await api('/api/canales'); } catch (e) { return fallo(e); }
+  marcarCanales(r);
+  if (!$('can')) return;
+  const c = r.correo;
+  const pill = (ok, si, no) => ok == null ? `<span class="pastilla">Sin comprobar</span>` : ok ? `<span class="pastilla ok">✓ ${si}</span>` : `<span class="pastilla critico">✕ ${no}</span>`;
+  const cuando = iso => iso ? `${hace(iso)} (${fechaHora(iso)})` : 'todavía no';
+  $('can').innerHTML = `
+    <section class="tarjeta">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px"><h2 style="margin:0;font-size:18px">Buzón de soporte</h2>
+        ${c.configurado ? `<span class="pastilla oscura">${esc(c.usuario)}</span>` : '<span class="pastilla atencion">! Sin configurar</span>'}</div>
+      ${c.configurado ? `
+        <div class="estado-linea"><span class="k">Servidores</span><span>Lee de <b>${esc(c.imap || '—')}</b> y envía por <b>${esc(c.smtp || '—')}</b>${c.deteccion ? `<br><small style="color:var(--muted)">${esc(c.deteccion)}</small>` : ''}</span></div>
+        <div class="estado-linea"><span class="k">Correo entrante</span><span>${pill(c.lectura.ok, 'Conectado', 'Falla')} Revisado ${cuando(c.lectura.ultimo)} · cada ${c.intervalo} s · ${c.lectura.procesados} correos convertidos desde el arranque${c.carpeta !== 'INBOX' ? ` · carpeta «${esc(c.carpeta)}»` : ''}${c.lectura.error ? `<br><span style="color:var(--cr-t)">${esc(c.lectura.error)}</span>` : ''}</span></div>
+        <div class="estado-linea"><span class="k">Correo saliente</span><span>${pill(c.envio.ok, 'Funciona', 'Falla')} Último envío ${cuando(c.envio.ultimo)} · ${c.envio.enviados} enviados desde el arranque${c.envio.error ? `<br><span style="color:var(--cr-t)">${esc(c.envio.error)}</span>` : ''}</span></div>
+        <div class="estado-linea"><span class="k">Siempre despierto</span><span>${r.despierto ? '✓ El servicio se visita solo cada 10 minutos para seguir leyendo el correo.' : `No: ${r.publica ? 'desactivado con MANTENER_DESPIERTO=0.' : 'falta PUBLIC_URL en Render.'} En el plan gratuito el servicio se duerme sin visitas y deja de leer el correo.`}</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center">
+          <button class="boton sec" id="revisar">Revisar el buzón ahora</button>
+          <input class="campo" id="pruebaPara" type="email" placeholder="correo para la prueba" style="min-width:240px">
+          <button class="boton" id="prueba">Enviar correo de prueba</button>
+        </div>`
+      : `<p style="margin:6px 0 0;color:var(--bruma)">Con el buzón activo, cada correo a soporte se convierte en ticket y el cliente recibe el acuse, tus respuestas y la valoración por correo.</p>
+        <ol class="pasos-ayuda">
+          <li>Crea el usuario <b>holded@interactivos.net</b> en Google Workspace (tiene que ser un usuario, no un alias).</li>
+          <li>Con ese usuario, activa la verificación en dos pasos y crea una <b>contraseña de aplicación</b> en myaccount.google.com/apppasswords.</li>
+          <li>En Render, añade <code>MAIL_USER</code> = holded@interactivos.net y <code>MAIL_PASS</code> = la contraseña de aplicación. Los servidores de Gmail se detectan solos.</li>
+          <li>Comprueba que <code>PUBLIC_URL</code> está puesta: sirve para los enlaces de los correos y para que el servicio no se duerma.</li>
+        </ol>`}
+    </section>
+    <section class="tarjeta">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px"><h2 style="margin:0;font-size:18px">WhatsApp</h2>${r.whatsapp ? '<span class="pastilla ok">✓ Activo</span>' : '<span class="pastilla">Sin configurar</span>'}</div>
+      <p style="margin:0;color:var(--bruma);font-size:13px">${r.whatsapp ? `Los mensajes al número de soporte entran como tickets. Webhook en Meta: <code>${esc((r.publica || 'https://…') + '/whatsapp/webhook')}</code>` : 'Necesita un número dado de alta en la API de WhatsApp Cloud de Meta (WA_TOKEN, WA_PHONE_ID, WA_VERIFY_TOKEN y WA_APP_SECRET en Render).'}</p>
+    </section>
+    <section class="tarjeta">
+      <h2 style="margin:0 0 6px;font-size:18px">Portal del cliente</h2>
+      <p style="margin:0;color:var(--bruma);font-size:13px">${r.publica ? `Los clientes abren incidencias en <a href="${esc(r.publica)}" target="_blank" rel="noopener">${esc(r.publica)}</a>, sin login.` : 'Falta PUBLIC_URL en Render para que los enlaces de los correos apunten al portal.'}</p>
+    </section>`;
+  const b = $('revisar');
+  if (b) b.onclick = async () => {
+    b.disabled = true; b.textContent = 'Revisando…';
+    try { const r2 = await api('/api/canales/revisar', {}); cargarCanales(r2); aviso(r2.correo.lectura.ok ? 'Buzón revisado.' : 'No se ha podido leer el buzón.', !r2.correo.lectura.ok); }
+    catch (e) { fallo(e); b.disabled = false; b.textContent = 'Revisar el buzón ahora'; }
+  };
+  const p = $('prueba');
+  if (p) p.onclick = async () => {
+    p.disabled = true;
+    try { const r2 = await api('/api/canales/prueba', { para: $('pruebaPara').value || c.usuario }); cargarCanales(r2); aviso('Correo de prueba enviado.'); }
+    catch (e) { fallo(e); p.disabled = false; }
+  };
+}
+// Aviso rojo en el menú si el buzón está configurado pero falla.
+function marcarCanales(r) {
+  const c = r.correo;
+  $('alertaCanales').classList.toggle('oculto', !(c.configurado && (c.lectura.ok === false || c.envio.ok === false)));
+}
+
 // ================= Arranque =================
 (async () => {
   try {
@@ -920,6 +1176,7 @@ function pintarClientes() {
   $('yo').onchange = () => { escribir('tecnico', yo()); $('yo').classList.toggle('falta', !yo()); if ($('items')) pintarLista(selActual); };
   $('salir').onclick = async () => { await fetch('/api/logout', { method: 'POST' }); location.href = '/admin/login'; };
   cargarClientes().catch(() => {});
+  api('/api/canales').then(marcarCanales).catch(() => {});
   ruta();
   if (!yo()) $('yo').classList.add('falta');
 })();
