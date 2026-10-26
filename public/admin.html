@@ -1207,6 +1207,7 @@ async function cargarCanales(r) {
         ${r.google.error ? `<div class="estado-linea"><span class="k">Último error</span><span style="color:var(--cr-t)">${esc(r.google.error)}</span></div>` : ''}
         <div style="margin-top:12px"><button class="boton sec" id="probarGoogle">Probar la conexión</button></div>`
       : `<p style="margin:6px 0 0;color:var(--bruma)">Sin Google, el botón de videollamada pide pegar un enlace de Meet. Conectado, crea las reuniones solo, el cliente reserva huecos libres y la duración real se apunta sola.</p>
+        ${r.google.falta?.length ? `<div class="estado-linea" style="margin-top:8px"><span class="k">Falta en Render</span><span style="color:var(--cr-t)">${r.google.falta.map(esc).join(' · ')}</span></div>` : ''}
         <ol class="pasos-ayuda">
           <li>En console.cloud.google.com crea un proyecto y activa <b>Google Calendar API</b> y <b>Google Meet REST API</b>.</li>
           <li>Crea una <b>cuenta de servicio</b>, genera una clave JSON y copia su <i>Client ID</i>.</li>

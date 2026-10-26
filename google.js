@@ -141,9 +141,20 @@ async function probar() {
   return { ok: true, huecosManana: h.length };
 }
 
+// Qué falta en las variables, para que Canales lo diga en vez de un «sin configurar» a secas.
+const falta = () => {
+  const c = cuenta(), l = [];
+  if (!c) l.push('GOOGLE_SA_JSON');
+  else if (c.error) l.push('GOOGLE_SA_JSON válida');
+  else if (!c.client_email || !c.private_key) l.push('GOOGLE_SA_JSON completa (sin client_email o private_key)');
+  if (!organizador()) l.push('GOOGLE_ORGANIZADOR');
+  return l;
+};
+
 const resumen = () => {
   const c = cuenta();
   return {
+    falta: falta(),
     activo: activo(), organizador: organizador() || null,
     cuentaServicio: c && !c.error ? c.client_email : null, errorClave: c?.error || null,
     ok: estado.ok, ultimo: estado.ultimo, error: estado.error, meet: estado.meet,
