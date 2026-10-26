@@ -94,6 +94,9 @@ const MAIL = {
   imap: env.IMAP_HOST, imapPuerto: Number(env.IMAP_PORT || 993),
   smtp: env.SMTP_HOST, smtpPuerto: Number(env.SMTP_PORT || 465),
   remitente: env.MAIL_FROM || (env.MAIL_USER ? `Soporte Holded <${env.MAIL_USER}>` : ''),
+  // Con un buzón personal no se lee la bandeja: solo la carpeta donde una regla del correo
+  // (o tú a mano) deja lo que debe ser ticket. Lo procesado pasa a la subcarpeta Procesados.
+  carpeta: env.IMAP_CARPETA || 'INBOX',
 };
 
 let transporte = null;
@@ -147,10 +150,18 @@ async function revisarCorreo() {
   const c = new ImapFlow({ host: MAIL.imap, port: MAIL.imapPuerto, secure: true, auth: { user: MAIL.usuario, pass: MAIL.clave }, logger: false });
   try {
     await c.connect();
-    const lock = await c.getMailboxLock('INBOX');
+    const dedicada = MAIL.carpeta !== 'INBOX';
+    let procesados = null;
+    if (dedicada) {
+      procesados = (await c.list()).find(b => b.path === MAIL.carpeta)?.delimiter;
+      procesados = `${MAIL.carpeta}${procesados || '/'}Procesados`;
+      await c.mailboxCreate(procesados).catch(() => {}); // ya existe
+    }
+    const lock = await c.getMailboxLock(MAIL.carpeta);
     try {
       const nuevos = [];
-      for await (const m of c.fetch({ seen: false }, { uid: true, source: true })) nuevos.push(m);
+      // En la carpeta dedicada vale todo lo que haya, aunque ya lo hayas leído al moverlo.
+      if (c.mailbox?.exists !== 0) for await (const m of c.fetch(dedicada ? '1:*' : { seen: false }, { uid: true, source: true })) nuevos.push(m);
       for (const m of nuevos) {
         const p = await simpleParser(m.source);
         const de = p.from?.value?.[0] || {};
@@ -165,7 +176,8 @@ async function revisarCorreo() {
             idExterno: 'mail:' + (p.messageId || m.uid),
           });
         }
-        await c.messageFlagsAdd({ uid: m.uid }, ['\\Seen'], { uid: true });
+        if (dedicada) await c.messageMove({ uid: m.uid }, procesados, { uid: true });
+        else await c.messageFlagsAdd({ uid: m.uid }, ['\\Seen'], { uid: true });
       }
     } finally { lock.release(); }
     await c.logout();
@@ -179,7 +191,7 @@ function iniciar() {
   if (MAIL.imap && MAIL.usuario) {
     revisarCorreo();
     setInterval(revisarCorreo, Number(env.IMAP_INTERVALO_S || 60) * 1000);
-    console.log(`Correo: revisando ${MAIL.usuario} cada ${env.IMAP_INTERVALO_S || 60} s`);
+    console.log(`Correo: revisando ${MAIL.usuario} (${MAIL.carpeta}) cada ${env.IMAP_INTERVALO_S || 60} s`);
   }
   if (waActivo()) console.log('WhatsApp: activo');
 }
