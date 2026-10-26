@@ -2,6 +2,7 @@ services:
   - type: web
     name: soporte-holded
     runtime: node
+    region: frankfurt
     plan: free
     buildCommand: npm install
     startCommand: node server.js
@@ -9,19 +10,29 @@ services:
     envVars:
       - key: TZ
         value: Europe/Madrid
-      - key: DATABASE_URL
-        fromDatabase:
-          name: soporte-holded-db
-          property: connectionString
-      - key: DASH_USER        # usuario y contraseña de la consola y el dashboard
+      - key: DATABASE_URL     # Postgres (Supabase: cadena del Session pooler)
         sync: false
-      - key: DASH_PASS
+      # Acceso único al panel /admin. Los clientes no tienen login.
+      - key: ADMIN_USUARIO
         sync: false
-      - key: TECNICOS         # ej. Blanch,David,Pablo,Pako
+      - key: ADMIN_CLAVE
         sync: false
-      - key: ENTRADA_KEY      # clave para crear tickets desde WhatsApp o correo (cabecera x-entrada-key)
+      - key: SESSION_SECRET   # texto largo aleatorio; si cambia, se cierran las sesiones abiertas
+        generateValue: true
+      - key: TECNICOS         # nombres del desplegable «Trabajando como», p. ej. Blanch,David,Pablo,Pako
         sync: false
       - key: PUBLIC_URL       # https://<servicio>.onrender.com, para los enlaces que reciben los clientes
+        sync: false
+      - key: HORARIO_LABORAL  # para el SLA de 1 h; por defecto 09:00-18:00, lunes a viernes
+        sync: false
+      # Lo que muestra el portal público
+      - key: WA_NUMERO_PUBLICO  # número de WhatsApp de soporte, con prefijo (34600...)
+        sync: false
+      - key: SOPORTE_EMAIL      # correo de soporte visible; si falta, se usa MAIL_USER
+        sync: false
+      - key: GOOGLE_RESENA_URL  # enlace para dejar reseña en Google (se ofrece a quien puntúa 9 o 10)
+        sync: false
+      - key: ENTRADA_KEY      # clave para crear tickets desde otros sistemas (cabecera x-entrada-key)
         sync: false
       # WhatsApp Cloud API. Webhook en Meta: <PUBLIC_URL>/whatsapp/webhook
       - key: WA_TOKEN
@@ -43,7 +54,3 @@ services:
         sync: false
       - key: HOLDED_API_KEY   # vacía = datos comerciales de ejemplo
         sync: false
-
-databases:
-  - name: soporte-holded-db
-    plan: free

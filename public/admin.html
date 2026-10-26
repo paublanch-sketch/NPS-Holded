@@ -1,0 +1,928 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Panel de soporte · Interactivos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rojo: #C81D25; --cal: #F9F9F8; --bruma: #5B616A; --pizarra: #1C1C1C; --linea: #e6e5e1; --linea2: #d9d8d3; --blanco: #fff;
+    --suave: #f3f2ef; --muted: #898781;
+    /* Estado (fijos, siempre con icono y texto) */
+    --ok: #0ca30c; --ok-t: #0a6b0a; --ok-f: #e7f5e7;
+    --at: #fab219; --at-t: #7a5200; --at-f: #fdf3dc;
+    --cr: #d03b3b; --cr-t: #a32020; --cr-f: #fbe9e9;
+    /* Gráficos */
+    --serie: #2a78d6; --serie-2: #eb6834; --rejilla: #e1e0d9; --eje: #c3c2b7;
+    --nota: #fff8e1; --nota-l: #f0d58a;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; font: 14px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--cal); color: var(--pizarra); display: grid; grid-template-columns: 228px minmax(0, 1fr); }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  a { color: inherit; }
+  .oculto { display: none !important; }
+
+  /* Navegación */
+  .nav { background: var(--pizarra); color: #fff; display: flex; flex-direction: column; padding: 18px 12px; position: sticky; top: 0; height: 100vh; }
+  .nav .marca { font-weight: 800; letter-spacing: .14em; font-size: 14px; padding: 4px 10px 2px; }
+  .nav .marca span { color: var(--rojo); }
+  .nav .sub { font-size: 12px; color: #a9a8a3; padding: 0 10px 18px; }
+  .nav a.ir { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 9px; color: #d7d6d1; text-decoration: none; font-weight: 500; position: relative; }
+  .nav a.ir:hover { background: rgba(255,255,255,.06); color: #fff; }
+  .nav a.ir.on { background: rgba(255,255,255,.1); color: #fff; }
+  .nav a.ir.on::before { content: ""; position: absolute; left: -12px; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: var(--rojo); }
+  .nav a.ir svg { flex: none; opacity: .9; }
+  .nav .cuenta { margin-left: auto; font-size: 12px; font-weight: 700; background: var(--rojo); color: #fff; border-radius: 99px; padding: 1px 8px; }
+  .nav .abajo { margin-top: auto; border-top: 1px solid rgba(255,255,255,.1); padding: 14px 10px 0; }
+  .nav .abajo label { font-size: 12px; color: #a9a8a3; display: block; margin-bottom: 6px; }
+  .nav select { width: 100%; background: #2a2a2a; color: #fff; border: 1px solid #3a3a3a; border-radius: 8px; padding: 8px; }
+  .nav select.falta { border-color: var(--at); box-shadow: 0 0 0 3px rgba(250,178,25,.25); }
+  .nav .salir { display: inline-block; margin-top: 12px; font-size: 13px; color: #a9a8a3; background: none; border: 0; padding: 0; cursor: pointer; }
+  .nav .salir:hover { color: #fff; }
+  .nav .portal { font-size: 13px; color: #a9a8a3; text-decoration: none; display: block; margin-top: 8px; }
+  .nav .portal:hover { color: #fff; }
+  #vista { min-width: 0; }
+
+  /* Comunes */
+  .boton { font-weight: 600; border: 1px solid var(--pizarra); border-radius: 9px; padding: 8px 14px; cursor: pointer; background: var(--pizarra); color: #fff; white-space: nowrap; transition: filter .15s; }
+  .boton:hover { filter: brightness(1.25); }
+  .boton:disabled { opacity: .5; cursor: default; }
+  .boton.sec { background: var(--blanco); color: var(--pizarra); border-color: var(--linea2); }
+  .boton.sec:hover { filter: none; background: var(--suave); }
+  .boton.verde { background: var(--ok-t); border-color: var(--ok-t); }
+  .boton.rojo { background: var(--cr-t); border-color: var(--cr-t); }
+  .boton.peq { padding: 5px 10px; font-size: 13px; }
+  .campo { border: 1px solid var(--linea2); border-radius: 9px; padding: 8px 10px; background: var(--blanco); }
+  .campo:focus { outline: none; border-color: var(--pizarra); box-shadow: 0 0 0 3px rgba(28,28,28,.08); }
+  .tarjeta { background: var(--blanco); border: 1px solid var(--linea); border-radius: 14px; padding: 18px 20px; }
+  .tarjeta h3 { font-size: 13px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--bruma); }
+  .pastilla { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 99px; white-space: nowrap; background: var(--suave); color: var(--bruma); }
+  .pastilla.ok { background: var(--ok-f); color: var(--ok-t); }
+  .pastilla.atencion { background: var(--at-f); color: var(--at-t); }
+  .pastilla.critico { background: var(--cr-f); color: var(--cr-t); }
+  .pastilla.oscura { background: var(--pizarra); color: #fff; }
+  .pastilla.urg { background: var(--rojo); color: #fff; }
+  .cabeza { display: flex; align-items: center; gap: 12px; padding: 20px 28px 0; flex-wrap: wrap; }
+  .cabeza h1 { font-size: 22px; margin: 0; letter-spacing: -.01em; }
+  .vacio { color: var(--muted); text-align: center; padding: 36px 16px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--linea); white-space: nowrap; }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--linea); vertical-align: middle; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.clic { cursor: pointer; }
+  tr.clic:hover td { background: #fbfbfa; }
+  .tabla { overflow-x: auto; }
+
+  /* Bandeja */
+  .bandeja { display: grid; grid-template-columns: 380px minmax(0, 1fr); height: 100vh; }
+  .bandeja > *, .detalle > *, .conv, .lista .top > * { min-width: 0; }
+  .lista { border-right: 1px solid var(--linea); background: var(--blanco); display: flex; flex-direction: column; min-height: 0; }
+  .lista .top { padding: 16px 14px 10px; border-bottom: 1px solid var(--linea); }
+  .lista .top .fila { display: flex; gap: 8px; align-items: center; }
+  .lista .top h1 { font-size: 18px; margin: 0 auto 0 0; }
+  .buscar { width: 100%; margin-top: 12px; }
+  .pestanas { display: flex; gap: 4px; margin-top: 10px; overflow-x: auto; scrollbar-width: none; }
+  .pestanas button { border: 0; background: none; padding: 6px 9px; border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--bruma); cursor: pointer; white-space: nowrap; }
+  .pestanas button:hover { background: var(--suave); }
+  .pestanas button.on { background: var(--pizarra); color: #fff; }
+  .pestanas button b { font-weight: 600; opacity: .7; margin-left: 3px; }
+  .items { overflow-y: auto; flex: 1; }
+  .item { display: block; padding: 12px 14px; border-bottom: 1px solid var(--linea); text-decoration: none; color: inherit; border-left: 3px solid transparent; }
+  .item:hover { background: #fbfbfa; }
+  .item.sel { background: #f6f5f2; border-left-color: var(--rojo); }
+  .item .l1 { display: flex; gap: 8px; align-items: baseline; }
+  .item .l1 b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item .l1 time { margin-left: auto; font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .item .l2 { font-size: 12px; color: var(--bruma); margin-top: 2px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .item .l3 { font-size: 13px; color: var(--bruma); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .punto { width: 8px; height: 8px; border-radius: 50%; background: var(--rojo); flex: none; display: inline-block; }
+  .detalle { display: grid; grid-template-columns: minmax(0, 1fr) 300px; min-height: 0; height: 100vh; }
+  .conv { display: flex; flex-direction: column; min-height: 0; }
+  .conv .cab { padding: 18px 24px 14px; background: var(--blanco); border-bottom: 1px solid var(--linea); }
+  .conv .cab h2 { font-size: 19px; margin: 0; letter-spacing: -.01em; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .conv .cab .meta { color: var(--bruma); font-size: 13px; margin-top: 3px; }
+  .acciones-contacto { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .acciones-contacto a, .acciones-contacto button { font-size: 12px; font-weight: 500; padding: 5px 10px; border-radius: 99px; border: 1px solid var(--linea2); background: var(--blanco); text-decoration: none; cursor: pointer; color: var(--pizarra); }
+  .acciones-contacto a:hover, .acciones-contacto button:hover { background: var(--suave); }
+  .hilo { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; }
+  .m { max-width: 76%; padding: 10px 13px; border-radius: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .m small { display: block; font-size: 11px; opacity: .7; margin-top: 4px; }
+  .m.cliente { align-self: flex-start; background: var(--blanco); border: 1px solid var(--linea); border-bottom-left-radius: 4px; }
+  .m.tecnico { align-self: flex-end; background: var(--pizarra); color: #fff; border-bottom-right-radius: 4px; }
+  .m.nota { align-self: flex-end; background: var(--nota); border: 1px dashed var(--nota-l); }
+  .m.sistema { align-self: center; background: none; color: var(--muted); font-size: 12px; text-align: center; padding: 2px 8px; }
+  .redactar { background: var(--blanco); border-top: 1px solid var(--linea); padding: 10px 24px 14px; }
+  .redactar .modos { display: flex; gap: 4px; margin-bottom: 8px; align-items: center; }
+  .redactar .modos button { border: 0; background: none; font-size: 13px; font-weight: 600; color: var(--muted); padding: 5px 9px; border-radius: 8px; cursor: pointer; }
+  .redactar .modos button.on { color: var(--pizarra); background: var(--suave); }
+  .redactar .modos button.on.nota { background: var(--nota); }
+  .redactar .modos select { margin-left: auto; font-size: 13px; padding: 5px 8px; }
+  .redactar .caja { display: flex; gap: 8px; align-items: flex-end; }
+  .redactar textarea { flex: 1; min-height: 46px; max-height: 200px; resize: none; }
+  .redactar.es-nota textarea { background: var(--nota); border-color: var(--nota-l); }
+  .redactar .ayuda { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .lado { border-left: 1px solid var(--linea); background: var(--cal); overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .lado .tarjeta { padding: 14px 16px; }
+  .reloj { font-size: 32px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .reloj.on { color: var(--ok-t); }
+  .reloj-sub { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .botones { display: flex; gap: 6px; flex-wrap: wrap; }
+  .botones .boton { flex: 1; }
+  .prop { display: grid; grid-template-columns: 92px 1fr; gap: 8px 10px; align-items: center; font-size: 13px; }
+  .prop span { color: var(--bruma); }
+  .prop select, .prop input[type=text] { width: 100%; padding: 6px 8px; font-size: 13px; }
+  .historial a { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 6px 0; border-top: 1px solid var(--linea); text-decoration: none; }
+  .historial a span { color: var(--muted); white-space: nowrap; }
+
+  /* Métricas */
+  .filtros { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 14px 28px; position: sticky; top: 0; z-index: 5; background: rgba(249,249,248,.92); backdrop-filter: blur(6px); border-bottom: 1px solid var(--linea); }
+  .filtros .seg { max-width: 100%; overflow-x: auto; scrollbar-width: none; display: inline-flex; background: var(--blanco); border: 1px solid var(--linea2); border-radius: 9px; padding: 2px; }
+  .filtros .seg button { border: 0; background: none; padding: 6px 10px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--bruma); white-space: nowrap; }
+  .filtros .seg button.on { background: var(--pizarra); color: #fff; }
+  .filtros select, .filtros input { padding: 7px 9px; font-size: 13px; }
+  .filtros .der { margin-left: auto; }
+  .contenido { padding: 20px 28px 48px; display: flex; flex-direction: column; gap: 20px; max-width: 1360px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 12px; }
+  .kpi { background: var(--blanco); border: 1px solid var(--linea); border-radius: 14px; padding: 14px 16px; }
+  .kpi .et { font-size: 12px; color: var(--bruma); font-weight: 500; }
+  .kpi .v { font-size: 28px; font-weight: 700; letter-spacing: -.02em; margin-top: 2px; }
+  .kpi .v small { font-size: 14px; font-weight: 600; color: var(--bruma); margin-left: 2px; }
+  .kpi .s { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .leyenda { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--bruma); }
+  .bloque .cab { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .bloque .cab h2 { font-size: 18px; margin: 0; }
+  .bloque .desc { color: var(--bruma); font-size: 13px; margin: 4px 0 0; }
+  .medidores { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin: 18px 0 6px; }
+  .medidor { text-align: center; }
+  .medidor svg { width: 104px; height: 104px; display: block; margin: 0 auto 4px; }
+  .medidor .et { font-size: 12px; color: var(--bruma); min-height: 32px; }
+  .extra { display: flex; gap: 18px; font-size: 13px; color: var(--bruma); margin: 8px 0 4px; flex-wrap: wrap; }
+  .extra b { color: var(--pizarra); }
+  .dosc { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: 20px; }
+  .dosc > * { min-width: 0; }
+  .barras .fila { display: grid; grid-template-columns: minmax(90px, 160px) 1fr 52px; gap: 10px; align-items: center; font-size: 13px; padding: 4px 0; }
+  .barras .fila .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .barras .pista { height: 12px; }
+  .barras .bar { height: 12px; border-radius: 0 4px 4px 0; background: var(--serie); min-width: 2px; }
+  .barras .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--bruma); }
+  .grafico svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .grafico .t { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .apilada { display: flex; gap: 2px; height: 14px; border-radius: 4px; overflow: hidden; margin: 12px 0 8px; }
+  .apilada div { height: 100%; }
+  .claves { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--bruma); }
+  .claves i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .aviso { background: var(--at-f); color: var(--at-t); border-radius: 10px; padding: 10px 14px; font-size: 13px; }
+  #tip { position: fixed; pointer-events: none; z-index: 50; background: var(--pizarra); color: #fff; font-size: 12px; padding: 6px 9px; border-radius: 7px; white-space: nowrap; opacity: 0; transition: opacity .1s; }
+
+  /* Modal y avisos */
+  dialog { border: 0; border-radius: 16px; padding: 0; width: min(520px, 94vw); box-shadow: 0 24px 60px rgba(0,0,0,.25); }
+  dialog::backdrop { background: rgba(28,28,28,.4); }
+  dialog form { padding: 22px 24px; }
+  dialog h3 { margin: 0 0 4px; font-size: 18px; }
+  dialog p.sub { margin: 0 0 8px; color: var(--bruma); font-size: 13px; }
+  dialog label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 5px; }
+  dialog .campo { width: 100%; }
+  dialog .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+  dialog .pie { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+  #avisos { position: fixed; right: 18px; bottom: 18px; display: flex; flex-direction: column; gap: 8px; z-index: 60; }
+  .toast { background: var(--pizarra); color: #fff; padding: 10px 14px; border-radius: 10px; font-size: 13px; box-shadow: 0 8px 24px rgba(0,0,0,.2); max-width: 360px; animation: entra .2s ease-out; }
+  .toast.error { background: var(--cr-t); }
+  @keyframes entra { from { transform: translateY(8px); opacity: 0; } }
+
+  @media (max-width: 1180px) { .detalle { grid-template-columns: 1fr; height: auto; } .lado { border-left: 0; border-top: 1px solid var(--linea); } .conv { height: 100vh; } }
+  @media (max-width: 900px) {
+    body { grid-template-columns: 1fr; }
+    .nav { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px; padding: 10px 12px; }
+    .nav .sub { display: none; } .nav .marca { margin-right: 8px; }
+    .nav .abajo { margin: 0 0 0 auto; border: 0; padding: 0; display: flex; gap: 10px; align-items: center; }
+    .nav .abajo label, .nav .portal { display: none; } .nav .salir { margin: 0; }
+    .nav a.ir.on::before { display: none; }
+    .bandeja { grid-template-columns: 1fr; height: auto; }
+    .bandeja.con-sel .lista { display: none; } .bandeja:not(.con-sel) .detalle { display: none; }
+    .lista { height: calc(100vh - 56px); }
+    .cabeza, .filtros, .contenido { padding-left: 16px; padding-right: 16px; }
+    .volver-movil { display: inline-block !important; }
+  }
+  .volver-movil { display: none; font-size: 13px; color: var(--bruma); text-decoration: none; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="marca">INTERACTIVOS<span>.</span></div>
+  <div class="sub">Soporte Holded</div>
+  <a class="ir" href="#/bandeja" data-v="bandeja"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h5l2 3h4l2-3h5"/><path d="M5 5h14l2 8v6H3v-6z"/></svg>Bandeja<span class="cuenta oculto" id="cuentaBandeja"></span></a>
+  <a class="ir" href="#/metricas" data-v="metricas"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Métricas</a>
+  <a class="ir" href="#/clientes" data-v="clientes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.6 2.6 3 5.2"/></svg>Clientes</a>
+  <div class="abajo">
+    <label for="yo">Trabajando como</label>
+    <select id="yo" aria-label="Técnico"></select>
+    <a class="portal" href="/" target="_blank" rel="noopener">Abrir el portal del cliente ↗</a>
+    <button class="salir" id="salir">Cerrar sesión</button>
+  </div>
+</nav>
+<div id="vista"></div>
+<div id="tip" role="tooltip"></div>
+<div id="avisos" aria-live="polite"></div>
+<dialog id="dlg"></dialog>
+
+<script>
+// ================= Utilidades =================
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = (n, d = 0) => n == null ? '—' : Number(n).toLocaleString('es-ES', { minimumFractionDigits: d, maximumFractionDigits: d });
+const horasTxt = h => h == null ? '—' : `${num(h, h % 1 ? 1 : 0)} h`;
+const fecha = iso => iso ? new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '';
+const fechaHora = iso => iso ? new Date(iso).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+const hace = iso => {
+  const m = Math.round((Date.now() - new Date(iso)) / 60000);
+  if (m < 1) return 'ahora';
+  if (m < 60) return `${m} min`;
+  if (m < 1440) return `${Math.floor(m / 60)} h`;
+  const d = Math.floor(m / 1440);
+  return d < 30 ? `${d} d` : fecha(iso);
+};
+const dur = min => min == null ? '—' : min < 60 ? `${min} min` : min < 600 ? `${Math.floor(min / 60)} h ${min % 60 ? (min % 60) + ' min' : ''}`.trim() : `${Math.round(min / 60)} h`;
+const hms = s => `${Math.floor(s / 3600)}:${String(Math.floor(s % 3600 / 60)).padStart(2, '0')}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+const iso = d => new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const leer = (k, def) => { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch { return def; } };
+const escribir = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
+async function api(url, body) {
+  const r = await fetch(url, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
+  if (r.status === 401) { location.href = '/admin/login?next=' + encodeURIComponent('/admin' + location.hash); throw new Error('Sesión caducada'); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || 'Algo ha fallado');
+  return d;
+}
+function aviso(texto, error = false) {
+  const t = document.createElement('div');
+  t.className = 'toast' + (error ? ' error' : '');
+  t.textContent = texto;
+  $('avisos').append(t);
+  setTimeout(() => t.remove(), error ? 6000 : 3000);
+}
+const fallo = e => aviso(e.message, true);
+
+// Horario laboral para el SLA (el mismo que usa el servidor).
+let H_INI = 540, H_FIN = 1080;
+function laborables(a, b = new Date()) {
+  const ini = new Date(a), fin = new Date(b);
+  if (!(fin > ini)) return 0;
+  let total = 0;
+  const d = new Date(ini.getFullYear(), ini.getMonth(), ini.getDate());
+  while (d <= fin) {
+    if (d.getDay() % 6) {
+      const s = Math.max(d.getTime() + H_INI * 60000, ini), e = Math.min(d.getTime() + H_FIN * 60000, fin);
+      if (e > s) total += (e - s) / 60000;
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return Math.round(total);
+}
+
+// Tooltip compartido de los gráficos.
+document.addEventListener('mousemove', e => {
+  const el = e.target.closest('[data-tip]');
+  const tip = $('tip');
+  if (!el) { tip.style.opacity = 0; return; }
+  tip.textContent = el.dataset.tip;
+  tip.style.opacity = 1;
+  const x = Math.min(e.clientX + 12, innerWidth - tip.offsetWidth - 8);
+  tip.style.left = x + 'px';
+  tip.style.top = (e.clientY - 34) + 'px';
+});
+
+// ================= Estado global =================
+let equipo = [], tickets = [], clientesCache = null, portal = {};
+const TIPOS = ['Facturación y Verifactu', 'Contabilidad e impuestos', 'Bancos y conciliación', 'Equipo y fichajes', 'Acceso y usuarios', 'Formación', 'Importación de datos', 'Plantillas', 'Suscripción y plan', 'Otra cosa'];
+const yo = () => $('yo').value;
+function exigirTecnico() {
+  if (yo()) return true;
+  $('yo').classList.add('falta');
+  $('yo').focus();
+  aviso('Elige primero quién eres en «Trabajando como».', true);
+  return false;
+}
+
+// ================= Router =================
+let pararVista = () => {};
+function ruta() {
+  const [, v = 'bandeja', arg] = location.hash.split('/');
+  document.querySelectorAll('.nav a.ir').forEach(a => a.classList.toggle('on', a.dataset.v === v));
+  if (v === 'bandeja' && $('items')) return seleccionar(Number(arg) || null);
+  pararVista();
+  pararVista = () => {};
+  ({ bandeja: vistaBandeja, metricas: vistaMetricas, clientes: vistaClientes }[v] || vistaBandeja)(arg);
+}
+addEventListener('hashchange', ruta);
+
+// ================= Bandeja =================
+const PESTANAS = [
+  ['abiertos', 'Abiertos', t => t.estado !== 'Cerrado'],
+  ['sin', 'Sin asignar', t => t.estado !== 'Cerrado' && !t.tecnico],
+  ['mios', 'Míos', t => t.estado !== 'Cerrado' && t.tecnico && t.tecnico === yo()],
+  ['espera', 'Espera cliente', t => t.estado === 'Pendiente cliente'],
+  ['cerrados', 'Cerrados', t => t.estado === 'Cerrado'],
+];
+let pestana = leer('pestana', 'abiertos'), busca = '', modoNota = false, selActual = null, firmaDet = '';
+const firmaDe = t => JSON.stringify([t?.id, t?.mensajes?.length, t?.estado, t?.tecnico, t?.sesiones?.length, t?.activa?.inicio, t?.tipo_incidencia, t?.urgente, t?.nps]);
+
+// Cambia el ticket abierto sin volver a montar la bandeja.
+function seleccionar(id) {
+  selActual = id;
+  document.querySelector('.bandeja')?.classList.toggle('con-sel', !!id);
+  document.querySelectorAll('.item').forEach(a => a.classList.toggle('sel', a.getAttribute('href') === '#/bandeja/' + id));
+  const t = tickets.find(x => x.id === id);
+  firmaDet = firmaDe(t);
+  if (id) pintarDetalle(t);
+  else $('detalle').innerHTML = '<div class="vacio" style="grid-column:1/-1;align-self:center">Elige un ticket de la bandeja</div>';
+}
+
+function slaDe(t) {
+  if (t.estado === 'Cerrado') return ['', 'Resuelto'];
+  if (t.estado === 'Pendiente cliente') return ['atencion', 'Espera cliente'];
+  if (t.primera_respuesta) return ['oscura', 'En curso'];
+  if (t.origen === 'Sheet') return ['', t.estado];
+  const m = laborables(t.entrada);
+  return [m > 60 ? 'critico' : m > 45 ? 'atencion' : 'ok', m > 60 ? `Fuera de SLA · ${dur(m)}` : `Sin responder · ${dur(m)}`];
+}
+const segundos = t => (t.horas_previas || 0) * 3600 + (t.sesiones || []).reduce((s, x) => s + ((x.fin ? new Date(x.fin) : new Date()) - new Date(x.inicio)) / 1000, 0);
+
+function ordenar(l) {
+  if (pestana === 'cerrados') return l.sort((a, b) => (b.cierre || '').localeCompare(a.cierre || ''));
+  const peso = t => (t.urgente ? 0 : 2) + (t.primera_respuesta ? 1 : 0);
+  return l.sort((a, b) => peso(a) - peso(b) || a.entrada.localeCompare(b.entrada));
+}
+
+function vistaBandeja(idSel) {
+  selActual = Number(idSel) || null;
+  const sel = selActual;
+  $('vista').innerHTML = `
+    <div class="bandeja ${sel ? 'con-sel' : ''}">
+      <section class="lista">
+        <div class="top">
+          <div class="fila"><h1>Bandeja</h1><button class="boton peq" id="nuevo">+ Nuevo ticket</button></div>
+          <input class="campo buscar" id="buscar" placeholder="Buscar cliente, correo o texto…" value="${esc(busca)}">
+          <div class="pestanas" id="pestanas"></div>
+        </div>
+        <div class="items" id="items"></div>
+      </section>
+      <section class="detalle" id="detalle">${sel ? '' : '<div class="vacio" style="grid-column:1/-1;align-self:center">Elige un ticket de la bandeja</div>'}</section>
+    </div>`;
+  $('buscar').oninput = e => { busca = e.target.value; pintarLista(selActual); };
+  $('nuevo').onclick = nuevoTicket;
+  $('pestanas').onclick = e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    pestana = b.dataset.p;
+    escribir('pestana', pestana);
+    pintarLista(selActual);
+  };
+  const refrescar = async () => {
+    if (document.hidden) return;
+    try { tickets = await api('/api/tickets'); } catch (e) { return fallo(e); }
+    pintarLista(selActual);
+    if (selActual) {
+      const t = tickets.find(x => x.id === selActual);
+      if (firmaDe(t) !== firmaDet) { firmaDet = firmaDe(t); pintarDetalle(t); }
+    }
+  };
+  // Con la lista ya en memoria se pinta al instante; luego se refresca.
+  if (tickets.length) { pintarLista(selActual); if (selActual) seleccionar(selActual); }
+  refrescar();
+  const i1 = setInterval(refrescar, 8000);
+  const i2 = setInterval(tick, 1000);
+  document.addEventListener('visibilitychange', refrescar);
+  pararVista = () => { clearInterval(i1); clearInterval(i2); document.removeEventListener('visibilitychange', refrescar); };
+}
+
+function pintarLista(sel) {
+  const abiertos = tickets.filter(t => t.estado !== 'Cerrado');
+  $('cuentaBandeja').textContent = abiertos.length;
+  $('cuentaBandeja').classList.toggle('oculto', !abiertos.length);
+  if (!$('items')) return;
+  $('pestanas').innerHTML = PESTANAS.map(([k, n, f]) => `<button data-p="${k}" class="${k === pestana ? 'on' : ''}">${n}${k === 'cerrados' ? '' : `<b>${tickets.filter(f).length}</b>`}</button>`).join('');
+  const filtro = PESTANAS.find(p => p[0] === pestana)?.[2] || PESTANAS[0][2];
+  const q = busca.trim().toLowerCase();
+  const l = ordenar(tickets.filter(t => filtro(t) && (!q || `${t.id} ${t.cliente} ${t.contacto} ${t.email} ${t.descripcion}`.toLowerCase().includes(q))));
+  const vista = pestana === 'cerrados' ? l.slice(0, 150) : l;
+  $('items').innerHTML = vista.map(t => {
+    const [n, txt] = slaDe(t);
+    const ultimoCliente = [...t.mensajes].reverse().find(m => m.de === 'cliente')?.texto || t.descripcion;
+    return `<a class="item ${t.id === sel ? 'sel' : ''}" href="#/bandeja/${t.id}">
+      <div class="l1">${t.urgente && t.estado !== 'Cerrado' ? '<span class="punto" title="Urgente"></span>' : ''}<b>#${t.id} ${esc(t.cliente)}</b><time>${hace(t.estado === 'Cerrado' ? t.cierre || t.entrada : t.entrada)}</time></div>
+      <div class="l2"><span class="pastilla ${n}">${esc(txt)}</span>${esc(t.canal)} · ${esc(t.tipo_incidencia)}${t.tecnico ? ' · ' + esc(t.tecnico) : ''}${t.activa ? ' · <b style="color:var(--ok-t)">⏱ en marcha</b>' : ''}</div>
+      <div class="l3">${esc(ultimoCliente)}</div></a>`;
+  }).join('') + (l.length > vista.length ? `<div class="vacio">Se muestran los 150 más recientes. Usa el buscador para el resto.</div>` : '')
+    || `<div class="vacio">${q ? 'Nada coincide con la búsqueda.' : pestana === 'sin' ? 'Todo asignado. 👌' : 'No hay tickets aquí.'}</div>`;
+}
+
+const PLANTILLAS = [
+  ['Saludo', 'Hola{contacto}, soy {tecnico}, del soporte de Holded de Interactivos. Ya estoy mirando tu incidencia y te digo algo en breve.'],
+  ['Pedir captura', '¿Nos puedes enviar una captura de pantalla del error? Así vemos exactamente qué pasa.'],
+  ['Recuperar contraseña', 'Para recuperar el acceso: en la pantalla de inicio de Holded pulsa «¿Has olvidado tu contraseña?» y escribe el correo con el que te diste de alta. Si en 5 minutos no te llega, revisa la carpeta de spam y dínoslo.'],
+  ['Proponer videollamada', '¿Te va bien que lo veamos en una videollamada corta? Dime un par de horas que te encajen y te paso el enlace.'],
+  ['Escalar a Holded', 'Lo hemos revisado y es un error de la propia plataforma. Lo hemos comunicado al soporte de Holded y te avisamos en cuanto lo corrijan.'],
+  ['Resuelto', 'Lo damos por resuelto. Si vuelve a pasar, responde a este mensaje y lo retomamos.'],
+];
+
+function pintarDetalle(t) {
+  const det = $('detalle');
+  if (!det) return;
+  if (!t) { det.innerHTML = '<div class="vacio" style="grid-column:1/-1">Este ticket no existe.</div>'; return; }
+  const tel = (t.telefono || '').replace(/[^\d+]/g, '');
+  const wa = tel.replace(/^\+/, '').replace(/^(?=[6-9]\d{8}$)/, '34');
+  const [n, txt] = slaDe(t);
+  const cerrado = t.estado === 'Cerrado';
+  const borrador = $('resp')?.value || '';
+  const ficha = clientesCache?.clientes.find(c => c.nombre === t.cliente);
+  const otros = tickets.filter(x => x.cliente === t.cliente && x.id !== t.id).sort((a, b) => b.entrada.localeCompare(a.entrada));
+  const horasCliente = tickets.filter(x => x.cliente === t.cliente).reduce((s, x) => s + segundos(x), 0) / 3600;
+  const tiposOpc = [...new Set([...TIPOS, t.tipo_incidencia])].map(x => `<option ${x === t.tipo_incidencia ? 'selected' : ''}>${esc(x)}</option>`).join('');
+  det.innerHTML = `
+    <div class="conv">
+      <div class="cab">
+        <a class="volver-movil" href="#/bandeja">← Bandeja</a>
+        <h2>#${t.id} · ${esc(t.cliente)} <span class="pastilla ${n}">${esc(txt)}</span>${t.urgente && !cerrado ? '<span class="pastilla urg">Urgente</span>' : ''}</h2>
+        <div class="meta">${esc(t.contacto || 'Sin contacto')} · ${esc(t.canal)} · entró ${fechaHora(t.entrada)}${t.primera_respuesta ? ` · 1.ª respuesta en ${dur(laborables(t.entrada, t.primera_respuesta))} laborables` : ''}</div>
+        <div class="acciones-contacto">
+          ${tel ? `<a href="tel:${esc(tel)}">📞 ${esc(t.telefono)}</a>` : ''}
+          ${wa.length >= 9 ? `<a href="https://wa.me/${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+          ${t.email ? `<a href="mailto:${esc(t.email)}?subject=${encodeURIComponent('Incidencia #' + t.id)}">✉ ${esc(t.email)}</a>` : ''}
+          <a href="/t/${esc(t.token)}" target="_blank" rel="noopener">Ver como cliente ↗</a>
+          <button id="copiar">Copiar enlace del cliente</button>
+        </div>
+      </div>
+      <div class="hilo" id="hilo">${t.mensajes.map(m => `<div class="m ${m.de}">${esc(m.texto)}${m.enlace ? `<br><a href="${esc(m.enlace)}" target="_blank" rel="noopener">${esc(m.enlace)}</a>` : ''}${m.de === 'sistema' ? '' : `<small>${m.de === 'nota' ? 'Nota interna · ' : ''}${m.autor ? esc(m.autor) + ' · ' : m.de === 'cliente' ? esc(t.contacto || t.cliente) + ' · ' : ''}${fechaHora(m.fecha)}</small>`}</div>`).join('')}</div>
+      <form class="redactar ${modoNota ? 'es-nota' : ''}" id="redactar">
+        <div class="modos">
+          <button type="button" data-m="cliente" class="${modoNota ? '' : 'on'}">Responder al cliente</button>
+          <button type="button" data-m="nota" class="nota ${modoNota ? 'on' : ''}">Nota interna</button>
+          <select class="campo" id="plantilla"><option value="">Respuestas rápidas…</option>${PLANTILLAS.map((p, i) => `<option value="${i}">${esc(p[0])}</option>`).join('')}</select>
+        </div>
+        <div class="caja"><textarea class="campo" id="resp" placeholder="${modoNota ? 'Nota solo para el equipo…' : `Escribe al cliente${t.canal === 'WhatsApp' ? ' (le llega por WhatsApp)' : t.email ? ' (le llega también por correo si está activo)' : ''}…`}">${esc(borrador)}</textarea><button class="boton">Enviar</button></div>
+        <div class="ayuda">Enter envía · Mayús+Enter salto de línea</div>
+      </form>
+    </div>
+    <aside class="lado">
+      <div class="tarjeta">
+        <h3>Tiempo</h3>
+        <div class="reloj ${t.activa ? 'on' : ''}" id="reloj">${hms(segundos(t))}</div>
+        <div class="reloj-sub">${t.activa ? `${t.activa.tipo === 'video' ? 'Videollamada' : 'Cronómetro'} en marcha · ${esc(t.activa.tecnico || '')}` : `${horasTxt(horasCliente)} con este cliente en total`}</div>
+        ${cerrado ? '' : `<div class="botones">
+          ${t.activa ? `<button class="boton rojo" data-a="parar">Pausar</button>` : `<button class="boton verde" data-a="iniciar">Iniciar</button>`}
+          <button class="boton sec" data-t="15">+15′</button><button class="boton sec" data-t="30">+30′</button><button class="boton sec" data-t="otro">+…</button>
+        </div>`}
+      </div>
+      <div class="tarjeta">
+        <h3>Acciones</h3>
+        <div class="botones" style="flex-direction:column">
+          ${cerrado
+            ? `<div style="font-size:13px;color:var(--bruma);margin-bottom:6px">Cerrado el ${fechaHora(t.cierre)}${t.nps != null ? ` · <b style="color:var(--pizarra)">NPS ${t.nps}</b>` : ' · valoración pendiente'}${t.mejora ? `<br>«${esc(t.mejora)}»` : ''}</div><button class="boton sec" data-a="reabrir">Reabrir</button>`
+            : `${t.activa?.tipo === 'video' ? `<a class="boton sec" style="text-align:center;text-decoration:none" href="${esc(t.video)}" target="_blank" rel="noopener">Volver a la sala ↗</a>` : `<button class="boton sec" data-a="video">Videollamada</button>`}
+               <button class="boton sec" data-a="pendiente" ${t.estado === 'Pendiente cliente' ? 'disabled' : ''}>Esperando al cliente</button>
+               <button class="boton" data-a="cerrar">Cerrar y pedir valoración</button>`}
+        </div>
+      </div>
+      <div class="tarjeta">
+        <h3>Detalles</h3>
+        <div class="prop">
+          <span>Técnico</span><select class="campo" id="pTec"><option value="">Sin asignar</option>${[...new Set([...equipo, t.tecnico].filter(Boolean))].map(x => `<option ${x === t.tecnico ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>
+          <span>Tipo</span><select class="campo" id="pTipo">${tiposOpc}</select>
+          <span>Urgente</span><label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" id="pUrg" ${t.urgente ? 'checked' : ''}> Me impide trabajar</label>
+        </div>
+      </div>
+      <div class="tarjeta">
+        <h3>Cliente</h3>
+        <div class="prop">
+          <span>Servicio</span><select class="campo" id="pServ">${(clientesCache?.servicios || []).map(x => `<option ${x === (ficha?.servicio || 'Sin clasificar') ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>
+          <span>Origen</span><select class="campo" id="pOrig">${(clientesCache?.origenes || []).map(x => `<option ${x === (ficha?.tipo_cliente || 'Sin clasificar') ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>
+        </div>
+        <div class="historial" style="margin-top:12px">${otros.slice(0, 5).map(x => `<a href="#/bandeja/${x.id}">#${x.id} ${esc(x.tipo_incidencia)}<span>${fecha(x.entrada)} · ${esc(x.estado)}</span></a>`).join('') || '<div style="font-size:13px;color:var(--muted)">Primer ticket de este cliente.</div>'}</div>
+      </div>
+    </aside>`;
+  const hilo = $('hilo');
+  hilo.scrollTop = hilo.scrollHeight;
+  const resp = $('resp');
+  const crecer = () => { resp.style.height = 'auto'; resp.style.height = Math.min(200, resp.scrollHeight) + 'px'; };
+  resp.oninput = crecer;
+  resp.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('redactar').requestSubmit(); } };
+  $('redactar').querySelector('.modos').onclick = e => {
+    const b = e.target.closest('button[data-m]');
+    if (!b) return;
+    modoNota = b.dataset.m === 'nota';
+    pintarDetalle(t);
+    $('resp').focus();
+  };
+  $('plantilla').onchange = e => {
+    const p = PLANTILLAS[e.target.value];
+    if (!p) return;
+    resp.value = p[1].replace('{contacto}', t.contacto ? ' ' + t.contacto.split(' ')[0] : '').replace('{tecnico}', yo() || 'el técnico');
+    e.target.value = '';
+    crecer();
+    resp.focus();
+  };
+  $('redactar').onsubmit = async e => {
+    e.preventDefault();
+    const texto = resp.value.trim();
+    if (!texto || !exigirTecnico()) return;
+    resp.value = '';
+    try { await accion(t.id, 'mensaje', { texto, nota: modoNota }); }
+    catch (err) { resp.value = texto; fallo(err); }
+  };
+  $('copiar').onclick = async () => {
+    try { await navigator.clipboard.writeText(`${location.origin}/t/${t.token}`); aviso('Enlace copiado: el cliente lo abre sin login.'); }
+    catch { aviso('No se ha podido copiar.', true); }
+  };
+  det.querySelector('.lado').onclick = async e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.t) {
+      if (!exigirTecnico()) return;
+      if (b.dataset.t === 'otro') return pedirTiempo(t);
+      return accion(t.id, 'tiempo', { minutos: Number(b.dataset.t) }).then(() => aviso(`+${b.dataset.t} min apuntados a ${yo()}`)).catch(fallo);
+    }
+    const a = b.dataset.a;
+    if (!a) return;
+    if (a !== 'reabrir' && !exigirTecnico()) return;
+    if (a === 'cerrar') return cerrarTicket(t);
+    if (a === 'video') {
+      const w = open('about:blank');
+      return accion(t.id, 'video').then(r => { w.location = r.video; aviso('Enlace enviado al cliente.'); }).catch(err => { w.close(); fallo(err); });
+    }
+    accion(t.id, a).catch(fallo);
+  };
+  $('pTec').onchange = e => accion(t.id, 'asignar', { asignado: e.target.value }).then(() => aviso(e.target.value ? `Asignado a ${e.target.value}` : 'Sin asignar')).catch(fallo);
+  $('pTipo').onchange = e => accion(t.id, 'datos', { tipo_incidencia: e.target.value }).catch(fallo);
+  $('pUrg').onchange = e => accion(t.id, 'urgencia', { urgente: e.target.checked }).catch(fallo);
+  const guardarFicha = () => api('/api/clientes', { nombre: t.cliente, servicio: $('pServ').value, tipo_cliente: $('pOrig').value })
+    .then(() => { clientesCache = null; cargarClientes(); aviso('Cliente actualizado.'); }).catch(fallo);
+  $('pServ').onchange = guardarFicha;
+  $('pOrig').onchange = guardarFicha;
+}
+
+function tick() {
+  const t = tickets.find(x => x.id === selActual);
+  if (t && $('reloj') && t.activa) $('reloj').textContent = hms(segundos(t));
+}
+
+async function accion(id, a, extra = {}) {
+  const t = await api(`/api/tickets/${id}/${a}`, { tecnico: yo(), ...extra });
+  tickets = tickets.map(x => x.id === t.id ? t : x);
+  pintarLista(selActual);
+  firmaDet = firmaDe(t);
+  if (t.id === selActual) pintarDetalle(t);
+  return t;
+}
+
+function dialogo(html, alEnviar) {
+  const d = $('dlg');
+  d.innerHTML = `<form method="dialog" novalidate>${html}</form>`;
+  const f = d.querySelector('form');
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const b = f.querySelector('button[type=submit]');
+    b.disabled = true;
+    try { if (await alEnviar(f) !== false) d.close(); } catch (err) { fallo(err); }
+    b.disabled = false;
+  };
+  f.querySelectorAll('[data-cerrar]').forEach(b => b.onclick = () => d.close());
+  d.showModal();
+  f.querySelector('input, textarea, select')?.focus();
+}
+
+function pedirTiempo(t) {
+  dialogo(`<h3>Apuntar tiempo</h3><p class="sub">Trabajo hecho fuera del cronómetro, a nombre de ${esc(yo())}.</p>
+    <div class="dos"><div><label>Minutos</label><input class="campo" name="min" type="number" min="1" max="600" value="20"></div>
+    <div><label>Qué has hecho <small>(opcional)</small></label><input class="campo" name="motivo" placeholder="Llamada, revisión…"></div></div>
+    <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Apuntar</button></div>`,
+    async f => { await accion(t.id, 'tiempo', { minutos: Number(f.min.value), motivo: f.motivo.value }); aviso('Tiempo apuntado.'); });
+}
+
+function cerrarTicket(t) {
+  const ficha = clientesCache?.clientes.find(c => c.nombre === t.cliente);
+  const sinClasificar = !ficha || pendiente(ficha);
+  const como = t.canal === 'WhatsApp' ? 'por WhatsApp' : t.email ? 'en su página y por correo (si el correo está activo)' : 'en su página';
+  dialogo(`<h3>Cerrar #${t.id} · ${esc(t.cliente)}</h3>
+    <p class="sub">Tiempo registrado: <b>${hms(segundos(t))}</b>. El cliente recibirá la encuesta de valoración ${como}.</p>
+    <label>Tipo de incidencia</label><select class="campo" name="tipo">${[...new Set([...TIPOS, t.tipo_incidencia])].map(x => `<option ${x === t.tipo_incidencia ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>
+    <label>Cómo se ha resuelto <small>(nota interna, opcional)</small></label><textarea class="campo" name="solucion" rows="3" placeholder="Para la próxima vez que pase…"></textarea>
+    <label>Minutos extra fuera del cronómetro <small>(opcional)</small></label><input class="campo" name="min" type="number" min="0" max="600" placeholder="0">
+    ${sinClasificar ? `<div class="dos"><div><label>Servicio del cliente</label><select class="campo" name="serv">${(clientesCache?.servicios || []).map(x => `<option ${x === (ficha?.servicio || 'Sin clasificar') ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></div>
+      <div><label>Origen del cliente</label><select class="campo" name="orig">${(clientesCache?.origenes || []).map(x => `<option ${x === (ficha?.tipo_cliente || 'Sin clasificar') ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></div></div>` : ''}
+    <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton verde">Cerrar y pedir valoración</button></div>`,
+    async f => {
+      if (f.serv) await api('/api/clientes', { nombre: t.cliente, servicio: f.serv.value, tipo_cliente: f.orig.value }).then(() => { clientesCache = null; cargarClientes(); });
+      await accion(t.id, 'cerrar', { tipo_incidencia: f.tipo.value, solucion: f.solucion.value, minutos: Number(f.min.value) || 0 });
+      aviso('Ticket cerrado. Encuesta enviada.');
+    });
+}
+
+function nuevoTicket() {
+  if (!exigirTecnico()) return;
+  const nombres = (clientesCache?.clientes || []).map(c => c.nombre);
+  dialogo(`<h3>Nuevo ticket</h3><p class="sub">Para llamadas, WhatsApp o correos que te llegan a ti. El cronómetro arranca solo.</p>
+    <div class="dos">
+      <div><label>Canal</label><select class="campo" name="canal"><option>Teléfono</option><option>WhatsApp</option><option>Correo</option></select></div>
+      <div><label>Tipo</label><select class="campo" name="tipo">${TIPOS.map(x => `<option>${esc(x)}</option>`).join('')}</select></div>
+      <div><label>Empresa</label><input class="campo" name="empresa" list="dlClientes" required></div>
+      <div><label>Contacto</label><input class="campo" name="contacto"></div>
+      <div><label>Teléfono</label><input class="campo" name="tel" type="tel"></div>
+      <div><label>Correo</label><input class="campo" name="email" type="email"></div>
+    </div>
+    <datalist id="dlClientes">${nombres.map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+    <label>Qué necesita</label><textarea class="campo" name="desc" rows="4" required></textarea>
+    <label style="display:flex;gap:6px;align-items:center;font-weight:500"><input type="checkbox" name="urg"> Urgente: le impide trabajar</label>
+    <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Crear y empezar</button></div>`,
+    async f => {
+      if (!f.empresa.value.trim() || !f.desc.value.trim() || !(f.tel.value.trim() || f.email.value.trim())) { aviso('Pon empresa, qué necesita y un teléfono o correo.', true); return false; }
+      const t = await api('/api/tickets', { canal: f.canal.value, tipo: f.tipo.value, empresa: f.empresa.value, contacto: f.contacto.value, telefono: f.tel.value, email: f.email.value, descripcion: f.desc.value, urgente: f.urg.checked, tecnico: yo() });
+      tickets.unshift(t);
+      location.hash = `#/bandeja/${t.id}`;
+      await accion(t.id, 'iniciar');
+      aviso(`Ticket #${t.id} creado.`);
+    });
+}
+
+// ================= Métricas =================
+const PERIODOS = {
+  mes: ['Este mes', () => { const h = new Date(); return [iso(new Date(h.getFullYear(), h.getMonth(), 1)), iso(h)]; }],
+  pasado: ['Mes pasado', () => { const h = new Date(); return [iso(new Date(h.getFullYear(), h.getMonth() - 1, 1)), iso(new Date(h.getFullYear(), h.getMonth(), 0))]; }],
+  trim: ['Este trimestre', () => { const h = new Date(); return [iso(new Date(h.getFullYear(), Math.floor(h.getMonth() / 3) * 3, 1)), iso(h)]; }],
+  d90: ['90 días', () => { const h = new Date(); return [iso(new Date(h - 89 * 864e5)), iso(h)]; }],
+  anio: ['Este año', () => { const h = new Date(); return [iso(new Date(h.getFullYear(), 0, 1)), iso(h)]; }],
+};
+let fm = leer('filtrosMetricas', { periodo: 'trim', servicio: '', tecnico: '', tipo_cliente: '' });
+const DESC = {
+  'Implementación': 'Clientes fuera de Kit Digital: referidos por una gestoría/asesoría o antiguos clientes de AKIRA sin Holded que lo solicitan.',
+  'Premium': 'Gestorías y asesorías con servicio Premium, más cualquier cliente que lo contrate directamente.',
+  'Kit Digital': 'Soporte del año de servicio del Kit Digital (el histórico del antiguo formulario).',
+  'Sin clasificar': 'Clientes a los que aún no se ha asignado servicio. Clasifícalos en Clientes.',
+};
+const NIVEL = { ok: ['ok', '✓ OK'], atencion: ['atencion', '! Atención'], critico: ['critico', '✕ Crítico'], null: ['', 'Sin datos'] };
+const COLOR = { ok: 'var(--ok)', atencion: 'var(--at)', critico: 'var(--cr)' };
+
+function rango() {
+  if (fm.periodo === 'custom' && fm.desde && fm.hasta) return [fm.desde, fm.hasta];
+  return (PERIODOS[fm.periodo] || PERIODOS.trim)[1]();
+}
+
+function vistaMetricas() {
+  const [d, h] = rango();
+  $('vista').innerHTML = `
+    <div class="cabeza"><h1>Métricas del servicio</h1><span style="color:var(--muted);font-size:13px" id="actualizado"></span></div>
+    <div class="filtros">
+      <div class="seg" id="seg">${Object.entries(PERIODOS).map(([k, [n]]) => `<button data-p="${k}" class="${fm.periodo === k ? 'on' : ''}">${n}</button>`).join('')}<button data-p="custom" class="${fm.periodo === 'custom' ? 'on' : ''}">Fechas…</button></div>
+      <span id="fechas" class="${fm.periodo === 'custom' ? '' : 'oculto'}"><input type="date" class="campo" id="fDesde" value="${d}"> – <input type="date" class="campo" id="fHasta" value="${h}"></span>
+      <select class="campo" id="fServ"><option value="">Todos los servicios</option></select>
+      <select class="campo" id="fOrig"><option value="">Todos los orígenes</option></select>
+      <select class="campo" id="fTec"><option value="">Todo el equipo</option></select>
+      <a class="boton sec peq der" id="csv">Descargar horas (CSV)</a>
+    </div>
+    <div class="contenido" id="met"><div class="vacio">Cargando métricas…</div></div>`;
+  const opts = (sel, l, v) => { $(sel).innerHTML = $(sel).options[0].outerHTML + l.map(x => `<option ${x === v ? 'selected' : ''}>${esc(x)}</option>`).join(''); };
+  cargarClientes().then(c => { opts('fServ', c.servicios, fm.servicio); opts('fOrig', c.origenes, fm.tipo_cliente); });
+  opts('fTec', equipo, fm.tecnico);
+  const cambiar = () => { escribir('filtrosMetricas', fm); cargarMetricas(); };
+  $('seg').onclick = e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    fm.periodo = b.dataset.p;
+    [...$('seg').children].forEach(x => x.classList.toggle('on', x === b));
+    $('fechas').classList.toggle('oculto', fm.periodo !== 'custom');
+    if (fm.periodo === 'custom') { fm.desde = $('fDesde').value; fm.hasta = $('fHasta').value; }
+    cambiar();
+  };
+  $('fDesde').onchange = $('fHasta').onchange = () => { fm.desde = $('fDesde').value; fm.hasta = $('fHasta').value; cambiar(); };
+  $('fServ').onchange = e => { fm.servicio = e.target.value; cambiar(); };
+  $('fOrig').onchange = e => { fm.tipo_cliente = e.target.value; cambiar(); };
+  $('fTec').onchange = e => { fm.tecnico = e.target.value; cambiar(); };
+  cargarMetricas();
+  const i = setInterval(() => !document.hidden && cargarMetricas(), 60000);
+  pararVista = () => clearInterval(i);
+}
+
+async function cargarMetricas() {
+  const [d, h] = rango();
+  const q = new URLSearchParams({ desde: d, hasta: h, servicio: fm.servicio, tecnico: fm.tecnico, tipo_cliente: fm.tipo_cliente });
+  if ($('csv')) $('csv').href = '/api/horas.csv?' + q;
+  let r;
+  try { r = await api('/api/resumen?' + q); } catch (e) { return fallo(e); }
+  if (!$('met')) return;
+  $('actualizado').textContent = `${fecha(d)} – ${fecha(h)} · actualizado ${new Date(r.actualizado).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+  const s = r.resumen, n = r.nps;
+  const kpi = (et, v, sub = '') => `<div class="kpi"><div class="et">${et}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`;
+  $('met').innerHTML = `
+    <div class="kpis">
+      ${kpi('Abiertas ahora', num(s.abiertas), s.sinAsignar ? `${s.sinAsignar} sin asignar` : 'todas asignadas')}
+      ${kpi('Entradas', num(s.entradas ?? s.entrados), `${num(s.cerrados)} cerradas en el periodo`)}
+      ${kpi('Horas de soporte', `${num(s.horas, 1)}<small>h</small>`, s.cerrados ? `${num(s.horas / Math.max(1, s.cerrados), 1)} h por ticket cerrado` : '')}
+      ${kpi('1.ª respuesta', s.primeraRespuestaMediana == null ? '—' : dur(s.primeraRespuestaMediana), s.slaCumplido == null ? 'sin datos aún (se mide desde la app)' : `${s.slaCumplido}% en menos de 1 h · ${s.slaMedibles} tickets`)}
+      ${kpi('Resolución media', s.diasResolucion == null ? '—' : `${num(s.diasResolucion, 1)}<small>días</small>`, 'de la entrada al cierre')}
+      ${kpi('NPS', n.score == null ? '—' : (n.score > 0 ? '+' : '') + n.score, n.respuestas ? `${num(n.media5, 1)}/5 de media · ${n.respuestas} respuestas` : 'aún sin valoraciones')}
+      ${kpi('Clientes atendidos', num(s.clientes), `${num(s.satisfechos)} satisfechos (9–10)`)}
+    </div>
+    <div class="leyenda"><span><span class="pastilla ok">✓ OK</span> dentro de la calidad de servicio</span><span><span class="pastilla atencion">! Atención</span> hay riesgo, requiere seguimiento</span><span><span class="pastilla critico">✕ Crítico</span> servicio mal hecho o SLA superado</span><span>SLA: 1.ª respuesta en menos de 1 h laborable (L–V ${esc(r.horario)})</span></div>
+    ${r.servicios.map(bloqueServicio).join('')}
+    ${r.porTipo.length ? `<section class="tarjeta"><h3>KPI por tipo de cliente</h3><div class="dosc">${r.porTipo.map(b => `<div><div style="display:flex;gap:8px;align-items:center;font-weight:600">${esc(b.nombre)} <span class="pastilla ${NIVEL[b.estado][0]}">${NIVEL[b.estado][1]}</span></div><div class="medidores" style="margin-top:10px">${medidor(b.abiertas, 20, 'Incidencias abiertas', b.niveles.abiertas)}${medidor(b.fueraSla, 10, 'Fuera de SLA', b.niveles.fueraSla)}${medidor(b.valoracion == null ? '—' : num(b.valoracion, 1), 5, 'Valoración /5', b.niveles.valoracion, b.valoracion)}</div></div>`).join('')}</div></section>` : ''}
+    <div class="dosc">
+      <section class="tarjeta grafico"><h3>Incidencias entradas por ${r.periodo.porMes ? 'mes' : 'semana'}</h3>${columnas(r.serie, 'tickets', r.periodo.porMes, v => `${num(v)} incidencias`)}</section>
+      <section class="tarjeta grafico"><h3>Horas de soporte por ${r.periodo.porMes ? 'mes' : 'semana'}</h3>${columnas(r.serie, 'horas', r.periodo.porMes, v => `${num(v, 1)} h`)}</section>
+    </div>
+    <div class="dosc">
+      <section class="tarjeta"><h3>Horas por técnico</h3>${barras(r.porTecnico, 'horas', x => `${num(x.horas, 1)} h`, x => `${x.nombre}: ${num(x.horas, 1)} h · ${x.tickets} tickets entrados`)}</section>
+      <section class="tarjeta"><h3>Tipos de incidencia</h3>${barras(r.porTipoIncidencia.slice(0, 8), 'tickets', x => num(x.tickets), x => `${x.nombre}: ${x.tickets}`)}${r.porTipoIncidencia.length > 8 ? `<div style="font-size:12px;color:var(--muted);margin-top:6px">y ${r.porTipoIncidencia.length - 8} tipos más</div>` : ''}</section>
+    </div>
+    <div class="dosc">
+      <section class="tarjeta"><h3>Horas por cliente</h3>${tablaClientes(r.porCliente)}</section>
+      <section class="tarjeta"><h3>Satisfacción (NPS)</h3>${bloqueNps(r)}</section>
+    </div>
+    <div class="dosc">
+      <section class="tarjeta"><h3>De dónde vienen los clientes</h3>${barras(r.porOrigen, 'clientes', x => num(x.clientes), x => `${x.nombre}: ${x.clientes} clientes con tickets en el periodo`)}<p style="font-size:12px;color:var(--muted);margin:8px 0 0">Clientes distintos con incidencias en el periodo, según su ficha.</p></section>
+      <section class="tarjeta"><h3>Canales de entrada</h3>${barras(r.porCanal, 'tickets', x => num(x.tickets), x => `${x.nombre}: ${x.tickets}`)}</section>
+    </div>
+    <section class="tarjeta"><h3>Comercial · contratos, licencias y presupuestos</h3>${bloqueComercial(r)}</section>`;
+  $('met').querySelectorAll('tr[data-id]').forEach(tr => tr.onclick = () => { location.hash = `#/bandeja/${tr.dataset.id}`; });
+}
+
+function medidor(valor, max, et, nivel, numero = Number(valor)) {
+  const r = 40, c = 2 * Math.PI * r, f = Math.max(0, Math.min(1, (numero || 0) / max));
+  const [cls, txt] = nivel ? NIVEL[nivel] : ['', 'Sin datos'];
+  return `<div class="medidor"><svg viewBox="0 0 100 100" role="img" aria-label="${esc(et)}: ${esc(valor)}">
+      <circle cx="50" cy="50" r="${r}" fill="none" stroke="#ecebe7" stroke-width="8"/>
+      ${f ? `<circle cx="50" cy="50" r="${r}" fill="none" stroke="${nivel ? COLOR[nivel] : 'var(--eje)'}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${c * f} ${c}" transform="rotate(-90 50 50)"/>` : ''}
+      <text x="50" y="56" text-anchor="middle" font-size="19" font-weight="700" fill="#1C1C1C" font-family="Inter, system-ui">${esc(valor)}</text></svg>
+    <div class="et">${esc(et)}</div><span class="pastilla ${cls}">${txt}</span></div>`;
+}
+
+function bloqueServicio(b) {
+  const [cls, txt] = NIVEL[b.estado];
+  if (b.vacio) return `<section class="tarjeta bloque"><div class="cab"><h2>${esc(b.nombre)}</h2><span class="pastilla">Sin datos</span></div><p class="desc">${esc(DESC[b.nombre] || '')}</p><div style="font-size:13px;color:var(--muted);margin-top:12px">Aún no hay incidencias de clientes con este servicio. Asígnalo a cada cliente en <a href="#/clientes">Clientes</a> o desde el propio ticket.</div></section>`;
+  return `<section class="tarjeta bloque">
+    <div class="cab"><h2>${esc(b.nombre)}</h2><span class="pastilla ${cls}">${txt}</span></div>
+    <p class="desc">${esc(DESC[b.nombre] || '')}</p>
+    <div class="medidores">
+      ${medidor(b.abiertas, 20, 'Incidencias abiertas', b.niveles.abiertas)}
+      ${medidor(b.fueraSla, 10, b.slaMedibles ? `Fuera de SLA (de ${b.slaMedibles})` : 'Fuera de SLA', b.niveles.fueraSla)}
+      ${medidor(b.excedidoMin ? '+' + dur(b.excedidoMin) : '0', 60, 'Tiempo excedido sobre la 1 h de SLA', b.niveles.excedido, b.excedidoMin)}
+      ${medidor(b.valoracion == null ? '—' : num(b.valoracion, 1), 5, `Valoración media /5${b.respuestasNps ? ` (${b.respuestasNps})` : ''}`, b.niveles.valoracion, b.valoracion)}
+    </div>
+    <div class="extra"><span><b>${num(b.tickets)}</b> incidencias en el periodo</span><span><b>${num(b.horas, 1)} h</b> de soporte</span></div>
+    ${b.casos.length ? `<h3 style="margin-top:14px">Casos abiertos ahora</h3><div class="tabla"><table><thead><tr><th>Cliente</th><th>Origen</th><th>Canal</th><th>Entrada</th><th>Espera 1.ª resp.</th><th>Estado</th></tr></thead><tbody>
+      ${b.casos.map(c => {
+        const [n, t] = c.respondido ? ['oscura', 'Respondido'] : c.esperaMin == null ? ['', c.estado] : c.esperaMin > 60 ? ['critico', 'Fuera de SLA'] : c.esperaMin > 45 ? ['atencion', 'Cerca del límite'] : ['ok', 'En plazo'];
+        return `<tr class="clic" data-id="${c.id}"><td><b>${esc(c.cliente)}</b></td><td>${esc(c.origen)}</td><td>${esc(c.canal)}</td><td>${fechaHora(c.entrada)}</td><td>${c.esperaMin == null ? '—' : dur(c.esperaMin)}</td><td><span class="pastilla ${n}">${t}</span></td></tr>`;
+      }).join('')}</tbody></table></div>` : '<div style="font-size:13px;color:var(--muted);margin-top:10px">Ningún caso abierto.</div>'}
+  </section>`;
+}
+
+// Columnas verticales: una serie, barras ≤24 px con remate redondeado, rejilla discreta.
+function columnas(serie, campo, porMes, fmt) {
+  if (!serie.length || serie.every(p => !p[campo])) return '<div class="vacio">Sin datos en el periodo.</div>';
+  const W = 600, H = 190, L = 34, B = 24, T = 8;
+  const max = Math.max(...serie.map(p => p[campo]));
+  const paso = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500].find(s => max / s <= 4) || Math.ceil(max / 4);
+  const tope = Math.ceil(max / paso) * paso || 1;
+  const banda = (W - L) / serie.length, ancho = Math.min(24, banda * .6);
+  const y = v => T + (H - T - B) * (1 - v / tope);
+  const marcas = [];
+  for (let v = 0; v <= tope; v += paso) marcas.push(v);
+  const cada = Math.ceil(serie.length / 8);
+  const et = p => porMes ? new Date(p.desde).toLocaleDateString('es-ES', { month: 'short' }) : fecha(p.desde);
+  return `<svg viewBox="0 0 ${W} ${H}" role="img">
+    ${marcas.map(v => `<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="${v ? 'var(--rejilla)' : 'var(--eje)'}" stroke-width="1"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#898781">${num(v)}</text>`).join('')}
+    ${serie.map((p, i) => {
+      const x = L + banda * i + (banda - ancho) / 2, v = p[campo], top = y(v), alto = H - B - top, r = Math.min(4, alto);
+      const barra = v ? `<path d="M${x},${H - B} V${top + r} Q${x},${top} ${x + r},${top} H${x + ancho - r} Q${x + ancho},${top} ${x + ancho},${top + r} V${H - B} Z" fill="var(--serie)"/>` : '';
+      return `<g data-tip="${porMes ? 'Mes de' : 'Semana del'} ${et(p)} · ${fmt(v)}">${barra}<rect x="${L + banda * i}" y="${T}" width="${banda}" height="${H - T - B}" fill="transparent"/>${i % cada === 0 ? `<text x="${x + ancho / 2}" y="${H - 6}" text-anchor="middle" font-size="11" fill="#898781">${et(p)}</text>` : ''}</g>`;
+    }).join('')}
+  </svg>`;
+}
+
+function barras(l, campo, fmt, tip) {
+  if (!l.length) return '<div class="vacio">Sin datos en el periodo.</div>';
+  const max = Math.max(...l.map(x => x[campo])) || 1;
+  return `<div class="barras">${l.map(x => `<div class="fila" data-tip="${esc(tip(x))}"><span class="n" title="${esc(x.nombre)}">${esc(x.nombre)}</span><div class="pista"><div class="bar" style="width:${x[campo] / max * 100}%"></div></div><span class="val">${fmt(x)}</span></div>`).join('')}</div>`;
+}
+
+let verTodosClientes = false;
+function tablaClientes(l) {
+  if (!l.length) return '<div class="vacio">Sin datos en el periodo.</div>';
+  const vista = verTodosClientes ? l : l.slice(0, 12);
+  setTimeout(() => { const b = $('masClientes'); if (b) b.onclick = () => { verTodosClientes = !verTodosClientes; cargarMetricas(); }; });
+  return `<div class="tabla"><table><thead><tr><th>Cliente</th><th>Servicio</th><th class="num">Tickets</th><th class="num">Horas</th></tr></thead><tbody>
+    ${vista.map(c => `<tr><td>${esc(c.nombre)}</td><td><span class="pastilla">${esc(c.servicio)}</span></td><td class="num">${num(c.tickets)}</td><td class="num"><b>${num(c.horas, 1)}</b></td></tr>`).join('')}
+  </tbody></table></div>${l.length > 12 ? `<button class="boton sec peq" id="masClientes" style="margin-top:10px">${verTodosClientes ? 'Ver menos' : `Ver los ${l.length} clientes`}</button>` : ''}`;
+}
+
+function bloqueNps(r) {
+  const n = r.nps;
+  if (!n.respuestas) return `<div class="vacio" style="padding:20px 0">Aún no hay valoraciones en el periodo. Llegan al cerrar cada ticket.</div>`;
+  const seg = [['Detractores (0–6)', n.detractores, '#e34948'], ['Pasivos (7–8)', n.pasivos, '#c3c2b7'], ['Promotores (9–10)', n.promotores, '#2a78d6']];
+  const mejoras = r.mejoras.filter(m => m.mejora);
+  return `<div style="display:flex;gap:18px;align-items:baseline"><div style="font-size:40px;font-weight:700;letter-spacing:-.02em">${n.score > 0 ? '+' : ''}${n.score}</div><div style="color:var(--bruma);font-size:13px">NPS · ${num(n.media5, 1)}/5 de media · ${n.respuestas} respuestas</div></div>
+    <div class="apilada">${seg.filter(s => s[1]).map(s => `<div style="flex:${s[1]};background:${s[2]}" data-tip="${s[0]}: ${s[1]}"></div>`).join('')}</div>
+    <div class="claves">${seg.map(s => `<span><i style="background:${s[2]}"></i>${s[0]}: <b style="color:var(--pizarra)">${s[1]}</b></span>`).join('')}</div>
+    <h3 style="margin-top:16px">Mejoras que piden los clientes</h3>
+    ${mejoras.length ? `<div class="tabla"><table><tbody>${mejoras.slice(0, 8).map(m => `<tr class="clic" data-id="${m.id}"><td style="width:42px"><span class="pastilla ${m.nps >= 9 ? 'ok' : m.nps >= 7 ? '' : 'critico'}">${m.nps ?? '—'}</span></td><td>«${esc(m.mejora)}»<div style="font-size:12px;color:var(--muted)">${esc(m.cliente)} · ${fecha(m.fecha)}</div></td></tr>`).join('')}</tbody></table></div>` : '<div style="font-size:13px;color:var(--muted)">Nadie ha dejado comentarios todavía.</div>'}`;
+}
+
+function bloqueComercial(r) {
+  const max = r.diasRespuesta;
+  const pend = r.comercial.filter(c => c.estado === 'Firmado, pendiente de pago');
+  const firm = r.comercial.filter(c => c.estado.startsWith('Firmado') || c.estado === 'Pagado');
+  return `${r.comercialEjemplo ? '<div class="aviso" style="margin-bottom:12px">Datos de ejemplo: falta conectar la API de Holded (variable HOLDED_API_KEY en Render).</div>' : ''}
+    <div class="extra"><span>Firmados sin pagar: <b>${pend.length} de ${firm.length}</b> (${firm.length ? Math.round(pend.length / firm.length * 100) : 0}%)</span><span>Plazo de respuesta del cliente: <b>${max} días</b></span></div>
+    <div class="tabla"><table><thead><tr><th>Cliente</th><th>Documento</th><th>Tipo</th><th class="num">Importe</th><th>Fecha</th><th>Estado</th><th>Tiempo</th></tr></thead><tbody>
+    ${r.comercial.map(c => {
+      const cerrado = c.estado === 'Pagado' || c.estado === 'Rechazado';
+      const [n, t] = cerrado ? ['', c.estado] : c.dias <= max / 2 ? ['ok', `✓ ${c.dias} días`] : c.dias <= max ? ['atencion', `! ${c.dias} días`] : ['critico', `✕ ${c.dias} días`];
+      return `<tr><td>${esc(c.cliente)}</td><td>${esc(c.documento)}</td><td>${esc(c.tipo)}</td><td class="num">${num(c.importe, 2)} €</td><td>${fecha(c.fecha)}</td><td>${esc(c.estado)}</td><td><span class="pastilla ${n}">${t}</span></td></tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+
+// ================= Clientes =================
+async function cargarClientes() {
+  if (!clientesCache) clientesCache = await api('/api/clientes');
+  return clientesCache;
+}
+let filtroCli = { q: '', sin: false };
+// Falta clasificar: sin servicio, o Implementación/Premium sin origen (en Kit Digital el origen no aplica).
+const pendiente = x => x.servicio === 'Sin clasificar' || (['Implementación', 'Premium'].includes(x.servicio) && x.tipo_cliente === 'Sin clasificar');
+function vistaClientes() {
+  $('vista').innerHTML = `
+    <div class="cabeza"><h1>Clientes</h1><span style="color:var(--muted);font-size:13px">El servicio y el origen se guardan por cliente y cuentan en todas sus incidencias.</span></div>
+    <div class="filtros">
+      <input class="campo" id="cq" placeholder="Buscar cliente, correo o teléfono…" style="min-width:260px" value="${esc(filtroCli.q)}">
+      <label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" id="csin" ${filtroCli.sin ? 'checked' : ''}> Solo pendientes de clasificar</label>
+      <span class="der" style="font-size:13px;color:var(--muted)" id="ccuenta"></span>
+    </div>
+    <div class="contenido"><section class="tarjeta" style="padding:6px 8px"><div class="tabla" id="ctabla"><div class="vacio">Cargando…</div></div></section></div>`;
+  $('cq').oninput = e => { filtroCli.q = e.target.value; pintarClientes(); };
+  $('csin').onchange = e => { filtroCli.sin = e.target.checked; pintarClientes(); };
+  clientesCache = null;
+  cargarClientes().then(pintarClientes).catch(fallo);
+}
+function pintarClientes() {
+  const c = clientesCache;
+  if (!c || !$('ctabla')) return;
+  const q = filtroCli.q.trim().toLowerCase();
+  const l = c.clientes.filter(x => (!filtroCli.sin || pendiente(x))
+    && (!q || `${x.nombre} ${x.emails.join(' ')} ${x.telefonos.join(' ')}`.toLowerCase().includes(q)));
+  $('ccuenta').textContent = `${l.length} de ${c.clientes.length} clientes · ${c.clientes.filter(pendiente).length} por clasificar`;
+  const sel = (campo, lista, v) => `<select class="campo" data-campo="${campo}" style="padding:5px 7px;font-size:13px">${lista.map(o => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+  $('ctabla').innerHTML = l.length ? `<table><thead><tr><th>Cliente</th><th>Servicio</th><th>Origen</th><th class="num">Tickets</th><th class="num">Abiertos</th><th>Último</th><th>Contacto</th><th></th></tr></thead><tbody>
+    ${l.slice(0, 300).map(x => `<tr data-nombre="${esc(x.nombre)}"><td><b>${esc(x.nombre)}</b></td><td>${sel('servicio', c.servicios, x.servicio)}</td><td>${sel('tipo_cliente', c.origenes, x.tipo_cliente)}</td><td class="num">${x.tickets}</td><td class="num">${x.abiertos || ''}</td><td>${x.ultimo ? fecha(x.ultimo) : ''}</td><td style="font-size:12px;color:var(--bruma)">${esc(x.emails[0] || x.telefonos[0] || '')}${x.emails.length > 1 ? ` +${x.emails.length - 1}` : ''}</td><td><button class="boton sec peq" data-fusion>Fusionar…</button></td></tr>`).join('')}
+  </tbody></table>` : '<div class="vacio">Ningún cliente coincide.</div>';
+  $('ctabla').onchange = async e => {
+    const s = e.target.closest('select[data-campo]');
+    if (!s) return;
+    const nombre = s.closest('tr').dataset.nombre;
+    try {
+      await api('/api/clientes', { nombre, [s.dataset.campo]: s.value });
+      const x = clientesCache.clientes.find(y => y.nombre === nombre);
+      x[s.dataset.campo] = s.value;
+      aviso(`${nombre}: ${s.value}`);
+    } catch (err) { fallo(err); }
+  };
+  $('ctabla').onclick = e => {
+    if (!e.target.closest('[data-fusion]')) return;
+    const de = e.target.closest('tr').dataset.nombre;
+    dialogo(`<h3>Fusionar «${esc(de)}»</h3><p class="sub">Todas sus incidencias pasan al cliente que elijas; «${esc(de)}» queda como nombre de contacto. No se puede deshacer desde aquí.</p>
+      <label>Es el mismo cliente que…</label><input class="campo" name="a" list="dlFusion" placeholder="Escribe para buscar" required>
+      <datalist id="dlFusion">${c.clientes.filter(x => x.nombre !== de).map(x => `<option value="${esc(x.nombre)}">`).join('')}</datalist>
+      <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Fusionar</button></div>`,
+      async f => {
+        const a = f.a.value.trim();
+        if (!c.clientes.some(x => x.nombre === a)) { aviso('Elige un cliente de la lista.', true); return false; }
+        const r = await api('/api/clientes/fusionar', { de, a });
+        aviso(`${r.movidos} incidencias pasadas a ${a}.`);
+        clientesCache = null;
+        await cargarClientes();
+        pintarClientes();
+      });
+  };
+}
+
+// ================= Arranque =================
+(async () => {
+  try {
+    [equipo, portal] = await Promise.all([api('/api/equipo'), fetch('/api/portal').then(r => r.json())]);
+    [H_INI, H_FIN] = (portal.horario || '09:00-18:00').split('-').map(h => { const [a, b] = h.split(':').map(Number); return a * 60 + (b || 0); });
+  } catch (e) { return fallo(e); }
+  const guardadoYo = leer('tecnico', '');
+  $('yo').innerHTML = `<option value="">— Elige quién eres —</option>` + equipo.map(n => `<option ${n === guardadoYo ? 'selected' : ''}>${esc(n)}</option>`).join('');
+  $('yo').onchange = () => { escribir('tecnico', yo()); $('yo').classList.toggle('falta', !yo()); if ($('items')) pintarLista(selActual); };
+  $('salir').onclick = async () => { await fetch('/api/logout', { method: 'POST' }); location.href = '/admin/login'; };
+  cargarClientes().catch(() => {});
+  ruta();
+  if (!yo()) $('yo').classList.add('falta');
+})();
+</script>
+</body>
+</html>

@@ -5,7 +5,7 @@ const tickets = require('./tickets');
 
 const env = process.env;
 const URL_PUBLICA = (env.PUBLIC_URL || '').replace(/\/$/, '');
-const enlace = t => `${URL_PUBLICA}/soporte?t=${t.token}`;
+const enlace = t => `${URL_PUBLICA}/t/${t.token}`;
 
 // ---------- WhatsApp ----------
 const WA = {

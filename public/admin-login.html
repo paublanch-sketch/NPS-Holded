@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Entrar · Panel de soporte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --rojo: #C81D25; --cal: #F9F9F8; --bruma: #5B616A; --pizarra: #1C1C1C; --linea: #e6e5e1; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; font: 15px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--pizarra);
+         background: radial-gradient(1200px 600px at 10% -10%, #fff 0%, transparent 60%), var(--cal); }
+  .caja { width: 100%; max-width: 400px; }
+  .marca { font-weight: 800; letter-spacing: .14em; font-size: 15px; margin-bottom: 26px; text-align: center; }
+  .marca span { color: var(--rojo); }
+  form { background: #fff; border: 1px solid var(--linea); border-radius: 16px; padding: 28px; box-shadow: 0 1px 2px rgba(28,28,28,.04), 0 16px 40px rgba(28,28,28,.08); }
+  h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: -.01em; }
+  p { margin: 0 0 22px; color: var(--bruma); font-size: 14px; }
+  label { display: block; font-size: 13px; font-weight: 600; margin: 14px 0 6px; }
+  .campo { position: relative; }
+  input { width: 100%; font: inherit; color: inherit; border: 1px solid #d9d8d3; border-radius: 10px; padding: 12px 13px; background: #fff; transition: border-color .15s, box-shadow .15s; }
+  input:focus { outline: none; border-color: var(--pizarra); box-shadow: 0 0 0 3px rgba(28,28,28,.08); }
+  input[aria-invalid="true"] { border-color: var(--rojo); }
+  .ver { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font: inherit; font-size: 13px; font-weight: 600; color: var(--bruma); background: none; border: 0; padding: 6px 8px; cursor: pointer; border-radius: 6px; }
+  .ver:hover { color: var(--pizarra); background: var(--cal); }
+  #clave { padding-right: 76px; }
+  button[type=submit] { width: 100%; margin-top: 22px; font: inherit; font-weight: 600; border: 0; border-radius: 10px; padding: 13px; background: var(--pizarra); color: #fff; cursor: pointer; transition: filter .15s; }
+  button[type=submit]:hover { filter: brightness(1.2); }
+  button[type=submit]:disabled { opacity: .6; cursor: default; }
+  .error { display: flex; gap: 8px; align-items: flex-start; margin-top: 16px; padding: 10px 12px; border-radius: 10px; background: #fbeaeb; color: #8f1219; font-size: 14px; }
+  .error[hidden] { display: none; }
+  .pie { text-align: center; margin-top: 18px; font-size: 13px; color: var(--bruma); }
+  .pie a { color: var(--bruma); }
+</style>
+</head>
+<body>
+<div class="caja">
+  <div class="marca">INTERACTIVOS<span>.</span></div>
+  <form id="f" novalidate>
+    <h1>Panel de soporte</h1>
+    <p>Bandeja de incidencias y métricas del servicio Holded.</p>
+    <label for="usuario">Usuario</label>
+    <input id="usuario" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus>
+    <label for="clave">Contraseña</label>
+    <div class="campo">
+      <input id="clave" type="password" autocomplete="current-password" required>
+      <button type="button" class="ver" id="ver" aria-pressed="false">Mostrar</button>
+    </div>
+    <button type="submit" id="entrar">Entrar</button>
+    <div class="error" id="error" role="alert" hidden></div>
+  </form>
+  <div class="pie">¿Eres cliente? <a href="/">Abre una incidencia aquí</a></div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+$('ver').onclick = () => {
+  const visible = $('clave').type === 'password';
+  $('clave').type = visible ? 'text' : 'password';
+  $('ver').textContent = visible ? 'Ocultar' : 'Mostrar';
+  $('ver').setAttribute('aria-pressed', visible);
+  $('clave').focus();
+};
+$('f').onsubmit = async e => {
+  e.preventDefault();
+  const usuario = $('usuario').value.trim(), clave = $('clave').value;
+  $('error').hidden = true;
+  ['usuario', 'clave'].forEach(k => $(k).removeAttribute('aria-invalid'));
+  if (!usuario || !clave) {
+    if (!usuario) $('usuario').setAttribute('aria-invalid', 'true');
+    if (!clave) $('clave').setAttribute('aria-invalid', 'true');
+    $('error').textContent = 'Escribe el usuario y la contraseña.';
+    $('error').hidden = false;
+    return;
+  }
+  $('entrar').disabled = true;
+  $('entrar').textContent = 'Entrando…';
+  try {
+    const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usuario, clave }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'No se ha podido entrar.');
+    const next = new URLSearchParams(location.search).get('next');
+    location.replace(next && next.startsWith('/admin') ? next : '/admin');
+  } catch (err) {
+    $('error').textContent = err.message;
+    $('error').hidden = false;
+    $('clave').setAttribute('aria-invalid', 'true');
+    $('clave').select();
+    $('entrar').disabled = false;
+    $('entrar').textContent = 'Entrar';
+  }
+};
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 // Tickets de soporte Holded: portal del cliente (público, por token) y consola del técnico.
 const crypto = require('crypto');
-const store = require('./store');
+const { tickets: store } = require('./store');
 
 // Hora local sin zona, el mismo formato que las fechas del Sheet ("2026-10-26T15:04:05").
 const ahora = () => {
@@ -29,6 +29,13 @@ const vistaCliente = t => ({
 });
 
 const vistaTecnico = t => ({ ...t, horas: horas(t), activa: activa(t) || null });
+
+// Horas por día de trabajo, para repartirlas por periodo en las métricas: cada sesión del
+// cronómetro en su fecha y las horas del Sheet en la fecha de cierre (o de entrada).
+const trabajo = t => [
+  ...(t.horas_previas ? [{ fecha: (t.cierre || t.entrada).slice(0, 10), horas: t.horas_previas, tecnico: t.tecnico }] : []),
+  ...(t.sesiones || []).map(x => ({ fecha: x.inicio.slice(0, 10), horas: (new Date(x.fin || ahora()) - new Date(x.inicio)) / 3600000, tecnico: x.tecnico || t.tecnico })),
+];
 
 async function porToken(token) {
   return (await store.todos()).find(t => t.token === token);
@@ -129,6 +136,7 @@ async function crear(b) {
     servicio: 'Sin clasificar',
     tipo_cliente: 'Sin clasificar',
     canal: CANALES.includes(b.canal) ? b.canal : 'Portal',
+    urgente: b.urgente === true,
     estado: 'Nuevo',
     tecnico: '',
     entrada,
@@ -151,9 +159,22 @@ const ACCIONES = {
     if (!t.tecnico) t.tecnico = b.tecnico || '';
     if (!nota && t.estado === 'Nuevo') t.estado = 'En curso';
   },
-  asignar(t, b) { t.tecnico = String(b.tecnico || ''); },
+  asignar(t, b) {
+    t.tecnico = String(b.asignado ?? '').slice(0, 60);
+    t.mensajes.push({ de: 'nota', autor: b.tecnico, texto: t.tecnico ? `Asignado a ${t.tecnico}` : 'Sin asignar', fecha: ahora() });
+  },
   datos(t, b) {
-    for (const k of ['servicio', 'tipo_cliente', 'tipo_incidencia']) if (b[k]) t[k] = String(b[k]).slice(0, 80);
+    if (b.tipo_incidencia) t.tipo_incidencia = String(b.tipo_incidencia).slice(0, 80);
+  },
+  // Tiempo trabajado fuera del cronómetro (una llamada, un correo largo...).
+  tiempo(t, b) {
+    const min = Math.round(Number(b.minutos));
+    if (!(min > 0 && min <= 600)) throw Object.assign(new Error('Entre 1 y 600 minutos'), { status: 400 });
+    const fin = new Date();
+    const inicio = new Date(fin - min * 60000);
+    const local = d => new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 19);
+    t.sesiones.push({ tipo: 'manual', tecnico: b.tecnico, inicio: local(inicio), fin: local(fin) });
+    t.mensajes.push({ de: 'nota', autor: b.tecnico, texto: `+${min} min apuntados a mano${b.motivo ? ': ' + String(b.motivo).slice(0, 200) : ''}`, fecha: ahora() });
   },
   iniciar(t, b) {
     pararSesion(t);
@@ -171,10 +192,15 @@ const ACCIONES = {
     if (!t.tecnico) t.tecnico = b.tecnico || '';
     t.estado = 'En curso';
   },
+  // Marca o quita la urgencia (el cliente la marca al abrir; el técnico puede corregirla).
+  urgencia(t, b) { t.urgente = b.urgente === true; },
   pendiente(t) { pararSesion(t); t.estado = 'Pendiente cliente'; },
   cerrar(t, b) {
     ACCIONES.datos(t, b);
     pararSesion(t);
+    if (Number(b.minutos) > 0) ACCIONES.tiempo(t, { tecnico: b.tecnico, minutos: b.minutos, motivo: 'al cerrar' });
+    if (String(b.solucion || '').trim()) t.mensajes.push({ de: 'nota', autor: b.tecnico, texto: 'Solución: ' + String(b.solucion).trim().slice(0, 3000), fecha: ahora() });
+    if (!t.tecnico) t.tecnico = b.tecnico || '';
     t.estado = 'Cerrado';
     t.cierre = ahora();
     t.mensajes.push({ de: 'sistema', texto: 'Hemos cerrado tu incidencia. ¿Nos ayudas con una valoración de 10 segundos?', fecha: ahora() });
@@ -201,14 +227,14 @@ async function rutasPublicas(req, res, ruta) {
     const b = await leerCuerpo(req);
     const t = await crear({ ...b, canal: 'Portal' });
     avisar(t, 'nuevo');
-    return json(res, { token: t.token }, 201), true;
+    return json(res, { token: t.token, id: t.id }, 201), true;
   }
   // Entrada automática para WhatsApp o correo (Make, Zapier, webhook de Meta...) con clave compartida.
   if (req.method === 'POST' && ruta === '/api/entrada') {
     if (!ENTRADA_KEY || req.headers['x-entrada-key'] !== ENTRADA_KEY) return json(res, { error: 'Clave no válida' }, 401), true;
     const t = await crear(await leerCuerpo(req));
     avisar(t, 'nuevo');
-    return json(res, { id: t.id, enlace: `/soporte?t=${t.token}` }, 201), true;
+    return json(res, { id: t.id, enlace: `/t/${t.token}` }, 201), true;
   }
   const m = ruta.match(/^\/api\/soporte\/([a-f0-9]{32})(\/mensaje|\/nps)?$/);
   if (!m) return false;
@@ -235,16 +261,18 @@ async function rutasPublicas(req, res, ruta) {
 }
 
 // Rutas de la consola (ya autenticadas).
-async function rutasConsola(req, res, ruta) {
+async function rutasConsola(req, res, ruta, equipo) {
+  // Con un solo acceso de admin, el técnico lo elige el panel; solo vale si es del equipo.
+  const quien = b => ({ ...b, tecnico: equipo.includes(b.tecnico) ? b.tecnico : '', asignado: equipo.includes(b.asignado) ? b.asignado : '' });
   if (req.method === 'GET' && ruta === '/api/tickets') {
     const l = (await store.todos()).map(vistaTecnico).sort((a, b) => b.entrada.localeCompare(a.entrada));
     return json(res, l), true;
   }
   // Alta manual desde la consola: llamadas, WhatsApp o correos que llegan fuera del portal.
   if (req.method === 'POST' && ruta === '/api/tickets') {
-    const b = await leerCuerpo(req);
+    const b = quien(await leerCuerpo(req));
     const t = await crear(b);
-    if (b.tecnico) ACCIONES.asignar(t, b);
+    t.tecnico = b.tecnico || '';
     await store.guardar(t);
     avisar(t, 'nuevo');
     return json(res, vistaTecnico(t), 201), true;
@@ -254,21 +282,21 @@ async function rutasConsola(req, res, ruta) {
   const t = await porId(m[1]);
   if (!t) return json(res, { error: 'Ticket no encontrado' }, 404), true;
   if (!ACCIONES[m[2]]) return json(res, { error: 'Acción desconocida' }, 400), true;
-  const b = await leerCuerpo(req);
+  const b = quien(await leerCuerpo(req));
   ACCIONES[m[2]](t, b);
   await store.guardar(t);
   avisar(t, m[2], b);
   return json(res, vistaTecnico(t)), true;
 }
 
-// Para el dashboard: mismos campos que las filas del Sheet.
+// Para las métricas: lo justo de cada ticket, sin mensajes.
 async function paraDashboard() {
   return (await store.todos()).map(t => ({
-    cliente: t.cliente, tipo_incidencia: t.tipo_incidencia, tecnico: t.tecnico, estado: t.estado,
-    entrada: t.entrada, cierre: t.cierre, primera_respuesta: t.primera_respuesta, horas: horas(t),
+    id: t.id, origen: t.origen, cliente: t.cliente, tipo_incidencia: t.tipo_incidencia, tecnico: t.tecnico, estado: t.estado,
+    entrada: t.entrada, cierre: t.cierre, primera_respuesta: t.primera_respuesta, horas: horas(t), trabajo: trabajo(t),
     nps: t.nps, mejora: t.mejora, servicio: t.servicio, tipo_cliente: t.tipo_cliente, canal: t.canal,
     interno: !!t.interno,
   }));
 }
 
-module.exports = { rutasPublicas, rutasConsola, paraDashboard, json, recibir, avisos, telefonoWa };
+module.exports = { rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };
