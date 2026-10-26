@@ -25,15 +25,20 @@ function almacenFichero() {
 function almacenPostgres(url) {
   const { Pool } = require('pg');
   const pool = new Pool({ connectionString: url, ssl: url.includes('localhost') ? false : { rejectUnauthorized: false } });
-  const listo = pool.query('CREATE TABLE IF NOT EXISTS tickets (id SERIAL PRIMARY KEY, doc JSONB NOT NULL)');
+  // Si Postgres falla al arrancar, se dice en el log y la siguiente consulta lo reintenta.
+  let creada = null;
+  const preparar = () => creada ||= pool.query('CREATE TABLE IF NOT EXISTS tickets (id SERIAL PRIMARY KEY, doc JSONB NOT NULL)')
+    .catch(e => { creada = null; console.error('Postgres:', e.message); throw e; });
+  preparar().catch(() => {});
+  pool.on('error', e => console.error('Postgres (conexión):', e.message));
   return {
     async todos() {
-      await listo;
+      await preparar();
       const { rows } = await pool.query('SELECT id, doc FROM tickets ORDER BY id');
       return rows.map(r => ({ ...r.doc, id: r.id }));
     },
     async guardar(t) {
-      await listo;
+      await preparar();
       if (t.id) await pool.query('UPDATE tickets SET doc = $2 WHERE id = $1', [t.id, t]);
       else t.id = (await pool.query('INSERT INTO tickets (doc) VALUES ($1) RETURNING id', [t])).rows[0].id;
       return t;
