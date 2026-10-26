@@ -1,7 +1,7 @@
 // Google Calendar y Meet con una cuenta de servicio con delegación de dominio de Workspace:
 // crea reuniones de Meet en el calendario del organizador, busca huecos libres para que el
 // cliente reserve y, al terminar, pregunta a Meet cuánto duró de verdad la reunión.
-// Sin GOOGLE_SA_JSON la app sigue con Jitsi y nada de esto se activa.
+// Sin GOOGLE_SA_JSON nada de esto se activa y el panel pide pegar un enlace de Meet.
 const crypto = require('crypto');
 
 const env = process.env;
