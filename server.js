@@ -1,15 +1,16 @@
-// Dashboard Servicio Holded — servidor sin dependencias (Node 18+).
-// Fuentes: tickets (Google Sheet publicado como CSV) y comercial (API de Holded).
-// Sin variables de entorno usa los datos de ejemplo de data/.
+// Servicio Holded: portal de soporte, consola del técnico y dashboard (Node 18+).
+// Fuentes: tickets de la app, histórico del Google Sheet (CSV, opcional) y comercial (API de Holded).
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const tickets = require('./tickets');
 
 const PORT = process.env.PORT || 3000;
 const SHEET_CSV_URL = process.env.SHEET_CSV_URL || '';
 const HOLDED_API_KEY = process.env.HOLDED_API_KEY || '';
 const DASH_USER = process.env.DASH_USER || '';
 const DASH_PASS = process.env.DASH_PASS || '';
+const TECNICOS = (process.env.TECNICOS || 'Blanch,David,Pablo,Pako').split(',').map(s => s.trim()).filter(Boolean);
 
 const SLA_MIN = 60;           // primera respuesta en menos de 1h
 const RESPUESTA_CLIENTE = 15; // días máximos para que el cliente firme/pague
@@ -34,11 +35,12 @@ function parseCSV(text) {
     .map(r => Object.fromEntries(head.map((h, i) => [h.trim(), (r[i] || '').trim()])));
 }
 
+// Tickets de la app más el histórico del Sheet, si se ha publicado su CSV.
 async function cargarTickets() {
-  const csv = SHEET_CSV_URL
-    ? await (await fetch(SHEET_CSV_URL)).text()
-    : fs.readFileSync(path.join(__dirname, 'data', 'tickets-ejemplo.csv'), 'utf8');
-  return parseCSV(csv).map(normalizar).filter(esHolded);
+  const historico = SHEET_CSV_URL
+    ? parseCSV(await (await fetch(SHEET_CSV_URL)).text()).map(normalizar).filter(esHolded)
+    : [];
+  return [...historico, ...(await tickets.paraDashboard())];
 }
 
 // "13/01/2026 18:05:46" o "2/02/2026" → ISO local "2026-01-13T18:05"
@@ -152,23 +154,33 @@ function autorizado(req) {
   return tipo === 'Basic' && Buffer.from(val || '', 'base64').toString() === `${DASH_USER}:${DASH_PASS}`;
 }
 
+const pagina = (res, nombre) => {
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  fs.createReadStream(path.join(__dirname, 'public', nombre)).pipe(res);
+};
+
 http.createServer(async (req, res) => {
-  if (!autorizado(req)) {
-    res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="Servicio Holded"' });
-    return res.end('Acceso restringido');
-  }
+  const ruta = req.url.split('?')[0];
   try {
-    if (req.url.startsWith('/api/resumen')) {
-      const [t, c] = await Promise.all([cargarTickets(), cargarComercial()]);
-      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      return res.end(JSON.stringify(resumen(t, c)));
+    // Público: el portal del cliente y su API por token.
+    if (ruta === '/salud') { res.writeHead(200); return res.end('ok'); }
+    if (ruta === '/soporte') return pagina(res, 'soporte.html');
+    if (await tickets.rutasPublicas(req, res, ruta)) return;
+
+    if (!autorizado(req)) {
+      res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="Servicio Holded"' });
+      return res.end('Acceso restringido');
     }
-    if (req.url === '/salud') { res.writeHead(200); return res.end('ok'); }
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    fs.createReadStream(path.join(__dirname, 'public', 'index.html')).pipe(res);
+    if (ruta === '/api/resumen') {
+      const [t, c] = await Promise.all([cargarTickets(), cargarComercial()]);
+      return tickets.json(res, resumen(t, c));
+    }
+    if (ruta === '/api/config') return tickets.json(res, { tecnicos: TECNICOS });
+    if (await tickets.rutasConsola(req, res, ruta)) return;
+    if (ruta === '/consola') return pagina(res, 'consola.html');
+    pagina(res, 'index.html');
   } catch (e) {
     console.error(e);
-    res.writeHead(500, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: e.message }));
+    tickets.json(res, { error: e.message }, e.status || 500);
   }
 }).listen(PORT, () => console.log(`Dashboard en http://localhost:${PORT}`));

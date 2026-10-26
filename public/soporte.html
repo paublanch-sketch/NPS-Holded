@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Soporte Holded</title>
+<style>
+  :root { --bg:#f4f5fb; --card:#fff; --ink:#1b1f2e; --mute:#6b7185; --line:#e4e6ef;
+          --brand:#4f46e5; --brand2:#eef0ff; --ok:#16a34a; --warn:#d97706; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--bg); color:var(--ink); }
+  .wrap { max-width:640px; margin:0 auto; padding:28px 16px 40px; }
+  .top { display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+  .logo { width:36px; height:36px; border-radius:10px; background:var(--brand); color:#fff; display:grid; place-items:center; font-weight:800; }
+  h1 { font-size:22px; margin:0; }
+  .sub { color:var(--mute); font-size:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px; box-shadow:0 1px 2px rgba(0,0,0,.03); }
+  label { display:block; font-size:13px; font-weight:600; margin:14px 0 6px; }
+  input, textarea, select { width:100%; font:inherit; padding:11px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:inherit; }
+  input:focus, textarea:focus, select:focus { outline:2px solid var(--brand2); border-color:var(--brand); }
+  textarea { min-height:120px; resize:vertical; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  button { font:inherit; font-weight:600; border:0; border-radius:10px; padding:12px 16px; cursor:pointer; background:var(--brand); color:#fff; }
+  button:disabled { opacity:.5; cursor:default; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { background:#fff; color:var(--ink); border:1px solid var(--line); padding:8px 12px; font-weight:500; }
+  .chip.on { background:var(--brand2); border-color:var(--brand); color:var(--brand); }
+  .estado { display:inline-block; font-size:12px; font-weight:700; padding:3px 10px; border-radius:99px; background:var(--brand2); color:var(--brand); }
+  .pasos { display:flex; gap:6px; margin:14px 0 4px; }
+  .paso { flex:1; height:6px; border-radius:6px; background:var(--line); }
+  .paso.on { background:var(--brand); }
+  .chat { display:flex; flex-direction:column; gap:10px; margin:16px 0; max-height:55vh; overflow:auto; padding-right:4px; }
+  .msg { max-width:82%; padding:10px 13px; border-radius:14px; white-space:pre-wrap; word-wrap:break-word; }
+  .msg.cliente { align-self:flex-end; background:var(--brand); color:#fff; border-bottom-right-radius:4px; }
+  .msg.tecnico { align-self:flex-start; background:#f1f2f7; border-bottom-left-radius:4px; }
+  .msg.sistema { align-self:center; background:#fff8e6; color:#7a5200; font-size:14px; text-align:center; }
+  .msg small { display:block; opacity:.7; font-size:11px; margin-top:4px; }
+  .enviar { display:flex; gap:8px; }
+  .enviar textarea { min-height:46px; height:46px; }
+  .video { display:flex; align-items:center; justify-content:space-between; gap:12px; background:#ecfdf3; border:1px solid #b7ebc9; border-radius:12px; padding:12px 14px; margin-top:14px; }
+  .video a { background:var(--ok); color:#fff; padding:10px 14px; border-radius:10px; text-decoration:none; font-weight:700; white-space:nowrap; }
+  .nps { display:grid; grid-template-columns:repeat(11,1fr); gap:4px; margin:12px 0; }
+  .nps button { padding:10px 0; background:#fff; color:var(--ink); border:1px solid var(--line); }
+  .nps button.on { background:var(--brand); color:#fff; border-color:var(--brand); }
+  .escala { display:flex; justify-content:space-between; font-size:12px; color:var(--mute); }
+  .gracias { text-align:center; padding:20px 0; }
+  .err { color:#b91c1c; font-size:14px; margin-top:10px; }
+  .hidden { display:none; }
+  @media (max-width:520px){ .row{grid-template-columns:1fr} .nps{grid-template-columns:repeat(6,1fr)} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div class="logo">H</div><div><h1>Soporte Holded</h1><div class="sub">Te respondemos en menos de 1 hora en horario laboral</div></div></div>
+
+  <!-- Alta -->
+  <form id="alta" class="card hidden">
+    <div class="sub">Cuéntanos qué pasa y un técnico te contestará aquí mismo.</div>
+    <label>¿Sobre qué es?</label>
+    <div class="chips" id="tipos"></div>
+    <label for="desc">Describe la incidencia</label>
+    <textarea id="desc" required placeholder="Ej.: al aprobar una factura me sale un error de Verifactu…"></textarea>
+    <div class="row">
+      <div><label for="empresa">Empresa o autónomo</label><input id="empresa" required autocomplete="organization"></div>
+      <div><label for="contacto">Tu nombre</label><input id="contacto" autocomplete="name"></div>
+    </div>
+    <div class="row">
+      <div><label for="email">Correo</label><input id="email" type="email" required autocomplete="email"></div>
+      <div><label for="tel">Teléfono (opcional)</label><input id="tel" type="tel" autocomplete="tel"></div>
+    </div>
+    <div style="margin-top:18px"><button id="btnAlta">Enviar incidencia</button></div>
+    <div class="err" id="errAlta"></div>
+  </form>
+
+  <!-- Ticket -->
+  <div id="ticket" class="card hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <div><b id="tTitulo"></b><div class="sub" id="tSub"></div></div>
+      <span class="estado" id="tEstado"></span>
+    </div>
+    <div class="pasos"><div class="paso"></div><div class="paso"></div><div class="paso"></div></div>
+    <div class="sub" id="tPaso"></div>
+    <div id="video" class="video hidden"><div><b>Videollamada en curso</b><div class="sub">Se abre en el navegador, no hay que instalar nada.</div></div><a id="videoLink" target="_blank" rel="noopener">Unirme</a></div>
+    <div class="chat" id="chat"></div>
+    <div id="valorar" class="hidden">
+      <b>¿Qué probabilidad hay de que nos recomiendes?</b>
+      <div class="nps" id="nps"></div>
+      <div class="escala"><span>Nada probable</span><span>Muy probable</span></div>
+      <label for="mejora">¿Qué mejorarías? (opcional)</label>
+      <textarea id="mejora" style="min-height:70px"></textarea>
+      <div style="margin-top:12px"><button id="btnNps" disabled>Enviar valoración</button></div>
+    </div>
+    <div id="graciasNps" class="gracias hidden"><b>¡Gracias por tu valoración!</b><div class="sub">Si vuelves a necesitarnos, escríbenos aquí debajo.</div></div>
+    <form class="enviar" id="formMsg"><textarea id="msg" placeholder="Escribe un mensaje…"></textarea><button>Enviar</button></form>
+  </div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const hora = iso => iso ? new Date(iso).toLocaleString('es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+const token = new URLSearchParams(location.search).get('t');
+const TIPOS = ['Duda de uso', 'Facturación / Verifactu', 'Contabilidad', 'Bancos', 'Equipo y fichajes', 'Acceso y usuarios', 'Otra'];
+let tipo = TIPOS[0], nota = null, ultimo = '';
+
+async function api(url, body) {
+  const r = await fetch(url, body ? { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) } : {});
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || 'Error');
+  return d;
+}
+
+if (!token) {
+  $('alta').classList.remove('hidden');
+  $('tipos').innerHTML = TIPOS.map(t => `<button type="button" class="chip${t === tipo ? ' on' : ''}">${t}</button>`).join('');
+  $('tipos').onclick = e => {
+    if (!e.target.matches('.chip')) return;
+    tipo = e.target.textContent;
+    [...$('tipos').children].forEach(b => b.classList.toggle('on', b === e.target));
+  };
+  try { const g = JSON.parse(localStorage.getItem('soporte-datos') || '{}'); for (const k of ['empresa','contacto','email','tel']) if (g[k]) $(k).value = g[k]; } catch {}
+  $('alta').onsubmit = async e => {
+    e.preventDefault();
+    $('btnAlta').disabled = true; $('errAlta').textContent = '';
+    const datos = { empresa:$('empresa').value, contacto:$('contacto').value, email:$('email').value, tel:$('tel').value };
+    try { localStorage.setItem('soporte-datos', JSON.stringify(datos)); } catch {}
+    try {
+      const { token } = await api('/api/soporte', { ...datos, telefono:datos.tel, tipo, descripcion:$('desc').value });
+      location.href = '/soporte?t=' + token;
+    } catch (err) { $('errAlta').textContent = err.message; $('btnAlta').disabled = false; }
+  };
+} else {
+  $('ticket').classList.remove('hidden');
+  $('nps').innerHTML = Array.from({ length:11 }, (_, i) => `<button type="button">${i}</button>`).join('');
+  $('nps').onclick = e => {
+    if (e.target.tagName !== 'BUTTON') return;
+    nota = Number(e.target.textContent);
+    [...$('nps').children].forEach(b => b.classList.toggle('on', b === e.target));
+    $('btnNps').disabled = false;
+  };
+  $('btnNps').onclick = async () => { pintar(await api(`/api/soporte/${token}/nps`, { nps:nota, mejora:$('mejora').value })); };
+  $('formMsg').onsubmit = async e => {
+    e.preventDefault();
+    const texto = $('msg').value.trim();
+    if (!texto) return;
+    $('msg').value = '';
+    pintar(await api(`/api/soporte/${token}/mensaje`, { texto }));
+  };
+  $('msg').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('formMsg').requestSubmit(); } };
+  cargar(); setInterval(cargar, 5000);
+}
+
+async function cargar() {
+  try { pintar(await api(`/api/soporte/${token}`)); }
+  catch (e) { $('ticket').innerHTML = `<b>No encontramos esta incidencia.</b><div class="sub"><a href="/soporte">Abrir una nueva</a></div>`; }
+}
+
+function pintar(t) {
+  $('tTitulo').textContent = `Incidencia #${t.id} · ${t.empresa}`;
+  $('tSub').textContent = t.tecnico ? `Te atiende ${t.tecnico}` : 'Asignando técnico…';
+  $('tEstado').textContent = t.estado;
+  const n = t.estado === 'Cerrado' ? 3 : t.estado === 'Nuevo' ? 1 : 2;
+  [...document.querySelectorAll('.paso')].forEach((p, i) => p.classList.toggle('on', i < n));
+  $('tPaso').textContent = ['Recibida, un técnico la revisará enseguida', 'En curso', 'Resuelta'][n - 1];
+  $('video').classList.toggle('hidden', !t.video);
+  if (t.video) $('videoLink').href = t.video;
+  $('valorar').classList.toggle('hidden', !t.pideValoracion);
+  $('graciasNps').classList.toggle('hidden', t.nps == null);
+  const html = t.mensajes.map(m => `<div class="msg ${m.de}">${esc(m.texto)}${m.enlace ? `<br><a href="${esc(m.enlace)}" target="_blank" rel="noopener">Unirme a la videollamada</a>` : ''}<small>${m.de === 'tecnico' ? esc(m.autor || 'Técnico') + ' · ' : ''}${hora(m.fecha)}</small></div>`).join('');
+  if (html !== ultimo) { $('chat').innerHTML = html; $('chat').scrollTop = 1e9; ultimo = html; }
+}
+</script>
+</body>
+</html>

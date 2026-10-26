@@ -1,17 +1,31 @@
 services:
   - type: web
-    name: dashboard-servicio-holded
+    name: soporte-holded
     runtime: node
     plan: free
-    buildCommand: "true"
+    buildCommand: npm install
     startCommand: node server.js
     healthCheckPath: /salud
     envVars:
-      - key: SHEET_CSV_URL   # Google Sheet de incidencias: Archivo > Compartir > Publicar en la web > CSV
-        sync: false
-      - key: HOLDED_API_KEY  # vacía = datos de ejemplo
-        sync: false
-      - key: DASH_USER       # usuario y contraseña para el jefe (vacío = abierto)
+      - key: TZ
+        value: Europe/Madrid
+      - key: DATABASE_URL
+        fromDatabase:
+          name: soporte-holded-db
+          property: connectionString
+      - key: DASH_USER        # usuario y contraseña de la consola y el dashboard
         sync: false
       - key: DASH_PASS
         sync: false
+      - key: TECNICOS         # ej. Blanch,David,Pablo,Pako
+        sync: false
+      - key: ENTRADA_KEY      # clave para crear tickets desde WhatsApp o correo (cabecera x-entrada-key)
+        sync: false
+      - key: SHEET_CSV_URL    # histórico del Google Sheet publicado como CSV (opcional)
+        sync: false
+      - key: HOLDED_API_KEY   # vacía = datos comerciales de ejemplo
+        sync: false
+
+databases:
+  - name: soporte-holded-db
+    plan: free
