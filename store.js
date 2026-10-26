@@ -1,4 +1,4 @@
-// Almacén por colecciones (tickets, clientes y adjuntos). Con DATABASE_URL usa Postgres,
+// Almacén por colecciones (tickets, clientes, adjuntos y ajustes). Con DATABASE_URL usa Postgres,
 // una tabla por colección con una fila JSONB por documento; sin ella, ficheros JSON en
 // data/ para desarrollo. Render borra el disco en cada despliegue: en producción, Postgres.
 const fs = require('fs');
@@ -68,4 +68,4 @@ function coleccionPostgres(url, nombre) {
 
 const crear = nombre => process.env.DATABASE_URL ? coleccionPostgres(process.env.DATABASE_URL, nombre) : coleccionFichero(nombre);
 
-module.exports = { tickets: crear('tickets'), clientes: crear('clientes'), adjuntos: crear('adjuntos') };
+module.exports = { tickets: crear('tickets'), clientes: crear('clientes'), adjuntos: crear('adjuntos'), ajustes: crear('ajustes') };

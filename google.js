@@ -1,14 +1,20 @@
-// Google Calendar y Meet con una cuenta de servicio con delegación de dominio de Workspace:
-// crea reuniones de Meet en el calendario del organizador, busca huecos libres para que el
-// cliente reserve y, al terminar, pregunta a Meet cuánto duró de verdad la reunión.
-// Sin GOOGLE_SA_JSON nada de esto se activa y el panel pide pegar un enlace de Meet.
+// Google Calendar y Meet: crea reuniones de Meet en el calendario del organizador, busca huecos
+// libres para que el cliente reserve y, al terminar, pregunta a Meet cuánto duró la reunión.
+// Dos formas de dar permiso:
+//   - «Continuar con Google» (GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET): una persona conecta su
+//     cuenta desde Canales y se usa su calendario. No necesita administrador de Workspace.
+//   - Cuenta de servicio con delegación de dominio (GOOGLE_SA_JSON + GOOGLE_ORGANIZADOR).
+// Si hay cliente OAuth, manda él. Sin ninguna de las dos, el panel pide pegar un enlace de Meet.
 const crypto = require('crypto');
+const store = require('./store');
 
 const env = process.env;
 const TZ = 'Europe/Madrid';
-// Para las pruebas se pueden apuntar las tres direcciones a un servidor simulado.
+// Para las pruebas se pueden apuntar las direcciones a un servidor simulado.
 const URLS = {
   token: env.GOOGLE_TOKEN_URL || 'https://oauth2.googleapis.com/token',
+  auth: env.GOOGLE_AUTH_URL || 'https://accounts.google.com/o/oauth2/v2/auth',
+  revocar: env.GOOGLE_REVOKE_URL || 'https://oauth2.googleapis.com/revoke',
   calendar: (env.GOOGLE_CALENDAR_URL || 'https://www.googleapis.com/calendar/v3').replace(/\/$/, ''),
   meet: (env.GOOGLE_MEET_URL || 'https://meet.googleapis.com/v2').replace(/\/$/, ''),
 };
@@ -25,8 +31,32 @@ function cuenta() {
   try { return JSON.parse(raw.startsWith('{') ? raw : Buffer.from(raw, 'base64').toString('utf8')); }
   catch { return { error: 'GOOGLE_SA_JSON no es un JSON válido' }; }
 }
-const organizador = () => (env.GOOGLE_ORGANIZADOR || env.MAIL_USER || '').trim().toLowerCase();
-const activo = () => { const c = cuenta(); return !!(c && !c.error && c.client_email && c.private_key && organizador()); };
+// «Continuar con Google»: el permiso (refresh token) se guarda cifrado en la base de datos,
+// en la colección «ajustes», y se carga en memoria al arrancar.
+const clienteId = () => (env.GOOGLE_CLIENT_ID || '').trim();
+const clienteSecreto = () => (env.GOOGLE_CLIENT_SECRET || '').trim();
+const modoOAuth = () => !!(clienteId() && clienteSecreto());
+let conexion = null; // { email, refresh, conectado, alcances }
+
+const claveCifrado = () => crypto.createHash('sha256').update('soporte-google:' + clienteSecreto()).digest();
+function cifrar(texto) {
+  const iv = crypto.randomBytes(12), c = crypto.createCipheriv('aes-256-gcm', claveCifrado(), iv);
+  const datos = Buffer.concat([c.update(texto, 'utf8'), c.final()]);
+  return [iv, c.getAuthTag(), datos].map(b => b.toString('base64')).join('.');
+}
+function descifrar(s) {
+  const [iv, tag, datos] = s.split('.').map(b => Buffer.from(b, 'base64'));
+  const d = crypto.createDecipheriv('aes-256-gcm', claveCifrado(), iv);
+  d.setAuthTag(tag);
+  return Buffer.concat([d.update(datos), d.final()]).toString('utf8');
+}
+
+const organizador = () => modoOAuth() ? (conexion?.email || '') : (env.GOOGLE_ORGANIZADOR || env.MAIL_USER || '').trim().toLowerCase();
+const activo = () => {
+  if (modoOAuth()) return !!conexion;
+  const c = cuenta();
+  return !!(c && !c.error && c.client_email && c.private_key && organizador());
+};
 
 const estado = { ok: null, ultimo: null, error: null, meet: null };
 const marcar = (ok, error) => Object.assign(estado, { ok, error: error || null, ultimo: new Date().toISOString() });
@@ -34,6 +64,7 @@ const marcar = (ok, error) => Object.assign(estado, { ok, error: error || null, 
 let token = { valor: null, hasta: 0 };
 async function accessToken() {
   if (token.valor && token.hasta > Date.now() + 60000) return token.valor;
+  if (modoOAuth()) return tokenConexion();
   const c = cuenta();
   if (!c || c.error) throw new Error(c?.error || 'Google no está configurado');
   const b64 = o => Buffer.from(JSON.stringify(o)).toString('base64url');
@@ -52,6 +83,82 @@ async function accessToken() {
   }
   token = { valor: d.access_token, hasta: Date.now() + (d.expires_in || 3600) * 1000 };
   return token.valor;
+}
+
+// ---- «Continuar con Google» ----
+async function pedirToken(campos) {
+  const r = await fetch(URLS.token, {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ client_id: clienteId(), client_secret: clienteSecreto(), ...campos }),
+  });
+  const d = await r.json().catch(() => ({}));
+  return { ok: r.ok, d };
+}
+
+async function tokenConexion() {
+  if (!conexion) throw new Error('Google no está conectado: pulsa «Continuar con Google» en Canales');
+  const { ok, d } = await pedirToken({ grant_type: 'refresh_token', refresh_token: conexion.refresh });
+  if (!ok) {
+    // invalid_grant: la persona quitó el acceso, cambió la contraseña o el permiso caducó.
+    marcar(false, d.error === 'invalid_grant' ? `Google ha retirado el permiso de ${conexion.email}: vuelve a conectar la cuenta` : d.error_description || d.error || 'Google no ha dado el token');
+    throw new Error(estado.error);
+  }
+  token = { valor: d.access_token, hasta: Date.now() + (d.expires_in || 3600) * 1000 };
+  return token.valor;
+}
+
+// Dirección de Google donde la persona elige su cuenta y acepta los permisos.
+function urlConectar(vuelta, estadoOAuth) {
+  return `${URLS.auth}?${new URLSearchParams({
+    client_id: clienteId(), redirect_uri: vuelta, response_type: 'code', state: estadoOAuth,
+    scope: `openid email ${ALCANCES}`, access_type: 'offline', prompt: 'consent', include_granted_scopes: 'true',
+  })}`;
+}
+
+// Vuelta de Google: cambia el código por el permiso y lo guarda.
+async function completarConexion(codigo, vuelta) {
+  if (!modoOAuth()) throw new Error('Faltan GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET en Render');
+  if (!codigo) throw new Error('Google no ha devuelto el código');
+  const { ok, d } = await pedirToken({ grant_type: 'authorization_code', code: codigo, redirect_uri: vuelta });
+  if (!ok) throw new Error(d.error_description || d.error || 'Google no ha aceptado el código');
+  const dados = (d.scope || '').split(' ');
+  const falta = ALCANCES.split(' ').filter(a => !a.includes('meetings') && !dados.includes(a));
+  if (falta.length) throw new Error('Hay que marcar los permisos de Google Calendar: vuelve a conectar y acéptalos todos');
+  if (!d.refresh_token) throw new Error('Google no ha dado un permiso permanente: vuelve a conectar');
+  // El id_token llega directo de Google por HTTPS: basta con leer el correo.
+  let email = '';
+  try { email = JSON.parse(Buffer.from(d.id_token.split('.')[1], 'base64url')).email || ''; } catch {}
+  if (!email) throw new Error('Google no ha dicho qué cuenta se ha conectado');
+  const viejo = (await store.ajustes.donde('clave', 'google'))[0];
+  const doc = { ...(viejo || {}), clave: 'google', email: email.toLowerCase(), refresh: cifrar(d.refresh_token), conectado: new Date().toISOString(), alcances: dados };
+  await store.ajustes.guardar(doc);
+  conexion = { email: doc.email, refresh: d.refresh_token, conectado: doc.conectado, alcances: dados };
+  token = { valor: d.access_token, hasta: Date.now() + (d.expires_in || 3600) * 1000 };
+  Object.assign(estado, { ok: null, error: null, meet: null });
+  return doc.email;
+}
+
+async function desconectar() {
+  const viejo = (await store.ajustes.donde('clave', 'google'))[0];
+  if (conexion) await fetch(`${URLS.revocar}?token=${encodeURIComponent(conexion.refresh)}`, { method: 'POST' }).catch(() => {});
+  if (viejo) await store.ajustes.borrar(viejo.id);
+  conexion = null;
+  token = { valor: null, hasta: 0 };
+  Object.assign(estado, { ok: null, error: null, meet: null });
+}
+
+// Al arrancar: recupera la cuenta conectada (si el secreto cambió, hay que volver a conectar).
+async function cargar() {
+  if (!modoOAuth()) return;
+  try {
+    const doc = (await store.ajustes.donde('clave', 'google'))[0];
+    if (!doc) return;
+    conexion = { email: doc.email, refresh: descifrar(doc.refresh), conectado: doc.conectado, alcances: doc.alcances || [] };
+    console.log(`Google Meet: conectado con ${doc.email}`);
+  } catch (e) {
+    marcar(false, 'No se ha podido leer el permiso guardado de Google: vuelve a conectar la cuenta');
+    console.error('Google Meet:', e.message);
+  }
 }
 
 async function api(url, opciones = {}) {
@@ -143,6 +250,7 @@ async function probar() {
 
 // Qué falta en las variables, para que Canales lo diga en vez de un «sin configurar» a secas.
 const falta = () => {
+  if (modoOAuth()) return conexion ? [] : ['conectar una cuenta con «Continuar con Google»'];
   const c = cuenta(), l = [];
   if (!c) l.push('GOOGLE_SA_JSON');
   else if (c.error) l.push('GOOGLE_SA_JSON válida');
@@ -152,14 +260,17 @@ const falta = () => {
 };
 
 const resumen = () => {
-  const c = cuenta();
+  const oauth = modoOAuth(), c = oauth ? null : cuenta();
   return {
+    modo: oauth ? 'oauth' : c ? 'cuenta' : null,
     falta: falta(),
     activo: activo(), organizador: organizador() || null,
+    conectado: oauth && conexion ? conexion.conectado : null,
+    permisoMeet: oauth && conexion ? conexion.alcances.some(a => a.includes('meetings')) : null,
     cuentaServicio: c && !c.error ? c.client_email : null, errorClave: c?.error || null,
     ok: estado.ok, ultimo: estado.ultimo, error: estado.error, meet: estado.meet,
     minutosCita: Number(env.CITA_MIN || 30),
   };
 };
 
-module.exports = { activo, crearReunion, anularReunion, huecos, duracionReal, probar, resumen, local, organizador };
+module.exports = { activo, crearReunion, anularReunion, huecos, duracionReal, probar, resumen, local, organizador, modoOAuth, urlConectar, completarConexion, desconectar, cargar };

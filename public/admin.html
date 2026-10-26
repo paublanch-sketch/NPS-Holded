@@ -29,8 +29,8 @@
 
   /* Navegación */
   .nav { background: var(--pizarra); color: #fff; display: flex; flex-direction: column; padding: 18px 12px; position: sticky; top: 0; height: 100vh; }
-  .nav .marca { font-weight: 800; letter-spacing: .14em; font-size: 14px; padding: 4px 10px 2px; }
-  .nav .marca span { color: var(--rojo); }
+  .nav .marca { padding: 6px 10px 6px; line-height: 0; }
+  .nav .marca img { display: block; width: 100%; max-width: 190px; height: auto; }
   .nav .sub { font-size: 12px; color: #a9a8a3; padding: 0 10px 18px; }
   .nav a.ir { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 9px; color: #d7d6d1; text-decoration: none; font-weight: 500; position: relative; }
   .nav a.ir:hover { background: rgba(255,255,255,.06); color: #fff; }
@@ -153,6 +153,10 @@
   .estado-linea > span:last-child { min-width: 0; overflow-wrap: anywhere; }
   .pasos-ayuda { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--bruma); }
   .pasos-ayuda li { margin: 4px 0; }
+  /* Botón de Google según su guía de marca: blanco, borde gris y la G de colores. */
+  .boton-google { display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 16px 0 12px; margin-top: 14px; border: 1px solid #747775; border-radius: 20px; background: #fff; color: #1f1f1f; font: 500 14px/1 Roboto, Inter, system-ui, sans-serif; text-decoration: none; }
+  .boton-google:hover { background: #f8faff; box-shadow: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); }
+  .boton-google svg { width: 20px; height: 20px; }
   code { background: var(--suave); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
 
   /* Métricas */
@@ -295,7 +299,7 @@
   @media (max-width: 900px) {
     body { grid-template-columns: 1fr; }
     .nav { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px; padding: 10px 12px; }
-    .nav .sub { display: none; } .nav .marca { margin-right: 8px; }
+    .nav .sub { display: none; } .nav .marca { margin-right: 8px; } .nav .marca img { width: 150px; }
     .nav .abajo { margin: 4px 0 0; border: 0; padding: 0; display: flex; gap: 12px; align-items: center; width: 100%; }
     .nav .abajo select { flex: 1; width: auto; min-width: 0; }
     .nav .abajo label, .nav .portal { display: none; } .nav .salir { margin: 0; }
@@ -325,8 +329,8 @@
 </head>
 <body>
 <nav class="nav">
-  <div class="marca">INTERACTIVOS<span>.</span></div>
-  <div class="sub">Soporte Holded</div>
+  <div class="marca"><img src="/img/logo-interactivos-holded-claro.png" alt="Interactivos · Holded" width="701" height="71"></div>
+  <div class="sub">Panel de soporte</div>
   <a class="ir" href="#/bandeja" data-v="bandeja"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h5l2 3h4l2-3h5"/><path d="M5 5h14l2 8v6H3v-6z"/></svg>Bandeja<span class="cuenta oculto" id="cuentaBandeja"></span></a>
   <a class="ir" href="#/metricas" data-v="metricas"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Métricas</a>
   <a class="ir" href="#/clientes" data-v="clientes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.6 2.6 3 5.2"/></svg>Clientes</a>
@@ -1199,20 +1203,24 @@ async function cargarCanales(r) {
     </section>
     <section class="tarjeta">
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px"><h2 style="margin:0;font-size:18px">Google Meet y Calendar</h2>
-        ${r.google.activo ? pill(r.google.ok, 'Conectado', 'Falla') : r.google.errorClave ? '<span class="pastilla critico">✕ Clave no válida</span>' : '<span class="pastilla atencion">! Sin configurar</span>'}</div>
+        ${r.google.activo ? pill(r.google.ok, 'Conectado', 'Falla') : r.google.errorClave ? '<span class="pastilla critico">✕ Clave no válida</span>' : r.google.modo === 'oauth' ? '<span class="pastilla atencion">! Sin conectar</span>' : '<span class="pastilla atencion">! Sin configurar</span>'}</div>
       ${r.google.activo ? `
-        <div class="estado-linea"><span class="k">Organizador</span><span>Las reuniones se crean en el calendario de <b>${esc(r.google.organizador)}</b> · cuenta de servicio ${esc(r.google.cuentaServicio)}</span></div>
+        <div class="estado-linea"><span class="k">Calendario</span><span>Las reuniones se crean en el calendario de <b>${esc(r.google.organizador)}</b>${r.google.modo === 'oauth' ? ` · conectado ${esc(fechaHora(r.google.conectado))}` : ` · cuenta de servicio ${esc(r.google.cuentaServicio)}`}</span></div>
         <div class="estado-linea"><span class="k">Reservas</span><span>El cliente puede reservar huecos de ${r.google.minutosCita} min en horario laboral desde su incidencia.</span></div>
-        <div class="estado-linea"><span class="k">Duración real</span><span>${r.google.meet ? '✓ Meet devuelve la duración de las reuniones: se apuntan solas.' : 'Se comprueba cuando acabe la primera reunión.'}</span></div>
+        <div class="estado-linea"><span class="k">Duración real</span><span>${r.google.permisoMeet === false ? 'Sin permiso de Meet: vuelve a conectar y marca también el permiso de las reuniones de Meet para que la duración se apunte sola.' : r.google.meet ? '✓ Meet devuelve la duración de las reuniones: se apuntan solas.' : 'Se comprueba cuando acabe la primera reunión.'}</span></div>
         ${r.google.error ? `<div class="estado-linea"><span class="k">Último error</span><span style="color:var(--cr-t)">${esc(r.google.error)}</span></div>` : ''}
-        <div style="margin-top:12px"><button class="boton sec" id="probarGoogle">Probar la conexión</button></div>`
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="boton sec" id="probarGoogle">Probar la conexión</button>${r.google.modo === 'oauth' ? '<a class="boton sec" style="text-decoration:none" href="/admin/google/conectar">Cambiar de cuenta</a><button class="boton sec" id="desconectarGoogle">Desconectar</button>' : ''}</div>`
+      : r.google.modo === 'oauth' ? `
+        <p style="margin:6px 0 0;color:var(--bruma)">Conecta la cuenta de Google cuyo calendario se usará para las videollamadas. Google te pedirá permiso para crear reuniones de Meet y ver tus horas ocupadas; no hace falta ningún administrador.</p>
+        ${r.google.error ? `<div class="estado-linea" style="margin-top:8px"><span class="k">Último error</span><span style="color:var(--cr-t)">${esc(r.google.error)}</span></div>` : ''}
+        <a class="boton-google" href="/admin/google/conectar"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Continuar con Google</span></a>`
       : `<p style="margin:6px 0 0;color:var(--bruma)">Sin Google, el botón de videollamada pide pegar un enlace de Meet. Conectado, crea las reuniones solo, el cliente reserva huecos libres y la duración real se apunta sola.</p>
-        ${r.google.falta?.length ? `<div class="estado-linea" style="margin-top:8px"><span class="k">Falta en Render</span><span style="color:var(--cr-t)">${r.google.falta.map(esc).join(' · ')}</span></div>` : ''}
+        ${r.google.modo === 'cuenta' && r.google.falta?.length ? `<div class="estado-linea" style="margin-top:8px"><span class="k">Falta en Render</span><span style="color:var(--cr-t)">${r.google.falta.map(esc).join(' · ')}</span></div>` : ''}
         <ol class="pasos-ayuda">
-          <li>En console.cloud.google.com crea un proyecto y activa <b>Google Calendar API</b> y <b>Google Meet REST API</b>.</li>
-          <li>Crea una <b>cuenta de servicio</b>, genera una clave JSON y copia su <i>Client ID</i>.</li>
-          <li>En admin.google.com → Seguridad → Control de acceso y datos → Controles de API → <b>Delegación de todo el dominio</b>, añade ese Client ID con estos permisos:<br><code>https://www.googleapis.com/auth/calendar.events,https://www.googleapis.com/auth/calendar.freebusy,https://www.googleapis.com/auth/meetings.space.readonly</code></li>
-          <li>En Render: <code>GOOGLE_SA_JSON</code> = el contenido del JSON (o en base64) y <code>GOOGLE_ORGANIZADOR</code> = la cuenta cuyo calendario se usa (por defecto, la del buzón).</li>
+          <li>En console.cloud.google.com, proyecto <b>support-holded-interactivos</b>: activa <b>Google Calendar API</b> y <b>Google Meet REST API</b>.</li>
+          <li>En Google Auth Platform → Clientes → <b>Crear cliente</b> → Aplicación web, con este URI de redireccionamiento autorizado:<br><code>${esc((r.publica || location.origin) + '/admin/google/vuelta')}</code></li>
+          <li>En Render: <code>GOOGLE_CLIENT_ID</code> y <code>GOOGLE_CLIENT_SECRET</code> de ese cliente.</li>
+          <li>Vuelve aquí y pulsa <b>Continuar con Google</b> con la cuenta cuyo calendario quieras usar.</li>
         </ol>`}
     </section>
     <section class="tarjeta">
@@ -1234,6 +1242,11 @@ async function cargarCanales(r) {
     pg.disabled = true; pg.textContent = 'Probando…';
     try { const r2 = await api('/api/google/probar', {}); aviso(`Google conectado: ${r2.huecosManana} huecos libres mañana.`); cargarCanales(); }
     catch (e) { fallo(e); cargarCanales(); }
+  };
+  const dg = $('desconectarGoogle');
+  if (dg) dg.onclick = async () => {
+    if (!confirm('¿Desconectar Google? Las videollamadas ya agendadas siguen en el calendario, pero no se podrán crear ni reservar nuevas hasta volver a conectar.')) return;
+    try { await api('/api/google/desconectar', {}); aviso('Google desconectado.'); cargarCanales(); } catch (e) { fallo(e); }
   };
   const p = $('prueba');
   if (p) p.onclick = async () => {
@@ -1261,6 +1274,13 @@ function marcarCanales(r) {
   $('salir').onclick = async () => { await fetch('/api/logout', { method: 'POST' }); location.href = '/admin/login'; };
   cargarClientes().catch(() => {});
   api('/api/canales').then(marcarCanales).catch(() => {});
+  // Vuelta de «Continuar con Google».
+  const vueltaGoogle = new URLSearchParams(location.search).get('google');
+  if (vueltaGoogle !== null) {
+    history.replaceState(null, '', '/admin' + location.hash);
+    if (vueltaGoogle === 'ok') aviso('Google conectado: ya se pueden crear videollamadas y el cliente puede reservar.');
+    else aviso(vueltaGoogle === 'cancelado' ? 'Has cancelado la conexión con Google.' : vueltaGoogle === 'caducado' ? 'La conexión ha caducado: vuelve a pulsar «Continuar con Google».' : vueltaGoogle, true);
+  }
   ruta();
   if (!yo()) $('yo').classList.add('falta');
 })();

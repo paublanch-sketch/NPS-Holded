@@ -5,6 +5,7 @@
 // fichas de clientes y, para la parte comercial, la API de Holded.
 require('./entorno');
 const http = require('http');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const tickets = require('./tickets');
@@ -70,6 +71,39 @@ const pagina = (res, nombre) => {
 };
 const redirigir = (res, a) => { res.writeHead(302, { Location: a }); res.end(); };
 
+// Logos del portal y del panel (public/img).
+const IMAGENES = { '.png': 'image/png', '.svg': 'image/svg+xml', '.webp': 'image/webp' };
+function imagen(res, nombre) {
+  const fichero = path.join(__dirname, 'public', 'img', nombre);
+  if (!fs.existsSync(fichero)) { res.writeHead(404); return res.end(); }
+  res.writeHead(200, { 'Content-Type': IMAGENES[path.extname(nombre)], 'Cache-Control': 'public, max-age=86400' });
+  fs.createReadStream(fichero).pipe(res);
+}
+
+// «Continuar con Google»: ida a Google con un estado de un solo uso y vuelta con el permiso.
+const base = req => (process.env.PUBLIC_URL || `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`).replace(/\/+$/, '');
+async function conectarGoogle(req, res, ruta, url) {
+  const vuelta = `${base(req)}/admin/google/vuelta`;
+  const cookie = v => `g_estado=${v}; Path=/admin/google; HttpOnly; SameSite=Lax; Max-Age=${v ? 600 : 0}${vuelta.startsWith('https:') ? '; Secure' : ''}`;
+  const volver = motivo => redirigir(res, `/admin?google=${encodeURIComponent(motivo)}#/canales`);
+  if (ruta === '/admin/google/conectar') {
+    if (!google.modoOAuth()) return volver('Faltan GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET en Render');
+    const estado = crypto.randomBytes(16).toString('hex');
+    res.setHeader('Set-Cookie', cookie(estado));
+    return redirigir(res, google.urlConectar(vuelta, estado));
+  }
+  res.setHeader('Set-Cookie', cookie(''));
+  const esperado = (req.headers.cookie || '').match(/(?:^|;\s*)g_estado=([a-f0-9]{32})/)?.[1];
+  const p = k => url.searchParams.get(k) || '';
+  if (p('error')) return volver(p('error') === 'access_denied' ? 'cancelado' : p('error'));
+  if (!esperado || p('state') !== esperado) return volver('caducado');
+  try { await google.completarConexion(p('code'), vuelta); }
+  catch (e) { return volver(e.message); }
+  // Se comprueba ya, para que Canales diga «Conectado» o el error de verdad (p. ej., la API apagada).
+  try { await google.probar(); return volver('ok'); }
+  catch (e) { return volver(`Cuenta conectada, pero Google da este error: ${e.message}`); }
+}
+
 // Formularios del panel desde otra web: fuera (la cookie ya es SameSite=Lax; esto es el cinturón).
 const otroOrigen = req => {
   const o = req.headers.origin;
@@ -86,6 +120,7 @@ http.createServer(async (req, res) => {
   try {
     // ---- Público ----
     if (ruta === '/salud') { res.writeHead(200); return res.end('ok'); }
+    if (/^\/img\/[a-z0-9-]+\.(png|svg|webp)$/.test(ruta)) return imagen(res, ruta.slice(5));
     if (ruta === '/' || /^\/t\/[a-f0-9]{32}$/.test(ruta)) return pagina(res, 'portal.html');
     if (ruta === '/soporte') return redirigir(res, /^[a-f0-9]{32}$/.test(url.searchParams.get('t') || '') ? `/t/${url.searchParams.get('t')}` : '/');
     if (ruta === '/api/portal') {
@@ -109,6 +144,7 @@ http.createServer(async (req, res) => {
     if (await auth.rutas(req, res, ruta, { json, leerCuerpo })) return;
 
     const yo = await auth.usuarioDe(req);
+    if (ruta === '/admin/google/conectar' || ruta === '/admin/google/vuelta') return yo ? conectarGoogle(req, res, ruta, url) : redirigir(res, '/admin/login');
     if (ruta === '/admin' || ruta.startsWith('/admin/')) return yo ? pagina(res, 'admin.html') : redirigir(res, '/admin/login');
     if (!ruta.startsWith('/api/')) { res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); return res.end('No encontrado'); }
     if (!yo) return json(res, { error: 'Sesión caducada' }, 401);
@@ -128,6 +164,10 @@ http.createServer(async (req, res) => {
       try { return json(res, { ...(await google.probar()), google: google.resumen() }); }
       catch (e) { return json(res, { error: e.message, google: google.resumen() }, 502); }
     }
+    if (req.method === 'POST' && ruta === '/api/google/desconectar') {
+      await google.desconectar();
+      return json(res, { google: google.resumen() });
+    }
     if (await tickets.rutasConsola(req, res, ruta, auth.TECNICOS)) return;
     json(res, { error: 'No encontrado' }, 404);
   } catch (e) {
@@ -137,5 +177,5 @@ http.createServer(async (req, res) => {
 }).listen(PORT, () => {
   console.log(`Servicio Holded en http://localhost:${PORT}`);
   canales.iniciar();
-  tickets.iniciarReuniones();
+  google.cargar().then(() => tickets.iniciarReuniones());
 });

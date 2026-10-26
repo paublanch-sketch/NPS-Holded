@@ -26,12 +26,9 @@
   /* Cabecera */
   .barra { background: var(--blanco); border-bottom: 1px solid var(--linea); }
   .barra .dentro { max-width: 1240px; margin: 0 auto; padding: 16px 24px; display: flex; align-items: center; gap: 16px; }
-  .marca { font-weight: 800; letter-spacing: .2em; font-size: 16px; text-decoration: none; color: var(--pizarra); }
-  .marca span { color: var(--rojo); }
-  .sep { width: 1px; height: 22px; background: var(--linea2); }
-  .barra .titulo { color: var(--bruma); font-weight: 500; }
-  .insignia { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; border: 1px solid var(--linea2); border-radius: 99px; padding: 8px 16px; white-space: nowrap; background: var(--blanco); }
-  .insignia i { width: 9px; height: 9px; background: var(--rojo); transform: rotate(45deg); border-radius: 2px; display: inline-block; }
+  .marca { display: block; line-height: 0; min-width: 0; }
+  .marca img { display: block; height: 24px; width: auto; max-width: 100%; }
+  .insignia { display: block; margin-left: auto; height: 46px; width: auto; flex: none; }
 
   main { max-width: 1240px; margin: 0 auto; padding: 32px 24px 64px; }
 
@@ -214,12 +211,14 @@
   @media (max-width: 900px) { .rejilla { grid-template-columns: 1fr; } .heroe { grid-template-columns: auto minmax(0, 1fr); } .tiempo { grid-column: 1 / -1; justify-self: start; } }
   @media (max-width: 600px) {
     main { padding: 22px 16px 48px; } form.tarjeta { padding: 18px; } .barra .dentro { padding: 12px 16px; }
-    .insignia, .barra .sep, .barra .titulo { display: none; } .heroe .auri { display: none; } .heroe { grid-template-columns: 1fr; }
+    .marca img { height: 17px; } .insignia { height: 34px; } .barra .dentro { gap: 12px; }
+    .heroe .auri { display: none; } .heroe { grid-template-columns: 1fr; }
     .categorias { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cat { padding: 12px; gap: 10px; font-size: 13px; } .cat[aria-pressed="true"] { padding: 11px; }
     .dos { grid-template-columns: 1fr; } .seguro { margin-left: 0; } .adjuntar { flex-wrap: wrap; }
     .lista a { grid-template-columns: 44px minmax(0, 1fr) auto 16px; } .lista time { display: none; }
     .escala { grid-template-columns: repeat(6, 1fr); } .msg { max-width: 92%; }
   }
+  @media (max-width: 370px) { .insignia { display: none; } }
 </style>
 </head>
 <body>
@@ -251,10 +250,8 @@
 </svg>
 
 <header class="barra"><div class="dentro">
-  <a class="marca" href="/">INTERACTIVOS<span>.</span></a>
-  <div class="sep"></div>
-  <div class="titulo">Soporte Holded</div>
-  <div class="insignia"><i></i>Holded Solution Partner Platinum</div>
+  <a class="marca" href="/"><img src="/img/logo-interactivos-holded.png" alt="Interactivos · Holded" width="701" height="71"></a>
+  <img class="insignia" src="/img/holded-solution-partner.png" alt="Holded Solution Partner Platinum" width="1364" height="444">
 </div></header>
 
 <main>

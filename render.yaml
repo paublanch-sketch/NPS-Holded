@@ -55,8 +55,14 @@ services:
         sync: false
       - key: SMTP_HOST
         sync: false
-      # Google Meet y Calendar: cuenta de servicio con delegación de todo el dominio
-      # (calendar.events, calendar.freebusy, meetings.space.readonly). Pasos en el panel → Canales.
+      # Google Meet y Calendar. Lo normal: cliente OAuth y botón «Continuar con Google» en
+      # el panel → Canales (sin administrador de Workspace). Vuelta: <PUBLIC_URL>/admin/google/vuelta
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET # también cifra el permiso guardado: si cambia, hay que volver a conectar
+        sync: false
+      # Alternativa con administrador: cuenta de servicio con delegación de todo el dominio
+      # (calendar.events, calendar.freebusy, meetings.space.readonly). Sin cliente OAuth.
       - key: GOOGLE_SA_JSON     # el JSON de la clave de la cuenta de servicio, tal cual o en base64
         sync: false
       - key: GOOGLE_ORGANIZADOR # calendario donde se crean las reuniones; si falta, el de MAIL_USER
