@@ -31,7 +31,9 @@ function textoWhatsApp(t, evento, b) {
   switch (evento) {
     case 'nuevo': return `Hola${t.contacto ? ' ' + t.contacto : ''}, hemos recibido tu incidencia #${t.id}. Un técnico te contestará por aquí.${URL_PUBLICA ? `\nTambién puedes seguirla en ${enlace(t)}` : ''}`;
     case 'mensaje': return b.nota ? null : `${b.tecnico || 'Soporte'}: ${b.texto}`;
-    case 'video': return `${b.tecnico || 'El técnico'} te invita a una videollamada. Se abre en el navegador:\n${t.video}`;
+    case 'video': return `${b.tecnico || 'El técnico'} te invita a una videollamada de Google Meet:\n${t.video}`;
+    case 'cita': return `Videollamada de Google Meet agendada para el ${tickets.cuando(b.cita.inicio)}.\nEnlace: ${b.cita.enlace}`;
+    case 'anularCita': return 'Hemos anulado la videollamada prevista. Si necesitas otra, escríbenos por aquí.';
     case 'cerrar': return `Hemos cerrado tu incidencia #${t.id}. Del 0 al 10, ¿qué probabilidad hay de que nos recomiendes? Responde solo con el número.`;
     case 'pideMejora': return '¡Gracias! ¿Qué mejorarías? Puedes responder aquí mismo.';
     case 'gracias': return 'Gracias por tu opinión, nos ayuda mucho.';

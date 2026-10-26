@@ -2,6 +2,7 @@
 const crypto = require('crypto');
 const { tickets: store } = require('./store');
 const adjuntos = require('./adjuntos');
+const google = require('./google');
 
 // Hora local sin zona, el mismo formato que las fechas del Sheet ("2026-10-26T15:04:05").
 const ahora = () => {
@@ -27,6 +28,8 @@ const vistaCliente = t => ({
   pideValoracion: t.estado === 'Cerrado' && t.nps == null,
   nps: t.nps,
   video: activa(t)?.tipo === 'video' ? t.video : null,
+  citas: (t.citas || []).filter(c => c.estado === 'prevista' && c.origen !== 'ahora' && c.fin > ahora()).map(c => ({ inicio: c.inicio, fin: c.fin, enlace: c.enlace })),
+  reservar: google.activo() && t.estado !== 'Cerrado',
 });
 
 const vistaTecnico = t => ({ ...t, horas: horas(t), activa: activa(t) || null });
@@ -80,6 +83,11 @@ async function adjuntar(t, lista = [], origen = 'correo') {
     }
   }
 }
+
+const cuando = iso => {
+  const d = new Date(iso);
+  return `${d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+};
 
 const NPS_DIAS = 7; // un número 0–10 hasta una semana después del cierre se toma como valoración
 
@@ -201,12 +209,28 @@ const ACCIONES = {
   parar(t) { pararSesion(t); },
   video(t, b) {
     pararSesion(t);
-    t.video = `https://meet.jit.si/SoporteHolded-${t.token.slice(0, 10)}`;
-    t.sesiones.push({ tipo: 'video', tecnico: b.tecnico, inicio: ahora(), fin: null });
-    t.mensajes.push({ de: 'sistema', texto: `${b.tecnico || 'El técnico'} te invita a una videollamada.`, enlace: t.video, fecha: ahora() });
+    t.video = b.enlace;
+    t.sesiones.push({ tipo: 'video', tecnico: b.tecnico, inicio: ahora(), fin: null, codigo: b.codigo || null });
+    // También como cita, para que Meet diga después cuánto duró de verdad.
+    if (b.codigo) (t.citas ||= []).push({ id: Date.now(), inicio: ahora(), fin: ahora(), enlace: b.enlace, codigo: b.codigo, eventoId: b.eventoId || null, tecnico: b.tecnico, origen: 'ahora', estado: 'prevista' });
+    t.mensajes.push({ de: 'sistema', texto: `${b.tecnico || 'El técnico'} te invita a una videollamada de Google Meet.`, enlace: t.video, fecha: ahora() });
     if (!t.primera_respuesta) t.primera_respuesta = ahora();
     if (!t.tecnico) t.tecnico = b.tecnico || '';
     t.estado = 'En curso';
+  },
+  cita(t, b) {
+    (t.citas ||= []).push(b.cita);
+    const quien = b.cita.origen === 'cliente' ? 'Has reservado' : `${b.tecnico || 'El técnico'} te ha agendado`;
+    t.mensajes.push({ de: 'sistema', texto: `${quien} una videollamada de Google Meet para el ${cuando(b.cita.inicio)}.`, enlace: b.cita.enlace, fecha: ahora() });
+    if (b.cita.origen !== 'cliente' && !t.primera_respuesta) t.primera_respuesta = ahora();
+    if (b.cita.origen !== 'cliente' && !t.tecnico) t.tecnico = b.tecnico || '';
+    if (t.estado === 'Nuevo' && b.cita.origen !== 'cliente') t.estado = 'En curso';
+  },
+  anularCita(t, b) {
+    const c = (t.citas || []).find(x => x.id === Number(b.cita));
+    if (!c || c.estado !== 'prevista') throw Object.assign(new Error('Esa videollamada ya no está prevista'), { status: 400 });
+    c.estado = 'anulada';
+    t.mensajes.push({ de: 'sistema', texto: `Se ha anulado la videollamada del ${cuando(c.inicio)}.`, fecha: ahora() });
   },
   // Marca o quita la urgencia (el cliente la marca al abrir; el técnico puede corregirla).
   urgencia(t, b) { t.urgente = b.urgente === true; },
@@ -281,11 +305,31 @@ async function rutasPublicas(req, res, ruta) {
     return json(res, { ok: true, correo: !!alRecuperar.fn }), true;
   }
 
-  const m = ruta.match(/^\/api\/soporte\/([a-f0-9]{32})(\/mensaje|\/nps|\/adjunto(?:\/(\d+))?)?$/);
+  const m = ruta.match(/^\/api\/soporte\/([a-f0-9]{32})(\/mensaje|\/nps|\/huecos|\/reservar|\/adjunto(?:\/(\d+))?)?$/);
   if (!m) return false;
   const t = await porToken(m[1]);
   if (!t) return json(res, { error: 'Ticket no encontrado' }, 404), true;
   if (req.method === 'GET' && !m[2]) return json(res, vistaCliente(t)), true;
+
+  // Videollamada: huecos libres del calendario de soporte y reserva de uno.
+  if (m[2] === '/huecos' && req.method === 'GET') {
+    if (!google.activo() || t.estado === 'Cerrado') return json(res, { activo: false, huecos: [] }), true;
+    return json(res, { activo: true, minutos: google.resumen().minutosCita, huecos: await google.huecos() }), true;
+  }
+  if (m[2] === '/reservar' && req.method === 'POST') {
+    if (!google.activo() || t.estado === 'Cerrado') return json(res, { error: 'Ahora no se pueden reservar videollamadas.' }, 400), true;
+    const prevista = (t.citas || []).find(c => c.estado === 'prevista' && c.origen !== 'ahora' && c.fin > ahora());
+    if (prevista) return json(res, { error: `Ya tienes una videollamada el ${cuando(prevista.inicio)}.` }, 409), true;
+    const { inicio } = await leerCuerpo(req);
+    const libre = (await google.huecos()).find(h => h.inicio === inicio);
+    if (!libre) return json(res, { error: 'Ese hueco ya no está libre. Elige otro.' }, 409), true;
+    const cita = await nuevaCita(t, { inicio: libre.inicio, minutos: google.resumen().minutosCita, tecnico: t.tecnico, origen: 'cliente' });
+    ACCIONES.cita(t, { cita });
+    t.mensajes.push({ de: 'nota', autor: 'Sistema', texto: `El cliente ha reservado una videollamada para el ${cuando(cita.inicio)}.`, fecha: ahora() });
+    await store.guardar(t);
+    avisar(t, 'cita', { cita });
+    return json(res, vistaCliente(t), 201), true;
+  }
 
   // Adjuntos: el cliente sube archivos a su incidencia y puede volver a abrirlos.
   if (m[2]?.startsWith('/adjunto')) {
@@ -326,6 +370,85 @@ async function rutasPublicas(req, res, ruta) {
 // La pone canales.js si hay correo: envía al cliente los enlaces de sus incidencias.
 const alRecuperar = { fn: null };
 
+// ---------- Google Meet ----------
+const codigoMeet = url => (String(url).match(/meet\.google\.com\/([a-z]{3}-[a-z]{4}-[a-z]{3})/) || [])[1] || null;
+const errorUso = m => Object.assign(new Error(m), { status: 400 });
+const tituloReunion = t => `Soporte Holded · #${t.id} ${t.cliente}`;
+const descReunion = t => `Incidencia #${t.id}: ${t.asunto || t.tipo_incidencia}${process.env.PUBLIC_URL ? '\n' + process.env.PUBLIC_URL.replace(/\/$/, '') + '/t/' + t.token : ''}`;
+const sumar = (isoLocal, min) => google.local(new Date(new Date(isoLocal).getTime() + min * 60000));
+
+async function nuevaCita(t, { inicio, minutos, tecnico, origen }) {
+  const r = await google.crearReunion({ titulo: tituloReunion(t), descripcion: descReunion(t), inicio, fin: sumar(inicio, minutos), invitado: t.email || null });
+  return { id: Date.now(), inicio: r.inicio, fin: r.fin, enlace: r.enlace, codigo: r.codigo, eventoId: r.eventoId, tecnico, origen, estado: 'prevista' };
+}
+
+// Lo que necesita Google antes de tocar el ticket.
+const PREVIOS = {
+  async video(t, b) {
+    const pegado = String(b.enlace || '').trim();
+    if (pegado) {
+      if (!/^https:\/\/meet\.google\.com\/[a-z0-9-]+/i.test(pegado)) throw errorUso('Pega un enlace de Google Meet (https://meet.google.com/…).');
+      b.enlace = pegado;
+      b.codigo = codigoMeet(pegado);
+      return;
+    }
+    if (!google.activo()) throw errorUso('Google no está conectado: crea la reunión en meet.new y pega aquí el enlace.');
+    const ahoraLocal = ahora();
+    const r = await google.crearReunion({ titulo: tituloReunion(t), descripcion: descReunion(t), inicio: ahoraLocal, fin: sumar(ahoraLocal, 60), invitado: null });
+    Object.assign(b, { enlace: r.enlace, codigo: r.codigo, eventoId: r.eventoId });
+  },
+  async cita(t, b) {
+    if (!google.activo()) throw errorUso('Para agendar hace falta conectar Google (panel → Canales).');
+    const inicio = String(b.inicio || '');
+    const minutos = Math.round(Number(b.minutos) || 30);
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(inicio) || new Date(inicio) < new Date()) throw errorUso('Elige una fecha y hora futuras.');
+    if (minutos < 15 || minutos > 240) throw errorUso('La duración tiene que estar entre 15 y 240 minutos.');
+    b.cita = await nuevaCita(t, { inicio: inicio.slice(0, 16) + ':00', minutos, tecnico: b.tecnico, origen: 'tecnico' });
+  },
+  async anularCita(t, b) {
+    const c = (t.citas || []).find(x => x.id === Number(b.cita));
+    if (c?.eventoId && google.activo()) await google.anularReunion(c.eventoId).catch(e => { if (e.status !== 404) throw e; });
+  },
+};
+
+// Cada 10 minutos: a las reuniones de Meet ya pasadas se les apunta la duración real.
+let contando = false;
+async function contabilizarReuniones() {
+  if (!google.activo() || contando) return;
+  contando = true;
+  try {
+    const ahoraMs = Date.now();
+    for (const t of await store.todos()) {
+      let cambio = false;
+      for (const c of (t.citas || []).filter(x => x.estado === 'prevista' && x.codigo)) {
+        // Las agendadas, a partir de su hora de fin; las de «ahora», cuando se ha parado el cronómetro.
+        const sesion = (t.sesiones || []).find(x => x.codigo === c.codigo && !x.real);
+        const listo = c.origen === 'ahora' ? sesion && sesion.fin : new Date(c.fin).getTime() + 10 * 60000 < ahoraMs;
+        if (!listo) continue;
+        let r = null;
+        try { r = await google.duracionReal(c.codigo, c.inicio); } catch (e) { console.error('Meet:', e.message); continue; }
+        if (r) {
+          if (sesion) Object.assign(sesion, { inicio: r.inicio, fin: r.fin, real: true });
+          else t.sesiones.push({ tipo: 'video', tecnico: c.tecnico || t.tecnico, inicio: r.inicio, fin: r.fin, codigo: c.codigo, real: true });
+          Object.assign(c, { estado: 'hecha', minutosReales: r.minutos });
+          t.mensajes.push({ de: 'nota', autor: 'Meet', texto: `Videollamada registrada por Google Meet: ${r.minutos} min (de ${r.inicio.slice(11, 16)} a ${r.fin.slice(11, 16)}).`, fecha: ahora() });
+          cambio = true;
+        } else if (ahoraMs - new Date(c.origen === 'ahora' && sesion ? sesion.fin : c.fin).getTime() > 24 * 3600000) {
+          c.estado = 'sin_datos';
+          t.mensajes.push({ de: 'nota', autor: 'Meet', texto: `Google Meet no tiene registro de la videollamada del ${cuando(c.inicio)}. Se queda el tiempo del cronómetro; si no lo hubo, apúntalo a mano.`, fecha: ahora() });
+          cambio = true;
+        }
+      }
+      if (cambio) await store.guardar(t);
+    }
+  } finally { contando = false; }
+}
+function iniciarReuniones() {
+  if (!google.activo()) return;
+  setInterval(() => contabilizarReuniones().catch(e => console.error('Meet:', e.message)), 10 * 60000);
+  console.log(`Google Meet: activo (organiza ${google.organizador()})`);
+}
+
 // Rutas de la consola (ya autenticadas).
 async function rutasConsola(req, res, ruta, equipo) {
   // Con un solo acceso de admin, el técnico lo elige el panel; solo vale si es del equipo.
@@ -355,6 +478,7 @@ async function rutasConsola(req, res, ruta, equipo) {
   if (!t) return json(res, { error: 'Ticket no encontrado' }, 404), true;
   if (!ACCIONES[m[2]]) return json(res, { error: 'Acción desconocida' }, 400), true;
   const b = quien(await leerCuerpo(req));
+  if (PREVIOS[m[2]]) await PREVIOS[m[2]](t, b);
   ACCIONES[m[2]](t, b);
   await store.guardar(t);
   avisar(t, m[2], b);
@@ -371,4 +495,4 @@ async function paraDashboard() {
   }));
 }
 
-module.exports = { alRecuperar, porId, rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };
+module.exports = { cuando, iniciarReuniones, contabilizarReuniones, alRecuperar, porId, rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };

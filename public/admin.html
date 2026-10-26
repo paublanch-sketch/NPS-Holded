@@ -150,6 +150,7 @@
   .estado-linea { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-top: 1px solid var(--linea); font-size: 13px; }
   .estado-linea:first-of-type { border-top: 0; }
   .estado-linea .k { width: 150px; color: var(--bruma); flex: none; }
+  .estado-linea > span:last-child { min-width: 0; overflow-wrap: anywhere; }
   .pasos-ayuda { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--bruma); }
   .pasos-ayuda li { margin: 4px 0; }
   code { background: var(--suave); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
@@ -410,7 +411,7 @@ document.addEventListener('mousemove', e => {
 });
 
 // ================= Estado global =================
-let equipo = [], tickets = [], clientesCache = null, portal = {};
+let equipo = [], tickets = [], clientesCache = null, portal = {}, googleInfo = { activo: false };
 const TIPOS = ['Facturación y Verifactu', 'Contabilidad e impuestos', 'Bancos y conciliación', 'Equipo y fichajes', 'Acceso y usuarios', 'Formación', 'Importación de datos', 'Plantillas', 'Suscripción y plan', 'Otra cosa'];
 const yo = () => $('yo').value;
 function exigirTecnico() {
@@ -601,6 +602,7 @@ function pintarDetalle(t) {
                <button class="boton" data-a="cerrar">Cerrar y pedir valoración</button>`}
         </div>
       </div>
+      ${tarjetaCitas(t)}
       <div class="tarjeta">
         <h3>Detalles</h3>
         <div class="prop">
@@ -663,9 +665,10 @@ function pintarDetalle(t) {
     if (!a) return;
     if (a !== 'reabrir' && !exigirTecnico()) return;
     if (a === 'cerrar') return cerrarTicket(t);
-    if (a === 'video') {
-      const w = open('about:blank');
-      return accion(t.id, 'video').then(r => { w.location = r.video; aviso('Enlace enviado al cliente.'); }).catch(err => { w.close(); fallo(err); });
+    if (a === 'video') return dialogoVideo(t);
+    if (a === 'anularCita') {
+      if (!confirm('¿Anular esta videollamada? El cliente recibirá el aviso.')) return;
+      return accion(t.id, 'anularCita', { cita: Number(b.dataset.cita) }).then(() => aviso('Videollamada anulada.')).catch(fallo);
     }
     accion(t.id, a).catch(fallo);
   };
@@ -676,6 +679,62 @@ function pintarDetalle(t) {
     .then(() => { clientesCache = null; cargarClientes(); aviso('Cliente actualizado.'); }).catch(fallo);
   $('pServ').onchange = guardarFicha;
   $('pOrig').onchange = guardarFicha;
+}
+
+// Videollamadas de Google Meet del ticket: previstas, hechas (con su duración real) y anuladas.
+function tarjetaCitas(t) {
+  const l = (t.citas || []).filter(c => c.origen !== 'ahora' || c.estado !== 'prevista').slice().sort((a, b) => b.inicio.localeCompare(a.inicio));
+  if (!l.length) return '';
+  const ahoraIso = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 19);
+  return `<div class="tarjeta"><h3>Videollamadas</h3><div class="historial">${l.map(c => {
+    const futura = c.estado === 'prevista' && c.fin > ahoraIso;
+    const estado = c.estado === 'hecha' ? `${c.minutosReales} min (Meet)` : c.estado === 'anulada' ? 'Anulada' : c.estado === 'sin_datos' ? 'Sin registro en Meet' : futura ? (c.origen === 'cliente' ? 'Reservada por el cliente' : 'Prevista') : 'Pendiente de Meet';
+    return `<div style="padding:8px 0;border-top:1px solid var(--linea);font-size:13px">
+      <div style="display:flex;justify-content:space-between;gap:8px"><b style="${c.estado === 'anulada' ? 'text-decoration:line-through;color:var(--muted)' : ''}">${c.origen === 'ahora' ? 'Al momento' : fechaHora(c.inicio)}</b><span style="color:var(--muted)">${esc(estado)}</span></div>
+      ${futura ? `<div style="display:flex;gap:6px;margin-top:6px"><a class="boton sec peq" style="text-decoration:none" href="${esc(c.enlace)}" target="_blank" rel="noopener">Unirme ↗</a><button class="boton sec peq" data-a="anularCita" data-cita="${c.id}">Anular</button></div>` : ''}
+    </div>`;
+  }).join('')}</div></div>`;
+}
+
+function dialogoVideo(t) {
+  const g = googleInfo.activo;
+  const manana = new Date(Date.now() + 864e5);
+  const fechaDef = new Date(manana - manana.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  dialogo(`<h3>Videollamada con Google Meet</h3>
+    <p class="sub">${g ? 'La reunión se crea en el calendario de soporte y el enlace le llega al cliente por su canal.' : 'Google no está conectado (panel → Canales). Crea la reunión en meet.new y pega aquí el enlace.'}</p>
+    ${g ? `<div class="filtros" style="position:static;padding:8px 0 0;border:0;background:none"><div class="seg" id="vModo"><button type="button" data-v="ahora" class="on">Ahora</button><button type="button" data-v="agendar">Agendar</button><button type="button" data-v="pegar">Pegar enlace</button></div></div>` : ''}
+    <div data-panel="ahora" class="${g ? '' : 'oculto'}"><p style="font-size:13px;color:var(--bruma);margin:12px 0 0">Crea la reunión, te la abre y arranca el cronómetro. Cuando termine, Meet nos dirá cuánto duró de verdad.</p></div>
+    <div data-panel="agendar" class="oculto"><div class="dos">
+      <div><label>Día</label><input class="campo" type="date" name="dia" value="${fechaDef}"></div>
+      <div><label>Hora</label><input class="campo" type="time" name="hora" value="10:00" step="900"></div>
+      <div><label>Duración</label><select class="campo" name="min"><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 hora</option><option value="90">1 h 30 min</option></select></div>
+    </div><p style="font-size:12px;color:var(--muted);margin:8px 0 0">${t.email ? `El cliente (${esc(t.email)}) recibe la invitación de Google Calendar.` : 'Este cliente no tiene correo: le llega el enlace por su canal.'}</p></div>
+    <div data-panel="pegar" class="${g ? 'oculto' : ''}"><label>Enlace de Google Meet</label><input class="campo" name="enlace" placeholder="https://meet.google.com/abc-defg-hij">
+      <p style="font-size:12px;color:var(--muted);margin:8px 0 0"><a href="https://meet.new" target="_blank" rel="noopener">Crear una reunión en meet.new ↗</a> y copiar su enlace.</p></div>
+    <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton" id="vEnviar">${g ? 'Crear y abrir' : 'Enviar al cliente'}</button></div>`,
+    async f => {
+      const modo = g ? f.querySelector('#vModo .on').dataset.v : 'pegar';
+      if (modo === 'agendar') {
+        if (!f.dia.value || !f.hora.value) { aviso('Elige día y hora.', true); return false; }
+        await accion(t.id, 'cita', { inicio: `${f.dia.value}T${f.hora.value}`, minutos: Number(f.min.value) });
+        aviso('Videollamada agendada y enviada al cliente.');
+        return;
+      }
+      const w = modo === 'ahora' ? open('about:blank') : null;
+      try {
+        const r = await accion(t.id, 'video', modo === 'pegar' ? { enlace: f.enlace.value.trim() } : {});
+        if (w) w.location = r.video;
+        aviso('Enlace enviado al cliente.');
+      } catch (e) { if (w) w.close(); throw e; }
+    });
+  const seg = $('vModo');
+  if (seg) seg.onclick = e => {
+    const b = e.target.closest('button[data-v]');
+    if (!b) return;
+    [...seg.children].forEach(x => x.classList.toggle('on', x === b));
+    $('dlg').querySelectorAll('[data-panel]').forEach(p => p.classList.toggle('oculto', p.dataset.panel !== b.dataset.v));
+    $('vEnviar').textContent = { ahora: 'Crear y abrir', agendar: 'Agendar y enviar', pegar: 'Enviar al cliente' }[b.dataset.v];
+  };
 }
 
 function tick() {
@@ -1139,6 +1198,23 @@ async function cargarCanales(r) {
         </ol>`}
     </section>
     <section class="tarjeta">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px"><h2 style="margin:0;font-size:18px">Google Meet y Calendar</h2>
+        ${r.google.activo ? pill(r.google.ok, 'Conectado', 'Falla') : r.google.errorClave ? '<span class="pastilla critico">✕ Clave no válida</span>' : '<span class="pastilla atencion">! Sin configurar</span>'}</div>
+      ${r.google.activo ? `
+        <div class="estado-linea"><span class="k">Organizador</span><span>Las reuniones se crean en el calendario de <b>${esc(r.google.organizador)}</b> · cuenta de servicio ${esc(r.google.cuentaServicio)}</span></div>
+        <div class="estado-linea"><span class="k">Reservas</span><span>El cliente puede reservar huecos de ${r.google.minutosCita} min en horario laboral desde su incidencia.</span></div>
+        <div class="estado-linea"><span class="k">Duración real</span><span>${r.google.meet ? '✓ Meet devuelve la duración de las reuniones: se apuntan solas.' : 'Se comprueba cuando acabe la primera reunión.'}</span></div>
+        ${r.google.error ? `<div class="estado-linea"><span class="k">Último error</span><span style="color:var(--cr-t)">${esc(r.google.error)}</span></div>` : ''}
+        <div style="margin-top:12px"><button class="boton sec" id="probarGoogle">Probar la conexión</button></div>`
+      : `<p style="margin:6px 0 0;color:var(--bruma)">Sin Google, el botón de videollamada pide pegar un enlace de Meet. Conectado, crea las reuniones solo, el cliente reserva huecos libres y la duración real se apunta sola.</p>
+        <ol class="pasos-ayuda">
+          <li>En console.cloud.google.com crea un proyecto y activa <b>Google Calendar API</b> y <b>Google Meet REST API</b>.</li>
+          <li>Crea una <b>cuenta de servicio</b>, genera una clave JSON y copia su <i>Client ID</i>.</li>
+          <li>En admin.google.com → Seguridad → Control de acceso y datos → Controles de API → <b>Delegación de todo el dominio</b>, añade ese Client ID con estos permisos:<br><code>https://www.googleapis.com/auth/calendar.events,https://www.googleapis.com/auth/calendar.freebusy,https://www.googleapis.com/auth/meetings.space.readonly</code></li>
+          <li>En Render: <code>GOOGLE_SA_JSON</code> = el contenido del JSON (o en base64) y <code>GOOGLE_ORGANIZADOR</code> = la cuenta cuyo calendario se usa (por defecto, la del buzón).</li>
+        </ol>`}
+    </section>
+    <section class="tarjeta">
       <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px"><h2 style="margin:0;font-size:18px">WhatsApp</h2>${r.whatsapp ? '<span class="pastilla ok">✓ Activo</span>' : '<span class="pastilla">Sin configurar</span>'}</div>
       <p style="margin:0;color:var(--bruma);font-size:13px">${r.whatsapp ? `Los mensajes al número de soporte entran como tickets. Webhook en Meta: <code>${esc((r.publica || 'https://…') + '/whatsapp/webhook')}</code>` : 'Necesita un número dado de alta en la API de WhatsApp Cloud de Meta (WA_TOKEN, WA_PHONE_ID, WA_VERIFY_TOKEN y WA_APP_SECRET en Render).'}</p>
     </section>
@@ -1152,6 +1228,12 @@ async function cargarCanales(r) {
     try { const r2 = await api('/api/canales/revisar', {}); cargarCanales(r2); aviso(r2.correo.lectura.ok ? 'Buzón revisado.' : 'No se ha podido leer el buzón.', !r2.correo.lectura.ok); }
     catch (e) { fallo(e); b.disabled = false; b.textContent = 'Revisar el buzón ahora'; }
   };
+  const pg = $('probarGoogle');
+  if (pg) pg.onclick = async () => {
+    pg.disabled = true; pg.textContent = 'Probando…';
+    try { const r2 = await api('/api/google/probar', {}); aviso(`Google conectado: ${r2.huecosManana} huecos libres mañana.`); cargarCanales(); }
+    catch (e) { fallo(e); cargarCanales(); }
+  };
   const p = $('prueba');
   if (p) p.onclick = async () => {
     p.disabled = true;
@@ -1161,8 +1243,9 @@ async function cargarCanales(r) {
 }
 // Aviso rojo en el menú si el buzón está configurado pero falla.
 function marcarCanales(r) {
+  googleInfo = r.google || googleInfo;
   const c = r.correo;
-  $('alertaCanales').classList.toggle('oculto', !(c.configurado && (c.lectura.ok === false || c.envio.ok === false)));
+  $('alertaCanales').classList.toggle('oculto', !((c.configurado && (c.lectura.ok === false || c.envio.ok === false)) || (googleInfo.activo && googleInfo.ok === false)));
 }
 
 // ================= Arranque =================

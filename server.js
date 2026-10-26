@@ -12,6 +12,7 @@ const canales = require('./canales');
 const auth = require('./auth');
 const clientes = require('./clientes');
 const metricas = require('./metricas');
+const google = require('./google');
 
 const PORT = process.env.PORT || 3000;
 const HOLDED_API_KEY = process.env.HOLDED_API_KEY || '';
@@ -123,6 +124,10 @@ http.createServer(async (req, res) => {
     }
     if (await clientes.rutas(req, res, ruta, { json, leerCuerpo })) return;
     if (await canales.correo.rutas(req, res, ruta, { json, leerCuerpo })) return;
+    if (req.method === 'POST' && ruta === '/api/google/probar') {
+      try { return json(res, { ...(await google.probar()), google: google.resumen() }); }
+      catch (e) { return json(res, { error: e.message, google: google.resumen() }, 502); }
+    }
     if (await tickets.rutasConsola(req, res, ruta, auth.TECNICOS)) return;
     json(res, { error: 'No encontrado' }, 404);
   } catch (e) {
@@ -132,4 +137,5 @@ http.createServer(async (req, res) => {
 }).listen(PORT, () => {
   console.log(`Servicio Holded en http://localhost:${PORT}`);
   canales.iniciar();
+  tickets.iniciarReuniones();
 });

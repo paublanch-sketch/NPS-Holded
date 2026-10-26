@@ -55,6 +55,14 @@ services:
         sync: false
       - key: SMTP_HOST
         sync: false
+      # Google Meet y Calendar: cuenta de servicio con delegación de todo el dominio
+      # (calendar.events, calendar.freebusy, meetings.space.readonly). Pasos en el panel → Canales.
+      - key: GOOGLE_SA_JSON     # el JSON de la clave de la cuenta de servicio, tal cual o en base64
+        sync: false
+      - key: GOOGLE_ORGANIZADOR # calendario donde se crean las reuniones; si falta, el de MAIL_USER
+        sync: false
+      - key: CITA_MIN           # minutos de las videollamadas que reserva el cliente; por defecto 30
+        sync: false
       - key: MANTENER_DESPIERTO # 0 para no visitarse cada 10 min (solo hace falta en el plan gratuito)
         sync: false
       - key: HOLDED_API_KEY   # vacía = datos comerciales de ejemplo

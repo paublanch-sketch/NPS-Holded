@@ -120,7 +120,7 @@ function correoPara(t, evento, b) {
     };
     case 'video': return {
       titulo: 'Te invitamos a una videollamada',
-      texto: `Hola${nombre}:\n\n${b.tecnico || 'El técnico'} te espera en una videollamada para resolver tu incidencia. Se abre en el navegador, sin instalar nada.`,
+      texto: `Hola${nombre}:\n\n${b.tecnico || 'El técnico'} te espera en una videollamada de Google Meet para resolver tu incidencia. Se abre en el navegador o en la app de Meet.`,
       boton: { texto: 'Unirme a la videollamada', url: t.video },
     };
     case 'cerrar': return {
@@ -128,6 +128,12 @@ function correoPara(t, evento, b) {
       texto: `Hola${nombre}:\n\nDamos por resuelta tu incidencia. Si vuelve a pasar, responde a este correo y la retomamos.\n\n¿Nos ayudas con 10 segundos? Del 0 al 10, ¿qué probabilidad hay de que nos recomiendes?${URL_PUBLICA ? '' : ' Responde a este correo solo con el número.'}`,
       extra: escalaNps(t),
     };
+    case 'cita': return {
+      titulo: 'Videollamada agendada',
+      texto: `Hola${nombre}:\n\nTienes una videollamada de Google Meet el ${tickets.cuando(b.cita.inicio)} para tu incidencia #${t.id}.${t.email ? ' También te llega la invitación de Google Calendar.' : ''}`,
+      boton: { texto: 'Unirme a la videollamada', url: b.cita.enlace },
+    };
+    case 'anularCita': return { titulo: 'Videollamada anulada', texto: `Hola${nombre}:\n\nHemos anulado la videollamada prevista para tu incidencia #${t.id}. Si necesitas otra, responde a este correo.`, boton: ver };
     case 'pideMejora': return { titulo: '¡Gracias por tu valoración!', texto: '¿Qué mejorarías? Puedes responder a este correo con lo que quieras contarnos.' };
   }
   return null;
@@ -267,6 +273,7 @@ function resumen() {
     publica: URL_PUBLICA || null,
     despierto: !!despierto,
     whatsapp: !!(env.WA_TOKEN && env.WA_PHONE_ID),
+    google: require('./google').resumen(),
   };
 }
 
