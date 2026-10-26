@@ -1,0 +1,14 @@
+id,cliente,servicio,tipo_cliente,canal,tipo_incidencia,entrada,primera_respuesta,cierre,horas,estado,nps,mejora
+1,Gestoría Martí & Soler,Implementación,Gestoría,Email,Alta y configuración,2026-10-26T09:14,2026-10-26T09:36,,1.5,Abierto,,
+2,Bufete Roca (ex-AKIRA),Implementación,Directo,Teléfono,Importación de datos,2026-10-26T10:02,2026-10-26T10:10,,0.5,Abierto,,
+3,Asesoría Vilanova,Implementación,Gestoría,Formulario web,Alta y configuración,2026-10-26T11:40,,,0,Abierto,,
+4,Gestoría Puig SLP,Premium,Gestoría,WhatsApp,Facturación,2026-10-26T08:50,,,0,Abierto,,
+5,Clínica Dental Bonavista,Premium,Directo,Teléfono,Contabilidad,2026-10-26T10:20,2026-10-26T11:08,,0.75,Abierto,,
+6,Asesoría Fontclara,Premium,Gestoría,Email,Modelos AEAT,2026-10-26T11:05,2026-10-26T11:20,,0.25,Abierto,,
+7,Restaurant Can Ferrer,Premium,Directo,Formulario web,Bancos,2026-10-26T11:52,,,0,Abierto,,
+8,Gestoría Puig SLP,Premium,Gestoría,Email,Modelos AEAT,2026-10-14T09:00,2026-10-14T09:20,2026-10-14T12:00,2.5,Cerrado,9,
+9,Clínica Dental Bonavista,Premium,Directo,Teléfono,Facturación,2026-10-08T16:00,2026-10-08T17:30,2026-10-09T10:00,3,Cerrado,6,Que respondan antes por teléfono
+10,Asesoría Fontclara,Premium,Gestoría,WhatsApp,Bancos,2026-10-20T10:00,2026-10-20T10:15,2026-10-20T11:00,1,Cerrado,10,
+11,Gestoría Martí & Soler,Implementación,Gestoría,Email,Formación,2026-10-02T09:00,2026-10-02T09:10,2026-10-05T13:00,4,Cerrado,10,
+12,Restaurant Can Ferrer,Premium,Directo,Email,Contabilidad,2026-09-22T12:00,2026-09-22T12:40,2026-09-23T09:00,2,Cerrado,8,Más vídeos tutoriales
+13,Bufete Roca (ex-AKIRA),Implementación,Directo,Teléfono,Alta y configuración,2026-09-29T10:00,2026-09-29T11:20,2026-10-01T18:00,6,Cerrado,9,

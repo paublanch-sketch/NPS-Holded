@@ -1,0 +1,9 @@
+{
+  "name": "dashboard-servicio-holded",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dashboard de incidencias, horas, NPS y comercial del servicio Holded",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Servicio Holded</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --ink:#1d2330; --mute:#6b7280; --line:#e5e7eb;
+          --ok:#1f9d55; --warn:#e08a00; --crit:#d64545; --info:#3b6fd8; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:20px 24px 8px; }
+  h1 { margin:0; font-size:22px; }
+  .sub { color:var(--mute); font-size:13px; }
+  main { padding:8px 24px 40px; display:grid; gap:18px; max-width:1200px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; }
+  h2 { margin:0 0 2px; font-size:17px; display:flex; gap:10px; align-items:center; }
+  h3 { margin:16px 0 8px; font-size:12px; letter-spacing:.06em; color:var(--mute); text-transform:uppercase; }
+  .pill { font-size:12px; font-weight:600; padding:2px 10px; border-radius:99px; color:#fff; }
+  .ok{background:var(--ok)} .warn{background:var(--warn)} .crit{background:var(--crit)} .info{background:var(--info)}
+  .rings { display:flex; flex-wrap:wrap; gap:22px; margin-top:14px; }
+  .ring { width:130px; text-align:center; }
+  .ring svg { width:96px; height:96px; }
+  .ring .v { font-size:20px; font-weight:700; }
+  .ring .l { font-size:12px; color:var(--mute); }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; color:var(--mute); font-weight:600; font-size:11px; text-transform:uppercase; padding:6px 8px; border-bottom:1px solid var(--line); }
+  td { padding:7px 8px; border-bottom:1px solid var(--line); }
+  .tablewrap { overflow-x:auto; }
+  .grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:18px; }
+  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; }
+  .legend { display:flex; gap:14px; font-size:12px; color:var(--mute); flex-wrap:wrap; }
+  @media (max-width:600px){ header,main{padding-left:16px;padding-right:16px} .ring{width:44%} }
+</style>
+</head>
+<body>
+<header>
+  <h1>Servicio Holded</h1>
+  <div class="sub">Dashboard operativo · Implementación y Soporte Premium · <span id="upd"></span></div>
+  <div class="legend" style="margin-top:8px">
+    <span><i class="dot ok"></i>OK</span><span><i class="dot warn"></i>Atención</span><span><i class="dot crit"></i>Crítico</span><span><i class="dot info"></i>Informativo</span>
+  </div>
+</header>
+<main id="app">Cargando…</main>
+<script>
+const nivelAbiertas = n => n <= 5 ? 'ok' : n <= 10 ? 'warn' : 'crit';
+const nivelExceso = m => m === 0 ? 'ok' : m <= 30 ? 'warn' : 'crit';
+const nivelNota = v => v == null ? 'info' : v >= 4.5 ? 'ok' : v >= 4 ? 'warn' : 'crit';
+const nivelFuera = n => n === 0 ? 'ok' : n <= 1 ? 'warn' : 'crit';
+const peor = (...n) => n.includes('crit') ? 'crit' : n.includes('warn') ? 'warn' : 'ok';
+const txt = { ok:'OK', warn:'Atención', crit:'Crítico', info:'Info' };
+const color = { ok:'#1f9d55', warn:'#e08a00', crit:'#d64545', info:'#3b6fd8' };
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dur = m => m >= 60 ? `${Math.floor(m/60)}h ${m%60}min` : `${m} min`;
+const hora = iso => (iso || '').slice(11, 16);
+
+function ring(valor, max, etiqueta, nivel, num = parseFloat(valor) || 0) {
+  const r = 40, c = 2 * Math.PI * r, f = Math.min(1, max ? num / max : 0);
+  return `<div class="ring"><svg viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="${r}" fill="none" stroke="#eceef2" stroke-width="9"/>
+    <circle cx="50" cy="50" r="${r}" fill="none" stroke="${color[nivel]}" stroke-width="9" stroke-linecap="round"
+      stroke-dasharray="${c * f} ${c}" transform="rotate(-90 50 50)"/>
+    <text x="50" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="#1d2330">${esc(valor)}</text></svg>
+    <div class="l">${etiqueta}</div><span class="pill ${nivel}">${txt[nivel]}</span></div>`;
+}
+
+function anillos(b, completo) {
+  return [
+    ring(b.abiertas, 20, 'Incidencias abiertas', nivelAbiertas(b.abiertas)),
+    completo ? ring(b.excedidoMin ? `+${b.excedidoMin}′` : '0′', 60, 'Tiempo excedido sobre la 1h de SLA', nivelExceso(b.excedidoMin), b.excedidoMin)
+             : ring(b.fueraSla, 10, 'Incidencias fuera de SLA', nivelFuera(b.fueraSla)),
+    ring(b.valoracion ?? '—', 5, 'Valoración media (NPS)', nivelNota(b.valoracion)),
+    ring(b.horasMes + 'h', 40, `Horas empleadas este mes (${b.horasTotal}h total)`, 'info'),
+  ].join('');
+}
+
+function bloque(titulo, desc, b, cols) {
+  const estado = peor(nivelAbiertas(b.abiertas), nivelExceso(b.excedidoMin), nivelNota(b.valoracion) === 'info' ? 'ok' : nivelNota(b.valoracion));
+  const filas = b.casos.map(c => {
+    const n = c.esperaMin > 60 ? 'crit' : c.esperaMin > 45 ? 'warn' : 'ok';
+    const et = c.respondido ? 'Respondido' : n === 'crit' ? 'Fuera de SLA' : n === 'warn' ? 'Cerca del límite' : 'En plazo';
+    return `<tr><td>${esc(c.cliente)}</td><td>${esc(cols === 'origen' ? c.origen : c.canal)}</td><td>${esc(c.tipo)}</td>
+      <td>${hora(c.entrada)}</td><td>${dur(c.esperaMin)}</td><td>${c.horas}h</td><td><span class="pill ${c.respondido ? 'ok' : n}">${et}</span></td></tr>`;
+  }).join('') || '<tr><td colspan="7">Sin casos abiertos</td></tr>';
+  return `<section><h2>${titulo} <span class="pill ${estado}">${txt[estado]}</span></h2><div class="sub">${desc}</div>
+    <div class="rings">${anillos(b, true)}</div>
+    <h3>Casos abiertos ahora</h3><div class="tablewrap"><table><tr><th>Cliente</th><th>${cols === 'origen' ? 'Origen' : 'Canal'}</th><th>Tipo</th><th>Entrada</th><th>Espera 1ª respuesta</th><th>Horas</th><th>Estado</th></tr>${filas}</table></div></section>`;
+}
+
+function semaforo(c, max) {
+  if (c.estado === 'Pagado' || c.estado === 'Rechazado') return ['info', c.estado];
+  return c.dias <= max / 2 ? ['ok', `${c.dias} días`] : c.dias <= max ? ['warn', `${c.dias} días`] : ['crit', `${c.dias} días · atención`];
+}
+
+async function cargar() {
+  const d = await (await fetch('/api/resumen')).json();
+  if (d.error) { app.textContent = 'Error: ' + d.error; return; }
+  upd.textContent = 'Actualizado ' + new Date(d.actualizado).toLocaleString('es-ES');
+  const tipos = Object.entries(d.porTipo).map(([n, b]) =>
+    `<div><h3>${n}</h3><div class="rings">${anillos(b, false)}</div></div>`).join('');
+  const pendientes = d.comercial.filter(c => c.estado === 'Firmado, pendiente de pago');
+  const firmados = d.comercial.filter(c => c.estado.startsWith('Firmado') || c.estado === 'Pagado');
+  const ratio = firmados.length ? Math.round(pendientes.length / firmados.length * 100) : 0;
+  app.innerHTML =
+    bloque('Implementación Holded', 'Clientes fuera de Kit Digital: referidos por una gestoría/asesoría o antiguos clientes de AKIRA.', d.implementacion, 'origen') +
+    bloque('Servicio Premium Holded', 'Gestorías y asesorías con servicio Premium, más cualquier cliente que lo contrate directamente.', d.premium, 'canal') +
+    `<section><h2>KPI por tipo de cliente</h2><div class="grid2">${tipos}</div></section>
+    <section><h2>Comercial · contratos, licencias y presupuestos</h2>
+      <div class="sub">Plazo de respuesta del cliente: ${d.diasRespuesta} días. Firmados sin pagar: ${pendientes.length} de ${firmados.length} (${ratio}%).</div>
+      <div class="tablewrap"><table style="margin-top:10px"><tr><th>Cliente</th><th>Documento</th><th>Tipo</th><th>Importe</th><th>Fecha</th><th>Estado</th><th>Tiempo</th></tr>
+      ${d.comercial.map(c => { const [n, t] = semaforo(c, d.diasRespuesta); return `<tr><td>${esc(c.cliente)}</td><td>${esc(c.documento)}</td><td>${esc(c.tipo)}</td>
+        <td>${Number(c.importe).toLocaleString('es-ES')} €</td><td>${esc(c.fecha)}</td><td>${esc(c.estado)}</td><td><span class="pill ${n}">${t}</span></td></tr>`; }).join('')}
+      </table></div></section>
+    <div class="grid2">
+      <section><h2>Horas por cliente</h2><div class="tablewrap"><table><tr><th>Cliente</th><th>Horas</th></tr>
+        ${d.horasPorCliente.map(h => `<tr><td>${esc(h.cliente)}</td><td>${h.horas}h</td></tr>`).join('')}</table></div></section>
+      <section><h2>Mejoras señaladas en el NPS</h2><div class="tablewrap"><table><tr><th>Cliente</th><th>Nota</th><th>Mejora</th></tr>
+        ${d.mejoras.map(m => `<tr><td>${esc(m.cliente)}</td><td>${m.nps ?? '—'}</td><td>${esc(m.mejora)}</td></tr>`).join('') || '<tr><td colspan="3">Sin comentarios</td></tr>'}</table></div></section>
+    </div>`;
+}
+cargar(); setInterval(cargar, 60000);
+</script>
+</body>
+</html>
