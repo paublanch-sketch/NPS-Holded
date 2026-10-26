@@ -601,7 +601,7 @@ if (token) {
   };
 
   // Videollamada: la prevista con su enlace, o reservar un hueco libre del calendario de soporte.
-  let reservando = false, huecos = null, diaSel = null, horaSel = null, firmaCita = '';
+  let reservando = false, huecos = null, sinAgenda = false, diaSel = null, horaSel = null, firmaCita = '';
   const diaLargo = iso => new Date(iso).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
   function pintarCita(t) {
     const firma = JSON.stringify([t.citas, t.reservar, reservando, huecos && huecos.length, diaSel, horaSel]);
@@ -619,14 +619,14 @@ if (token) {
       $('abrirReserva').onclick = async () => {
         reservando = true; firmaCita = '';
         $('cita').innerHTML = '<p>Buscando huecos libres…</p>';
-        try { huecos = (await api(`/api/soporte/${token}/huecos`)).huecos; } catch (e) { huecos = []; }
+        try { huecos = (await api(`/api/soporte/${token}/huecos`)).huecos; sinAgenda = false; } catch (e) { huecos = []; sinAgenda = true; }
         diaSel = huecos[0]?.inicio.slice(0, 10) || null;
         pintarCita(t);
       };
       return;
     }
     if (!huecos?.length) {
-      $('cita').innerHTML = `<h2>${icono('video')}Reservar videollamada</h2><p>Ahora no hay huecos libres en los próximos días. Escríbenos por el chat y te proponemos una hora.</p>`;
+      $('cita').innerHTML = `<h2>${icono('video')}Reservar videollamada</h2><p>${sinAgenda ? 'Ahora no podemos mostrar la agenda.' : 'Ahora no hay huecos libres en los próximos días.'} Escríbenos por el chat y te proponemos una hora.</p>`;
       return;
     }
     const dias = [...new Set(huecos.map(h => h.inicio.slice(0, 10)))];
