@@ -23,7 +23,6 @@
     --nota: #fff8e1; --nota-l: #f0d58a;
   }
   * { box-sizing: border-box; }
-  /* El body crece con el contenido: así la barra lateral (sticky) se queda quieta al bajar. */
   html { height: 100%; }
   body { min-height: 100%; }
   body { margin: 0; font: 14px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--cal); color: var(--pizarra); display: grid; grid-template-columns: 228px minmax(0, 1fr); }
@@ -32,7 +31,8 @@
   .oculto { display: none !important; }
 
   /* Navegación */
-  .nav { background: var(--marino); color: #fff; display: flex; flex-direction: column; gap: 4px; padding: 22px 14px 16px; position: sticky; top: 0; height: 100vh; align-self: start; }
+  /* Barra lateral fija a la izquierda: solo se desplaza el panel */
+  .nav { background: var(--marino); color: #fff; display: flex; flex-direction: column; gap: 4px; padding: 22px 14px 16px; position: fixed; top: 0; left: 0; bottom: 0; width: 228px; overflow-y: auto; z-index: 20; }
   .nav .marca { padding: 4px 10px 24px; line-height: 0; }
   .nav .marca img { display: block; width: 100%; max-width: 180px; height: auto; }
   .nav .enlaces { display: flex; flex-direction: column; gap: 4px; }
@@ -61,7 +61,7 @@
   .menu-yo a, .menu-yo button.salir { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 8px; padding: 8px 10px; border-radius: 8px; font-size: 13px; color: var(--pizarra); text-decoration: none; background: none; border: 0; cursor: pointer; text-align: left; }
   .menu-yo a:hover, .menu-yo button.salir:hover { background: var(--suave); }
   .menu-yo hr { border: 0; border-top: 1px solid var(--linea); margin: 12px 0 4px; }
-  #vista { min-width: 0; }
+  #vista { min-width: 0; grid-column: 2; }
 
   /* Comunes */
   .boton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; text-decoration: none; border: 1px solid var(--azul); border-radius: 10px; padding: 9px 16px; cursor: pointer; background: var(--azul); color: #fff; white-space: nowrap; box-shadow: 0 1px 2px rgba(37, 99, 235, .25); transition: background .15s, border-color .15s, box-shadow .15s; }
@@ -311,9 +311,10 @@
   @media (max-width: 1180px) { .detalle { grid-template-columns: 1fr; height: auto; } .lado { border-left: 0; border-top: 1px solid var(--linea); display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); align-items: start; } .conv { height: auto; } .hilo { max-height: 60vh; min-height: 220px; } }
   @media (max-width: 900px) {
     body { grid-template-columns: minmax(0, 1fr); }
+    #vista { grid-column: 1; }
     .nav, .nav .enlaces { min-width: 0; }
     /* Arriba: logo y cuenta; debajo, los enlaces en una fila que se desliza */
-    .nav { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px 12px; }
+    .nav { position: static; width: auto; overflow: visible; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px 12px; }
     .nav .marca { padding: 0; margin-right: auto; } .nav .marca img { width: 150px; }
     .nav .abajo { margin: 0; border: 0; padding: 0; }
     .yo-boton { padding: 4px; gap: 6px; } .yo-boton .avatar { width: 34px; height: 34px; font-size: 13px; } .yo-boton .yo-txt { display: none; }
