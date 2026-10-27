@@ -135,6 +135,68 @@
   .m.tecnico { align-self: flex-end; background: var(--pizarra); color: #fff; border-bottom-right-radius: 4px; }
   .m.nota { align-self: flex-end; background: var(--nota); border: 1px dashed var(--nota-l); }
   .m.sistema { align-self: center; background: none; color: var(--muted); font-size: 12px; text-align: center; padding: 2px 8px; }
+  /* Clientes: cabecera, filtros, tabla con avatar y píldoras, tarjetas y paginación */
+  .cl-cab { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 24px 28px 0; flex-wrap: wrap; }
+  .cl-cab h1 { margin: 0; font-size: 26px; letter-spacing: -.02em; }
+  .cl-cab p { margin: 4px 0 0; color: var(--bruma); font-size: 14px; }
+  .cl-filtros { display: grid; grid-template-columns: minmax(240px, 1.7fr) repeat(4, minmax(130px, 1fr)) auto; gap: 12px; align-items: end; background: var(--blanco); border: 1px solid var(--linea); border-radius: 14px; padding: 14px 16px; box-shadow: var(--sombra-b); }
+  .cl-buscar { position: relative; }
+  .cl-buscar > svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--muted); pointer-events: none; }
+  .cl-buscar input { width: 100%; padding-left: 36px; padding-right: 58px; }
+  .cl-buscar kbd { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font: 600 11px Inter, sans-serif; color: var(--muted); border: 1px solid var(--linea2); border-radius: 6px; padding: 2px 6px; background: var(--suave); }
+  .cl-f label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin: 0 0 4px 2px; }
+  .cl-f select { width: 100%; }
+  #cliMas svg { width: 16px; height: 16px; }
+  .cl-mas { display: none; grid-column: 1 / -1; grid-template-columns: repeat(3, minmax(150px, 230px)); gap: 12px; padding-top: 4px; }
+  .cl-mas.on { display: grid; }
+  .cl-tabla { background: var(--blanco); border: 1px solid var(--linea); border-radius: 14px; box-shadow: var(--sombra-b); }
+  .cl-barra { display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-bottom: 1px solid var(--linea); flex-wrap: wrap; }
+  .cl-barra > b { font-size: 15px; }
+  .cl-barra .orden { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--bruma); }
+  .cl-vista { margin-left: auto; display: inline-flex; border: 1px solid var(--linea2); border-radius: 9px; overflow: hidden; }
+  .cl-vista button { border: 0; background: var(--blanco); padding: 7px 10px; cursor: pointer; color: var(--bruma); display: grid; place-items: center; }
+  .cl-vista button.on { background: var(--azul); color: #fff; }
+  .cl-vista svg { width: 16px; height: 16px; }
+  .cl-tabla th { background: #fafbfc; }
+  .cl-tabla td { font-size: 13px; }
+  .av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; flex: none; letter-spacing: .02em; }
+  .cl-nom { display: flex; gap: 10px; align-items: center; min-width: 190px; }
+  .cl-nom a { color: var(--pizarra); font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
+  .cl-nom a:hover { color: var(--azul); }
+  .cl-nom small { display: block; color: var(--muted); font-size: 11px; margin-top: 1px; }
+  .pl { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 99px; white-space: nowrap; border: 1px solid transparent; }
+  .pl.kit { background: #f1ecfd; color: #6d3fd1; }
+  .pl.premium { background: #e7f6ec; color: #17803d; }
+  .pl.impl { background: var(--azul-f); color: var(--azul-h); }
+  .pl.sin { background: var(--suave); color: var(--bruma); }
+  .pl.o-akira { background: #e8f4fb; color: #1f6f99; border-color: #cfe6f3; }
+  .pl.o-gest { background: #fdf0e6; color: #b45309; border-color: #f8dcc4; }
+  .pl.o-ref { background: #eaf7ee; color: #17803d; border-color: #cfeedd; }
+  .pl.o-dir { background: var(--suave); color: var(--bruma); border-color: var(--linea); }
+  .cl-fecha, .cl-mail { display: inline-flex; gap: 6px; align-items: center; color: var(--bruma); white-space: nowrap; }
+  .cl-fecha svg, .cl-mail svg { width: 14px; height: 14px; color: var(--muted); flex: none; }
+  .cl-mail { max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
+  .cl-tabla th, .cl-tabla td { padding-left: 8px; padding-right: 8px; }
+  .cl-acc { display: flex; gap: 4px; align-items: center; justify-content: flex-end; position: relative; }
+  .cl-menu-b { border: 0; background: none; padding: 4px 8px; border-radius: 8px; cursor: pointer; color: var(--bruma); font-size: 18px; line-height: 1; }
+  .cl-menu-b:hover { background: var(--suave); }
+  .cl-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; background: var(--blanco); border: 1px solid var(--linea); border-radius: 10px; box-shadow: 0 10px 30px rgba(16, 24, 40, .12); padding: 6px; min-width: 200px; }
+  .cl-menu button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 8px 10px; border-radius: 7px; font: inherit; font-size: 13px; cursor: pointer; color: var(--pizarra); }
+  .cl-menu button:hover { background: var(--suave); }
+  .cl-pie { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; font-size: 13px; color: var(--bruma); flex-wrap: wrap; gap: 10px; }
+  .cl-pie:empty { display: none; }
+  .cl-pag { display: flex; gap: 4px; align-items: center; }
+  .cl-pag button { min-width: 32px; height: 32px; border: 1px solid var(--linea2); background: var(--blanco); border-radius: 8px; cursor: pointer; font: inherit; font-size: 13px; color: var(--pizarra); }
+  .cl-pag button.on { background: var(--azul); color: #fff; border-color: var(--azul); }
+  .cl-pag button:disabled { opacity: .4; cursor: default; }
+  .cl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; padding: 16px; }
+  .cl-card { border: 1px solid var(--linea); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 12px; background: var(--blanco); }
+  .cl-card .cl-nom { min-width: 0; }
+  .cl-card .num3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; background: var(--cal); border-radius: 10px; padding: 8px 4px; }
+  .cl-card .num3 b { display: block; font-size: 16px; }
+  .cl-card .num3 span { font-size: 11px; color: var(--muted); }
+  @media (max-width: 1150px) { .cl-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cl-buscar { grid-column: 1 / -1; } .cl-mas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 760px) { .cl-cab { padding: 16px 16px 0; } .cl-tabla .tabla table { min-width: 940px; } .cl-filtros { grid-template-columns: 1fr; } .cl-mas { grid-template-columns: 1fr; } }
   /* Ficha de cliente: sus incidencias con la conversación y, aparte, las notas internas */
   .ficha { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 20px; align-items: start; }
   .ficha-datos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
@@ -153,8 +215,6 @@
   .nota-f + .nota-f { margin-top: 8px; }
   .nota-f small { display: block; color: var(--bruma); font-size: 11px; margin-top: 4px; }
   .nota-f small a { color: inherit; }
-  #ctabla td a.cli { color: var(--pizarra); text-decoration: none; }
-  #ctabla td a.cli:hover { color: var(--azul); text-decoration: underline; }
   @media (max-width: 1000px) { .ficha { grid-template-columns: 1fr; } .ficha-datos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .redactar { background: var(--blanco); border-top: 1px solid var(--linea); padding: 10px 24px 14px; }
   .redactar .modos { display: flex; gap: 4px; margin-bottom: 8px; align-items: center; }
@@ -350,17 +410,6 @@
     .volver-movil { display: inline-block !important; }
   }
   @media (max-width: 760px) {
-    #ctabla thead { display: none; }
-    #ctabla table, #ctabla tbody { display: block; }
-    #ctabla tr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; padding: 12px 6px; border-bottom: 1px solid var(--linea); }
-    #ctabla td { border: 0; padding: 0; }
-    #ctabla td:first-child { grid-column: 1 / -1; }
-    #ctabla td select { width: 100%; }
-    #ctabla td.num, #ctabla td:nth-child(6) { font-size: 12px; color: var(--bruma); text-align: left; }
-    #ctabla td:nth-child(4)::after { content: " tickets"; }
-    #ctabla td:nth-child(5):not(:empty)::after { content: " abiertos"; }
-    #ctabla td:nth-child(7) { grid-column: 1 / -1; }
-    #ctabla td:last-child { grid-column: 1 / -1; }
     .filtros input#cq { min-width: 0 !important; width: 100%; }
   }
   .volver-movil { display: none; font-size: 13px; color: var(--bruma); text-decoration: none; margin-bottom: 6px; }
@@ -1075,75 +1124,199 @@ async function cargarClientes() {
   if (!clientesCache) clientesCache = await api('/api/clientes');
   return clientesCache;
 }
-let filtroCli = { q: '', sin: false, tab: 'con' };
-// Segunda pestaña: clientes de la lista del Kit Digital activos que aún no han abierto ninguna incidencia.
+// Filtros de la lista. «tick» sustituye a las pestañas: por defecto, los que tienen incidencias.
+let filtroCli = { q: '', serv: '', orig: '', tick: 'con', estado: '', contacto: '', horas: '', orden: 'nombre', vista: 'lista', mas: false, pag: 1 };
+const POR_PAGINA = 25;
+// Clientes de la lista del Kit Digital activos que aún no han abierto ninguna incidencia.
 const kitSinTickets = x => x.kitDigital && !x.tickets;
 // Falta clasificar: sin servicio, o Implementación/Premium sin origen (en Kit Digital el origen no aplica).
 const pendiente = x => x.servicio === 'Sin clasificar' || (['Implementación', 'Premium'].includes(x.servicio) && x.tipo_cliente === 'Sin clasificar');
+
+const ICO_CLI = {
+  buscar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
+  mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg>',
+  lista: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>',
+  grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>',
+  filtro: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>',
+};
+// Avatar con las iniciales y un color fijo por cliente.
+const COLORES_AV = [['#e0e7ff', '#4338ca'], ['#fce7f3', '#be185d'], ['#dcfce7', '#15803d'], ['#fef3c7', '#b45309'], ['#e0f2fe', '#0369a1'], ['#ede9fe', '#6d28d9'], ['#ffe4e6', '#be123c'], ['#ccfbf1', '#0f766e'], ['#f1f5f9', '#475569'], ['#ffedd5', '#c2410c']];
+function avatar(nombre) {
+  const p = String(nombre).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9 ]/g, ' ').split(' ').filter(Boolean);
+  const ini = (p.length > 1 ? p[0][0] + p[1][0] : (p[0] || '?').slice(0, 2)) || '?';
+  let h = 0;
+  for (const ch of String(nombre)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const [bg, fg] = COLORES_AV[h % COLORES_AV.length];
+  return `<span class="av" style="background:${bg};color:${fg}">${esc(ini)}</span>`;
+}
+const pildoraServ = s => `<span class="pl ${{ 'Kit Digital': 'kit', Premium: 'premium', 'Implementación': 'impl' }[s] || 'sin'}">${esc(s)}</span>`;
+const pildoraOrig = o => `<span class="pl ${{ 'Antiguo cliente AKIRA': 'o-akira', 'Gestoría / asesoría': 'o-gest', 'Referido por gestoría': 'o-ref', Directo: 'o-dir' }[o] || 'sin'}">${esc(o)}</span>`;
+const fechaLarga = iso => iso ? new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+
 function vistaClientes(arg) {
   if (arg) return vistaFicha(decodeURIComponent(arg));
+  const opc = (lista, v, todos = 'Todos') => `<option value="">${todos}</option>${lista.map(([k, t]) => `<option value="${esc(k)}" ${k === v ? 'selected' : ''}>${esc(t)}</option>`).join('')}`;
+  const f = filtroCli;
   $('vista').innerHTML = `
-    <div class="cabeza"><h1>Clientes</h1><span style="color:var(--muted);font-size:13px">El servicio y el origen se guardan por cliente y cuentan en todas sus incidencias.</span></div>
-    <div class="filtros">
-      <div class="seg" id="ctab"><button type="button" data-t="con" class="${filtroCli.tab === 'con' ? 'on' : ''}">Con incidencias</button><button type="button" data-t="kit" class="${filtroCli.tab === 'kit' ? 'on' : ''}">Kit Digital activos sin incidencias</button></div>
-      <input class="campo" id="cq" placeholder="Buscar cliente, correo o teléfono…" style="min-width:260px" value="${esc(filtroCli.q)}">
-      <label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" id="csin" ${filtroCli.sin ? 'checked' : ''}> Solo pendientes de clasificar</label>
-      <span class="der" style="font-size:13px;color:var(--muted)" id="ccuenta"></span>
+    <div class="cl-cab">
+      <div><h1>Clientes</h1><p>Gestiona y da seguimiento a tus clientes. Filtra, busca y ordena la información fácilmente.</p></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="boton sec" id="kitPegar">Importar lista Kit Digital…</button><button class="boton" id="cliNuevo">+ Nuevo cliente</button></div>
     </div>
-    <div class="contenido"><section class="tarjeta" style="padding:6px 8px"><div class="tabla" id="ctabla"><div class="vacio">Cargando…</div></div></section></div>`;
-  $('cq').oninput = e => { filtroCli.q = e.target.value; pintarClientes(); };
-  $('csin').onchange = e => { filtroCli.sin = e.target.checked; pintarClientes(); };
-  $('ctab').onclick = e => {
-    const b = e.target.closest('button[data-t]');
-    if (!b) return;
-    filtroCli.tab = b.dataset.t;
-    $('ctab').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
-    pintarClientes();
-  };
+    <div class="contenido">
+      <section class="cl-filtros">
+        <div class="cl-buscar">${ICO_CLI.buscar}<input class="campo" id="cq" placeholder="Buscar por nombre, email, teléfono o código de cliente…" value="${esc(f.q)}"><kbd>${/Mac/.test(navigator.platform) ? '⌘' : 'Ctrl'} K</kbd></div>
+        <div class="cl-f"><label>Servicio</label><select class="campo" data-f="serv"></select></div>
+        <div class="cl-f"><label>Origen</label><select class="campo" data-f="orig"></select></div>
+        <div class="cl-f"><label>Tickets</label><select class="campo" data-f="tick">
+          ${[['con', 'Con incidencias'], ['abiertas', 'Con incidencias abiertas'], ['kit', 'Kit Digital activos sin incidencias'], ['todos', 'Todos']].map(([k, t]) => `<option value="${k}" ${k === f.tick ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+        <div class="cl-f"><label>Estado</label><select class="campo" data-f="estado">${opc([['pend', 'Por clasificar'], ['clas', 'Clasificados'], ['kit', 'Kit Digital activo']], f.estado)}</select></div>
+        <button class="boton sec" id="cliMas" style="align-self:end">${ICO_CLI.filtro}Más filtros</button>
+        <div class="cl-mas ${f.mas ? 'on' : ''}" id="cliMasCaja">
+          <div class="cl-f"><label>Último contacto</label><select class="campo" data-f="contacto">${opc([['30', 'Últimos 30 días'], ['90', 'Últimos 90 días'], ['365', 'Último año'], ['viejo', 'Hace más de un año'], ['nunca', 'Sin contacto']], f.contacto, 'Cualquier fecha')}</select></div>
+          <div class="cl-f"><label>Horas de soporte</label><select class="campo" data-f="horas">${opc([['con', 'Con horas'], ['5', '5 h o más'], ['10', '10 h o más'], ['sin', 'Sin horas']], f.horas, 'Todas')}</select></div>
+          <div class="cl-f" style="align-self:end"><button class="boton sec" id="cliLimpiar" type="button">Quitar filtros</button></div>
+        </div>
+      </section>
+      <section class="cl-tabla">
+        <div class="cl-barra">
+          <b id="ccuenta">Cargando…</b>
+          <span class="orden">Ordenar por <select class="campo" data-f="orden" style="padding:6px 8px">
+            ${[['nombre', 'Nombre (A-Z)'], ['nombreZ', 'Nombre (Z-A)'], ['ultimo', 'Último contacto'], ['tickets', 'Más tickets'], ['abiertos', 'Más abiertos'], ['horas', 'Más horas']].map(([k, t]) => `<option value="${k}" ${k === f.orden ? 'selected' : ''}>${t}</option>`).join('')}</select></span>
+          <div class="cl-vista" id="cliVista"><button type="button" data-v="lista" class="${f.vista === 'lista' ? 'on' : ''}" title="Lista" aria-label="Ver como lista">${ICO_CLI.lista}</button><button type="button" data-v="grid" class="${f.vista === 'grid' ? 'on' : ''}" title="Tarjetas" aria-label="Ver como tarjetas">${ICO_CLI.grid}</button></div>
+        </div>
+        <div id="cltabla"><div class="vacio">Cargando…</div></div>
+        <div class="cl-pie" id="clpie"></div>
+      </section>
+    </div>`;
+  $('cq').oninput = e => { f.q = e.target.value; f.pag = 1; pintarClientes(); };
+  $('vista').querySelectorAll('select[data-f]').forEach(s => s.onchange = () => { f[s.dataset.f] = s.value; f.pag = 1; pintarClientes(); });
+  $('cliMas').onclick = () => { f.mas = !f.mas; $('cliMasCaja').classList.toggle('on', f.mas); };
+  $('cliLimpiar').onclick = () => { Object.assign(f, { q: '', serv: '', orig: '', tick: 'con', estado: '', contacto: '', horas: '', pag: 1 }); vistaClientes(); };
+  $('cliVista').onclick = e => { const b = e.target.closest('button[data-v]'); if (!b) return; f.vista = b.dataset.v; $('cliVista').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); pintarClientes(); };
+  $('cliNuevo').onclick = nuevoCliente;
+  $('kitPegar').onclick = pegarKitDigital;
+  // Ctrl/⌘ + K: al buscador.
+  const tecla = e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('cq')?.focus(); } };
+  document.addEventListener('keydown', tecla);
+  pararVista = () => document.removeEventListener('keydown', tecla);
   clientesCache = null;
   cargarClientes().then(pintarClientes).catch(fallo);
 }
+
 function pintarClientes() {
   const c = clientesCache;
-  if (!c || !$('ctabla')) return;
-  const q = filtroCli.q.trim().toLowerCase();
-  const enTab = c.clientes.filter(x => filtroCli.tab === 'kit' ? kitSinTickets(x) : !kitSinTickets(x));
-  const l = enTab.filter(x => (!filtroCli.sin || pendiente(x))
-    && (!q || `${x.nombre} ${x.emails.join(' ')} ${x.telefonos.join(' ')}`.toLowerCase().includes(q)));
-  $('ccuenta').innerHTML = `${l.length} de ${enTab.length} clientes · ${enTab.filter(pendiente).length} por clasificar${filtroCli.tab === 'kit' ? ' <button class="boton sec peq" id="kitPegar" style="margin-left:8px">Pegar lista…</button>' : ''}`;
-  if ($('kitPegar')) $('kitPegar').onclick = pegarKitDigital;
-  const sel = (campo, lista, v) => `<select class="campo" data-campo="${campo}" style="padding:5px 7px;font-size:13px">${lista.map(o => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
-  $('ctabla').innerHTML = l.length ? `<table><thead><tr><th>Cliente</th><th>Servicio</th><th>Origen</th><th class="num">Tickets</th><th class="num">Abiertos</th><th>Último</th><th>Contacto</th><th></th></tr></thead><tbody>
-    ${l.slice(0, 300).map(x => `<tr data-nombre="${esc(x.nombre)}"><td><a class="cli" href="#/clientes/${encodeURIComponent(x.nombre)}"><b>${esc(x.nombre)}</b></a>${x.kitDigital && x.tickets ? `<div style="font-size:11px;color:var(--muted)">Kit Digital activo${x.kitDigital !== x.nombre ? ` · ${esc(x.kitDigital)}` : ''}</div>` : ''}</td><td>${sel('servicio', c.servicios, x.servicio)}</td><td>${sel('tipo_cliente', c.origenes, x.tipo_cliente)}</td><td class="num">${x.tickets}</td><td class="num">${x.abiertos || ''}</td><td>${x.ultimo ? fecha(x.ultimo) : ''}</td><td style="font-size:12px;color:var(--bruma);overflow-wrap:anywhere">${esc(x.emails[0] || x.telefonos[0] || '')}${x.emails.length > 1 ? ` +${x.emails.length - 1}` : ''}</td><td><button class="boton sec peq" data-fusion>Fusionar…</button></td></tr>`).join('')}
-  </tbody></table>` : `<div class="vacio">${filtroCli.tab === 'kit' && !enTab.length ? 'Todavía no hay lista del Kit Digital. Pulsa «Pegar lista…» y pega las razones sociales, una por línea.' : 'Ningún cliente coincide.'}</div>`;
-  $('ctabla').onchange = async e => {
-    const s = e.target.closest('select[data-campo]');
-    if (!s) return;
-    const nombre = s.closest('tr').dataset.nombre;
-    try {
-      await api('/api/clientes', { nombre, [s.dataset.campo]: s.value });
-      const x = clientesCache.clientes.find(y => y.nombre === nombre);
-      x[s.dataset.campo] = s.value;
-      aviso(`${nombre}: ${s.value}`);
-    } catch (err) { fallo(err); }
+  if (!c || !$('cltabla')) return;
+  const f = filtroCli;
+  // Servicio y origen: solo los que existen en la lista.
+  const llenar = (campo, lista) => { const s = $('vista').querySelector(`select[data-f="${campo}"]`); if (s && s.options.length <= 1) s.innerHTML = `<option value="">Todos</option>${lista.map(o => `<option ${o === f[campo] ? 'selected' : ''}>${esc(o)}</option>`).join('')}`; };
+  llenar('serv', c.servicios); llenar('orig', c.origenes);
+  const q = f.q.trim().toLowerCase();
+  const hoy = Date.now(), dias = iso => iso ? (hoy - new Date(iso)) / 864e5 : Infinity;
+  const l = c.clientes.filter(x =>
+    (f.tick === 'todos' || (f.tick === 'kit' ? kitSinTickets(x) : f.tick === 'abiertas' ? x.abiertos > 0 : !kitSinTickets(x)))
+    && (!f.serv || x.servicio === f.serv) && (!f.orig || x.tipo_cliente === f.orig)
+    && (!f.estado || (f.estado === 'pend' ? pendiente(x) : f.estado === 'clas' ? !pendiente(x) : !!x.kitDigital))
+    && (!f.contacto || (f.contacto === 'nunca' ? !x.ultimo : f.contacto === 'viejo' ? x.ultimo && dias(x.ultimo) > 365 : dias(x.ultimo) <= Number(f.contacto)))
+    && (!f.horas || (f.horas === 'con' ? x.horas > 0 : f.horas === 'sin' ? !x.horas : x.horas >= Number(f.horas)))
+    && (!q || `${x.nombre} ${x.kitDigital || ''} ${x.codigo} ${x.emails.join(' ')} ${x.telefonos.join(' ')}`.toLowerCase().includes(q)));
+  const nom = (a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
+  l.sort({ nombre: nom, nombreZ: (a, b) => nom(b, a), ultimo: (a, b) => b.ultimo.localeCompare(a.ultimo), tickets: (a, b) => b.tickets - a.tickets || nom(a, b), abiertos: (a, b) => b.abiertos - a.abiertos || nom(a, b), horas: (a, b) => b.horas - a.horas || nom(a, b) }[f.orden] || nom);
+  const paginas = Math.max(1, Math.ceil(l.length / POR_PAGINA));
+  f.pag = Math.min(f.pag, paginas);
+  const ini = (f.pag - 1) * POR_PAGINA, pag = l.slice(ini, ini + POR_PAGINA);
+  $('ccuenta').textContent = `${l.length} ${l.length === 1 ? 'cliente' : 'clientes'}`;
+  const ficha = x => `#/clientes/${encodeURIComponent(x.nombre)}`;
+  const correo = x => x.emails[0] ? `<span class="cl-mail" title="${esc(x.emails.join(', '))}">${ICO_CLI.mail}${esc(x.emails[0])}${x.emails.length > 1 ? ` +${x.emails.length - 1}` : ''}</span>` : (x.telefonos[0] ? `<span class="cl-mail">${esc(x.telefonos[0])}</span>` : '<span style="color:var(--muted)">—</span>');
+  const acciones = x => `<div class="cl-acc"><a class="boton sec peq" href="${ficha(x)}" style="text-decoration:none">Ver</a><button class="cl-menu-b" data-menu aria-label="Más acciones">⋯</button></div>`;
+  const sub = x => `<small>${esc(x.codigo || '')}${x.kitDigital ? `${x.codigo ? ' · ' : ''}Kit Digital activo${x.kitDigital !== x.nombre ? ` · ${esc(x.kitDigital)}` : ''}` : ''}</small>`;
+  $('cltabla').innerHTML = !l.length ? '<div class="vacio">Ningún cliente coincide con los filtros.</div>'
+    : f.vista === 'grid' ? `<div class="cl-grid">${pag.map(x => `<div class="cl-card" data-nombre="${esc(x.nombre)}">
+        <div class="cl-nom">${avatar(x.nombre)}<div style="min-width:0"><a href="${ficha(x)}">${esc(x.nombre)}</a>${sub(x)}</div></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${pildoraServ(x.servicio)}${pildoraOrig(x.tipo_cliente)}</div>
+        <div class="num3"><div><b>${x.tickets}</b><span>Tickets</span></div><div><b>${x.abiertos}</b><span>Abiertos</span></div><div><b>${num(x.horas, 1)}</b><span>Horas</span></div></div>
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:12px">${x.ultimo ? `<span class="cl-fecha">${ICO_CLI.cal}${fechaLarga(x.ultimo)}</span>` : '<span style="color:var(--muted)">Sin contacto</span>'}${acciones(x)}</div>
+      </div>`).join('')}</div>`
+    : `<div class="tabla"><table><thead><tr><th>Cliente</th><th>Servicio</th><th>Origen</th><th class="num">Tickets</th><th class="num">Abiertos</th><th class="num">Horas</th><th>Último contacto</th><th>Email</th><th style="text-align:right">Acciones</th></tr></thead><tbody>
+      ${pag.map(x => `<tr data-nombre="${esc(x.nombre)}">
+        <td><div class="cl-nom">${avatar(x.nombre)}<div style="min-width:0"><a href="${ficha(x)}">${esc(x.nombre)}</a>${sub(x)}</div></div></td>
+        <td>${pildoraServ(x.servicio)}</td><td>${pildoraOrig(x.tipo_cliente)}</td>
+        <td class="num">${x.tickets}</td><td class="num">${x.abiertos}</td><td class="num">${x.horas ? num(x.horas, 1) + ' h' : '—'}</td>
+        <td>${x.ultimo ? `<span class="cl-fecha">${ICO_CLI.cal}${fechaLarga(x.ultimo)}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+        <td>${correo(x)}</td><td>${acciones(x)}</td></tr>`).join('')}
+    </tbody></table></div>`;
+  // Paginación
+  const nums = [...new Set([1, f.pag - 1, f.pag, f.pag + 1, paginas])].filter(n => n >= 1 && n <= paginas).sort((a, b) => a - b);
+  $('clpie').innerHTML = l.length ? `<span>Mostrando ${ini + 1}-${ini + pag.length} de ${l.length} ${l.length === 1 ? 'cliente' : 'clientes'}</span>
+    <div class="cl-pag"><button data-p="${f.pag - 1}" ${f.pag === 1 ? 'disabled' : ''} aria-label="Anterior">‹</button>${nums.map((n, i) => `${i && n - nums[i - 1] > 1 ? '<span style="padding:6px 2px">…</span>' : ''}<button data-p="${n}" class="${n === f.pag ? 'on' : ''}">${n}</button>`).join('')}<button data-p="${f.pag + 1}" ${f.pag === paginas ? 'disabled' : ''} aria-label="Siguiente">›</button></div>` : '';
+  $('clpie').onclick = e => { const b = e.target.closest('button[data-p]'); if (!b || b.disabled) return; f.pag = Number(b.dataset.p); pintarClientes(); $('cltabla').scrollIntoView({ block: 'nearest' }); };
+  // Menú «⋯»: editar o fusionar.
+  $('cltabla').onclick = e => {
+    const b = e.target.closest('[data-menu]');
+    document.querySelectorAll('.cl-menu').forEach(m => m.remove());
+    if (!b) return;
+    const nombre = b.closest('[data-nombre]').dataset.nombre;
+    const m = document.createElement('div');
+    m.className = 'cl-menu';
+    m.innerHTML = '<button data-a="editar">Editar servicio y origen…</button><button data-a="fusionar">Fusionar con otro…</button>';
+    b.parentNode.append(m);
+    m.onclick = ev => {
+      const a = ev.target.closest('button[data-a]')?.dataset.a;
+      m.remove();
+      if (a === 'editar') editarCliente(nombre);
+      if (a === 'fusionar') fusionarCliente(nombre);
+    };
+    e.stopPropagation();
   };
-  $('ctabla').onclick = e => {
-    if (!e.target.closest('[data-fusion]')) return;
-    const de = e.target.closest('tr').dataset.nombre;
-    dialogo(`<h3>Fusionar «${esc(de)}»</h3><p class="sub">Todas sus incidencias pasan al cliente que elijas; «${esc(de)}» queda como nombre de contacto. No se puede deshacer desde aquí.</p>
-      <label>Es el mismo cliente que…</label><input class="campo" name="a" list="dlFusion" placeholder="Escribe para buscar" required>
-      <datalist id="dlFusion">${c.clientes.filter(x => x.nombre !== de).map(x => `<option value="${esc(x.nombre)}">`).join('')}</datalist>
-      <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Fusionar</button></div>`,
-      async f => {
-        const a = f.a.value.trim();
-        if (!c.clientes.some(x => x.nombre === a)) { aviso('Elige un cliente de la lista.', true); return false; }
-        const r = await api('/api/clientes/fusionar', { de, a });
-        aviso(`${r.movidos} incidencias pasadas a ${a}.`);
-        clientesCache = null;
-        await cargarClientes();
-        pintarClientes();
-      });
-  };
+}
+document.addEventListener('click', e => { if (!e.target.closest('.cl-menu, [data-menu]')) document.querySelectorAll('.cl-menu').forEach(m => m.remove()); });
+
+const selCampo = (nombre, lista, v) => `<select class="campo" name="${nombre}">${lista.map(o => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+function nuevoCliente() {
+  const c = clientesCache;
+  dialogo(`<h3>Nuevo cliente</h3><p class="sub">Para dar de alta un cliente que todavía no ha abierto ninguna incidencia.</p>
+    <label>Nombre o razón social</label><input class="campo" name="nombre" required>
+    <div class="dos"><div><label>Servicio</label>${selCampo('servicio', c.servicios, 'Kit Digital')}</div><div><label>Origen</label>${selCampo('tipo_cliente', c.origenes, 'Antiguo cliente AKIRA')}</div>
+    <div><label>Correo <small>(opcional)</small></label><input class="campo" name="email" type="email"></div><div><label>Teléfono <small>(opcional)</small></label><input class="campo" name="telefono" type="tel"></div></div>
+    <label>Notas <small>(opcional)</small></label><textarea class="campo" name="notas" rows="3"></textarea>
+    <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Crear cliente</button></div>`,
+    async fm => {
+      const nombre = fm.nombre.value.trim();
+      if (!nombre) { aviso('Falta el nombre.', true); return false; }
+      await api('/api/clientes', { nuevo: true, nombre, servicio: fm.servicio.value, tipo_cliente: fm.tipo_cliente.value, email: fm.email.value, telefono: fm.telefono.value, notas: fm.notas.value });
+      aviso('Cliente creado.');
+      clientesCache = null;
+      location.hash = `#/clientes/${encodeURIComponent(nombre)}`;
+    });
+}
+function editarCliente(nombre) {
+  const c = clientesCache, x = c.clientes.find(y => y.nombre === nombre);
+  dialogo(`<h3>${esc(nombre)}</h3><p class="sub">El servicio y el origen cuentan en todas sus incidencias y en las métricas.</p>
+    <div class="dos"><div><label>Servicio</label>${selCampo('servicio', c.servicios, x.servicio)}</div><div><label>Origen</label>${selCampo('tipo_cliente', c.origenes, x.tipo_cliente)}</div></div>
+    <label>Notas</label><textarea class="campo" name="notas" rows="3">${esc(x.notas || '')}</textarea>
+    <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Guardar</button></div>`,
+    async fm => {
+      await api('/api/clientes', { nombre, servicio: fm.servicio.value, tipo_cliente: fm.tipo_cliente.value, notas: fm.notas.value });
+      Object.assign(x, { servicio: fm.servicio.value, tipo_cliente: fm.tipo_cliente.value, notas: fm.notas.value });
+      aviso('Cliente actualizado.');
+      pintarClientes();
+    });
+}
+function fusionarCliente(de) {
+  const c = clientesCache;
+  dialogo(`<h3>Fusionar «${esc(de)}»</h3><p class="sub">Todas sus incidencias pasan al cliente que elijas; «${esc(de)}» queda como nombre de contacto. No se puede deshacer desde aquí.</p>
+    <label>Es el mismo cliente que…</label><input class="campo" name="a" list="dlFusion" placeholder="Escribe para buscar" required>
+    <datalist id="dlFusion">${c.clientes.filter(x => x.nombre !== de).map(x => `<option value="${esc(x.nombre)}">`).join('')}</datalist>
+    <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Fusionar</button></div>`,
+    async fm => {
+      const a = fm.a.value.trim();
+      if (!c.clientes.some(x => x.nombre === a)) { aviso('Elige un cliente de la lista.', true); return false; }
+      const r = await api('/api/clientes/fusionar', { de, a });
+      aviso(`${r.movidos} incidencias pasadas a ${a}.`);
+      clientesCache = null;
+      await cargarClientes();
+      pintarClientes();
+    });
 }
 
 // Pegar la lista de clientes del Kit Digital activos. Los que ya tienen incidencias se unen a su
@@ -1236,9 +1409,9 @@ async function vistaFicha(nombre) {
       </section>
       <div class="ficha">
         <section><h2 style="font-size:16px;margin:0 0 10px">Incidencias</h2>${l.map(incidencia).join('') || '<div class="vacio">Sin incidencias.</div>'}</section>
-        <section class="tarjeta" style="padding:16px 18px"><h2 style="font-size:16px;margin:0 0 4px">Notas internas (${notas.length})</h2>
-          <p style="margin:0 0 12px;font-size:12px;color:var(--bruma)">Solo las ve el equipo, nunca el cliente.</p>
-          ${notas.map(m => `<div class="nota-f">${esc(m.texto)}<small>${m.autor ? esc(m.autor) + ' · ' : ''}${fechaHora(m.fecha)} · <a href="#/bandeja/${m.t.id}">#${m.t.id}</a></small></div>`).join('') || '<div style="font-size:13px;color:var(--muted)">Ninguna nota interna.</div>'}
+        <section class="tarjeta" style="padding:16px 18px"><h2 style="font-size:16px;margin:0 0 4px">Notas internas y observaciones (${notas.length})</h2>
+          <p style="margin:0 0 12px;font-size:12px;color:var(--bruma)">Solo las ve el equipo, nunca el cliente. Las del Excel son la columna de observaciones (comentarios internos) del antiguo formulario.</p>
+          ${notas.map(m => `<div class="nota-f">${m.t.origen === 'Sheet' ? '<b style="display:block;font-size:11px;color:var(--at-t);margin-bottom:2px">Observación del Excel</b>' : ''}${esc(m.texto)}<small>${m.autor ? esc(m.autor) + ' · ' : ''}${fechaHora(m.fecha)} · <a href="#/bandeja/${m.t.id}">#${m.t.id}</a></small></div>`).join('') || '<div style="font-size:13px;color:var(--muted)">Ninguna nota interna.</div>'}
         </section>
       </div>
     </div>`;

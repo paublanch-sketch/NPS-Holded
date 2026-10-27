@@ -25,6 +25,9 @@ async function guardarFicha(nombre, cambios) {
   if (SERVICIOS.includes(cambios.servicio)) c.servicio = cambios.servicio;
   if (ORIGENES.includes(cambios.tipo_cliente)) c.tipo_cliente = cambios.tipo_cliente;
   if (typeof cambios.notas === 'string') c.notas = cambios.notas.slice(0, 2000);
+  // Contacto de la ficha, para los clientes dados de alta a mano (los demás lo sacan de sus tickets).
+  if (typeof cambios.email === 'string') c.email = cambios.email.trim().toLowerCase().slice(0, 200);
+  if (typeof cambios.telefono === 'string') c.telefono = cambios.telefono.trim().slice(0, 40);
   // Razón social en la lista de clientes del Kit Digital activos.
   if (typeof cambios.kitDigital === 'string' && cambios.kitDigital.trim()) c.kitDigital = cambios.kitDigital.trim();
   return clientes.guardar(c);
@@ -165,26 +168,39 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
   if (req.method === 'GET' && ruta === '/api/clientes') {
     const mapa = await fichas();
     const por = new Map();
+    const nuevo = nombre => ({ nombre, tickets: 0, abiertos: 0, horas: 0, ultimo: '', emails: new Set(), telefonos: new Set() });
+    const ahora = Date.now();
     for (const t of await tickets.todos()) {
       if (t.interno) continue;
-      const c = por.get(t.cliente) || { nombre: t.cliente, tickets: 0, abiertos: 0, ultimo: '', emails: new Set(), telefonos: new Set() };
+      const c = por.get(t.cliente) || nuevo(t.cliente);
       c.tickets++;
       if (t.estado !== 'Cerrado') c.abiertos++;
-      if (t.entrada > c.ultimo) c.ultimo = t.entrada;
+      // Horas: las del Sheet más las sesiones del cronómetro.
+      c.horas += (t.horas_previas || 0) + (t.sesiones || []).reduce((h, x) => h + ((x.fin ? new Date(x.fin) : ahora) - new Date(x.inicio)) / 36e5, 0);
+      // Último contacto: el mensaje más reciente, con el cliente o del equipo.
+      for (const f of [t.entrada, ...(t.mensajes || []).filter(m => m.de !== 'sistema').map(m => m.fecha)]) if (f > c.ultimo) c.ultimo = f;
       if (t.email) c.emails.add(t.email.toLowerCase());
       if (t.telefono) c.telefonos.add(t.telefono);
       por.set(t.cliente, c);
     }
-    for (const f of mapa.values()) if (!por.has(f.nombre)) por.set(f.nombre, { nombre: f.nombre, tickets: 0, abiertos: 0, ultimo: '', emails: new Set(), telefonos: new Set() });
+    for (const f of mapa.values()) {
+      if (!por.has(f.nombre)) por.set(f.nombre, nuevo(f.nombre));
+      if (f.email) por.get(f.nombre).emails.add(f.email);
+      if (f.telefono) por.get(f.nombre).telefonos.add(f.telefono);
+    }
     const l = [...por.values()].map(c => ({
-      ...c, emails: [...c.emails], telefonos: [...c.telefonos],
+      ...c, horas: Math.round(c.horas * 10) / 10, emails: [...c.emails], telefonos: [...c.telefonos],
       ...clasificar({ cliente: c.nombre }, mapa), notas: mapa.get(c.nombre)?.notas || '', kitDigital: mapa.get(c.nombre)?.kitDigital || null,
+      codigo: mapa.get(c.nombre)?.id ? 'CL-' + String(mapa.get(c.nombre).id).padStart(4, '0') : '',
     })).sort((a, b) => b.ultimo.localeCompare(a.ultimo));
     return json(res, { clientes: l, servicios: SERVICIOS, origenes: ORIGENES }), true;
   }
   if (req.method === 'POST' && ruta === '/api/clientes') {
     const b = await leerCuerpo(req);
     if (!String(b.nombre || '').trim()) return json(res, { error: 'Falta el nombre' }, 400), true;
+    // «Nuevo cliente»: no pisar uno que ya existe con ese nombre.
+    if (b.nuevo && (await clientes.todos()).some(f => f.nombre.toLowerCase() === String(b.nombre).trim().toLowerCase()))
+      return json(res, { error: 'Ya hay un cliente con ese nombre' }, 409), true;
     return json(res, await guardarFicha(String(b.nombre).trim(), b)), true;
   }
   if (req.method === 'POST' && ruta === '/api/clientes/kit-digital') {
