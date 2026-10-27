@@ -84,6 +84,8 @@ function resumen(todos, { desde, hasta, tecnico }, ahora = new Date()) {
       excedidoMin: excedido,
       valoracion: val.media5,
       respuestasNps: val.respuestas,
+      // Horas dedicadas en el periodo (cronómetro y horas del Sheet).
+      horas: horasDe(lista),
       casos: abiertas.sort((a, b) => a.entrada.localeCompare(b.entrada)).map(t => ({
         id: t.id, cliente: t.cliente, origen: t.tipo_cliente, canal: t.canal, tipo: t.tipo_incidencia,
         tecnico: t.tecnico, estado: t.estado, entrada: t.entrada, respondido: !!t.primera_respuesta,
