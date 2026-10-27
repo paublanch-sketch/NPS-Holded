@@ -47,6 +47,8 @@ services:
         sync: false
       - key: WA_APP_SECRET    # secreto de la app de Meta, para comprobar la firma
         sync: false
+      - key: WA_PLANTILLA_IDIOMA  # idioma de las plantillas en WhatsApp Manager (es, es_ES…); por defecto es
+        sync: false
       # Buzón de soporte. Con Google Workspace bastan MAIL_USER y MAIL_PASS (contraseña de
       # aplicación): IMAP_HOST y SMTP_HOST se deducen del MX. Estado en el panel → Canales.
       - key: MAIL_USER

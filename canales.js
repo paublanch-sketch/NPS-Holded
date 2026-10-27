@@ -12,39 +12,86 @@ const WA = {
   token: env.WA_TOKEN, telefonoId: env.WA_PHONE_ID,
   verificar: env.WA_VERIFY_TOKEN, secreto: env.WA_APP_SECRET,
   base: (env.WA_GRAPH_BASE || 'https://graph.facebook.com/v21.0').replace(/\/$/, ''),
+  idioma: env.WA_PLANTILLA_IDIOMA || 'es',
 };
 const waActivo = () => WA.token && WA.telefonoId;
 
-// Solo texto libre: vale dentro de las 24 h desde el último mensaje del cliente.
-// Fuera de esa ventana Meta lo rechaza y el error queda como nota en el ticket.
-async function enviarWhatsApp(telefono, texto) {
+async function llamarMeta(cuerpo) {
   const r = await fetch(`${WA.base}/${WA.telefonoId}/messages`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${WA.token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messaging_product: 'whatsapp', to: tickets.telefonoWa(telefono), type: 'text', text: { body: texto, preview_url: true } }),
+    body: JSON.stringify({ messaging_product: 'whatsapp', ...cuerpo }),
   });
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(d.error?.message || `Meta respondió ${r.status}`);
+  if (!r.ok) throw new Error(d.error?.error_data?.details || d.error?.message || `Meta respondió ${r.status}`);
 }
 
-function textoWhatsApp(t, evento, b) {
+// Meta solo deja escribir texto libre en las 24 h desde el último mensaje que el
+// cliente mandó por WhatsApp. Pasado ese plazo hay que usar una plantilla aprobada
+// en WhatsApp Manager, con el nombre, el idioma y las variables de PLANTILLAS_WA.
+const VENTANA_MS = 24 * 3600e3 - 10 * 60e3; // diez minutos de margen
+const enVentana = t => {
+  const ultimo = t.mensajes.filter(m => m.de === 'cliente' && String(m.idExterno || '').startsWith('wa:')).map(m => m.fecha).sort().pop();
+  return !!ultimo && Date.now() - new Date(ultimo) < VENTANA_MS;
+};
+
+// Categoría «Utilidad», idioma WA_PLANTILLA_IDIOMA (por defecto «es»). El cuerpo se
+// copia tal cual en Meta; {{1}}, {{2}}… son las variables, en ese orden. Meta rechaza
+// las plantillas que empiezan o acaban con una variable.
+const PLANTILLAS_WA = [
+  { nombre: 'soporte_incidencia_nueva', cuerpo: 'Hemos registrado tu incidencia #{{1}} en el Soporte Holded de Interactivos. Un técnico te contestará por este chat.', ejemplo: ['231'] },
+  { nombre: 'soporte_respuesta', cuerpo: 'Tienes una respuesta nueva en tu incidencia #{{1}} del Soporte Holded:\n\n{{2}}\n\nPuedes contestar por aquí mismo.', ejemplo: ['231', 'Blanch: Ya está corregida la serie de facturas, prueba ahora.'] },
+  { nombre: 'soporte_videollamada', cuerpo: 'Te invitamos a una videollamada de Google Meet por tu incidencia #{{1}}, con {{2}}.\n\nEnlace: {{3}}\n\nSe abre en el navegador o en la app de Meet.', ejemplo: ['231', 'Blanch', 'https://meet.google.com/abc-defg-hij'] },
+  { nombre: 'soporte_cita', cuerpo: 'Tu videollamada de Google Meet por la incidencia #{{1}} queda agendada para el {{2}}.\n\nEnlace: {{3}}\n\nSi no puedes asistir, escríbenos por aquí.', ejemplo: ['231', 'martes 28 de octubre a las 10:00', 'https://meet.google.com/abc-defg-hij'] },
+  { nombre: 'soporte_cita_anulada', cuerpo: 'Hemos anulado la videollamada prevista por tu incidencia #{{1}}. Si necesitas otra, escríbenos por aquí.', ejemplo: ['231'] },
+  { nombre: 'soporte_cierre', cuerpo: 'Hemos cerrado tu incidencia #{{1}}. Del 0 al 10, ¿qué probabilidad hay de que nos recomiendes? Responde solo con el número.', ejemplo: ['231'] },
+];
+
+// Meta no admite saltos de línea, tabuladores ni más de cuatro espacios seguidos
+// en una variable, ni variables vacías; y el cuerpo entero no puede pasar de 1024.
+const variable = (v, max = 700) => {
+  const s = String(v ?? '').replace(/\s+/g, ' ').trim() || '-';
+  return s.length > max ? s.slice(0, max - 1) + '…' : s;
+};
+
+// Texto libre dentro de la ventana; fuera, la plantilla del evento (si la tiene).
+function mensajeWhatsApp(t, evento, b, ventana) {
+  const libre = texto => texto && { type: 'text', text: { body: texto, preview_url: true } };
+  const plantilla = (nombre, ...vars) => ({ type: 'template', template: { name: nombre, language: { code: WA.idioma }, components: [{ type: 'body', parameters: vars.map(v => ({ type: 'text', text: variable(v) })) }] } });
   switch (evento) {
-    case 'nuevo': return `Hola${t.contacto ? ' ' + t.contacto : ''}, hemos recibido tu incidencia #${t.id}. Un técnico te contestará por aquí.${URL_PUBLICA ? `\nTambién puedes seguirla en ${enlace(t)}` : ''}`;
-    case 'mensaje': return b.nota ? null : `${b.tecnico || 'Soporte'}: ${b.texto}`;
-    case 'video': return `${b.tecnico || 'El técnico'} te invita a una videollamada de Google Meet:\n${t.video}`;
-    case 'cita': return `Videollamada de Google Meet agendada para el ${tickets.cuando(b.cita.inicio)}.\nEnlace: ${b.cita.enlace}`;
-    case 'anularCita': return 'Hemos anulado la videollamada prevista. Si necesitas otra, escríbenos por aquí.';
-    case 'cerrar': return `Hemos cerrado tu incidencia #${t.id}. Del 0 al 10, ¿qué probabilidad hay de que nos recomiendes? Responde solo con el número.`;
-    case 'pideMejora': return '¡Gracias! ¿Qué mejorarías? Puedes responder aquí mismo.';
-    case 'gracias': return 'Gracias por tu opinión, nos ayuda mucho.';
+    case 'nuevo': return ventana
+      ? libre(`Hola${t.contacto ? ' ' + t.contacto : ''}, hemos recibido tu incidencia #${t.id}. Un técnico te contestará por aquí.${URL_PUBLICA ? `\nTambién puedes seguirla en ${enlace(t)}` : ''}`)
+      : plantilla('soporte_incidencia_nueva', t.id);
+    case 'mensaje': {
+      if (b.nota) return null;
+      const texto = `${b.tecnico || 'Soporte'}: ${b.texto}`;
+      if (ventana) return libre(texto);
+      const resumido = variable(texto, 600);
+      return plantilla('soporte_respuesta', t.id, resumido.endsWith('…') && URL_PUBLICA ? `${resumido.slice(0, -1)}… (mensaje completo en ${enlace(t)})` : resumido);
+    }
+    case 'video': return ventana
+      ? libre(`${b.tecnico || 'El técnico'} te invita a una videollamada de Google Meet:\n${t.video}`)
+      : plantilla('soporte_videollamada', t.id, b.tecnico || 'el técnico', t.video);
+    case 'cita': return ventana
+      ? libre(`Videollamada de Google Meet agendada para el ${tickets.cuando(b.cita.inicio)}.\nEnlace: ${b.cita.enlace}`)
+      : plantilla('soporte_cita', t.id, tickets.cuando(b.cita.inicio), b.cita.enlace);
+    case 'anularCita': return ventana
+      ? libre('Hemos anulado la videollamada prevista. Si necesitas otra, escríbenos por aquí.')
+      : plantilla('soporte_cita_anulada', t.id);
+    case 'cerrar': return ventana
+      ? libre(`Hemos cerrado tu incidencia #${t.id}. Del 0 al 10, ¿qué probabilidad hay de que nos recomiendes? Responde solo con el número.`)
+      : plantilla('soporte_cierre', t.id);
+    // Solo salen justo después de un mensaje del cliente: siempre dentro de la ventana.
+    case 'pideMejora': return libre('¡Gracias! ¿Qué mejorarías? Puedes responder aquí mismo.');
+    case 'gracias': return libre('Gracias por tu opinión, nos ayuda mucho.');
   }
   return null;
 }
 
 tickets.avisos.push(async (t, evento, b) => {
   if (!waActivo() || t.canal !== 'WhatsApp' || !t.telefono) return;
-  const texto = textoWhatsApp(t, evento, b);
-  if (texto) await enviarWhatsApp(t.telefono, texto);
+  const m = mensajeWhatsApp(t, evento, b, enVentana(t));
+  if (m) await llamarMeta({ to: tickets.telefonoWa(t.telefono), ...m });
 });
 
 // Firma X-Hub-Signature-256 de Meta: sin ella cualquiera podría crear tickets.
@@ -99,4 +146,4 @@ function iniciar() {
   if (waActivo()) console.log('WhatsApp: activo');
 }
 
-module.exports = { rutasWhatsApp, iniciar, revisarCorreo: correo.revisarCorreo, sinCita: correo.sinCita, correo };
+module.exports = { PLANTILLAS_WA, mensajeWhatsApp, rutasWhatsApp, iniciar, revisarCorreo: correo.revisarCorreo, sinCita: correo.sinCita, correo };

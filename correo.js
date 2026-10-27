@@ -273,6 +273,8 @@ function resumen() {
     publica: URL_PUBLICA || null,
     despierto: !!despierto,
     whatsapp: !!(env.WA_TOKEN && env.WA_PHONE_ID),
+    plantillasWa: require('./canales').PLANTILLAS_WA.map(({ nombre, cuerpo }) => ({ nombre, cuerpo })),
+    idiomaWa: env.WA_PLANTILLA_IDIOMA || 'es',
     google: require('./google').resumen(),
   };
 }

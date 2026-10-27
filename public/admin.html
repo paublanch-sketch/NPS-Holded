@@ -1177,6 +1177,10 @@ async function cargarCanales(r) {
     <section class="tarjeta">
       <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px"><h2 style="margin:0;font-size:18px">WhatsApp</h2>${r.whatsapp ? '<span class="pastilla ok">✓ Activo</span>' : '<span class="pastilla">Sin configurar</span>'}</div>
       <p style="margin:0;color:var(--bruma);font-size:13px">${r.whatsapp ? `Los mensajes al número de soporte entran como tickets. Webhook en Meta: <code>${esc((r.publica || 'https://…') + '/whatsapp/webhook')}</code>` : 'Necesita un número dado de alta en la API de WhatsApp Cloud de Meta (WA_TOKEN, WA_PHONE_ID, WA_VERIFY_TOKEN y WA_APP_SECRET en Render).'}</p>
+      ${(r.plantillasWa || []).length ? `<details style="margin-top:12px"><summary style="cursor:pointer;font-size:13px;font-weight:600">Plantillas para escribir pasadas 24 h (${r.plantillasWa.length})</summary>
+        <p style="margin:8px 0;color:var(--bruma);font-size:13px">Meta solo deja mandar texto libre en las 24 h siguientes al último mensaje del cliente. Pasado ese plazo se usan estas plantillas: créalas en WhatsApp Manager → Plantillas con este nombre, categoría <b>Utilidad</b>, idioma <code>${esc(r.idiomaWa)}</code> y este cuerpo. Hasta que Meta las apruebe, ese aviso no llega y queda una nota en el ticket.</p>
+        ${r.plantillasWa.map(p => `<div style="border:1px solid var(--linea);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:13px"><code>${esc(p.nombre)}</code><div style="white-space:pre-wrap;color:var(--bruma);margin-top:4px">${esc(p.cuerpo)}</div></div>`).join('')}
+      </details>` : ''}
     </section>
     <section class="tarjeta">
       <h2 style="margin:0 0 6px;font-size:18px">Portal del cliente</h2>
