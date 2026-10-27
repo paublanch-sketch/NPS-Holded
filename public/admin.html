@@ -1222,8 +1222,8 @@ async function pintarEjemplo() {
   const hay = n.tickets || n.clientes;
   caja.innerHTML = `<div style="display:flex;gap:10px;align-items:center;margin-bottom:6px"><h2 style="margin:0;font-size:18px">Datos de ejemplo</h2>${hay ? `<span class="pastilla" style="background:var(--at-f);color:var(--at-t)">Puestos</span>` : '<span class="pastilla">Sin datos de ejemplo</span>'}</div>
     <p style="margin:0 0 12px;color:var(--bruma);font-size:13px">${hay
-      ? `Hay ${n.tickets} tickets y ${n.clientes} clientes inventados (Premium e Implementación) para ver las métricas con colores. Quitarlos borra solo esos: los clientes y tickets reales no se tocan.`
-      : 'Clientes y tickets inventados de Premium e Implementación, con fechas de estos días, para ver las métricas con colores y números. Se quitan con un botón sin tocar nada real.'}</p>
+      ? `Hay ${n.tickets} tickets y ${n.clientes} clientes inventados (Premium e Implementación) para ver las métricas con colores. Se renuevan solos cada día con fechas de esa semana. Quitarlos borra solo esos, los reales no se tocan, y ya no vuelven hasta que los pongas otra vez.`
+      : 'Quitados. Son clientes y tickets inventados de Premium e Implementación para ver las métricas con colores y números; si los vuelves a poner, se renuevan solos cada día.'}</p>
     <button class="boton${hay ? ' rojo' : ''}" id="ejemploBoton">${hay ? 'Quitar los datos de ejemplo' : 'Poner datos de ejemplo'}</button>`;
   $('ejemploBoton').onclick = async e => {
     if (hay && !confirm(`¿Quitar los ${n.tickets} tickets y ${n.clientes} clientes de ejemplo?`)) return;

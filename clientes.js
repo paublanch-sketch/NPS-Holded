@@ -1,6 +1,6 @@
 // Clientes: su servicio y su origen se guardan una vez por cliente y todos sus tickets
 // lo heredan. También permite fusionar dos nombres que son el mismo cliente.
-const { tickets, clientes } = require('./store');
+const { tickets, clientes, ajustes } = require('./store');
 
 const SERVICIOS = ['Implementación', 'Premium', 'Kit Digital', 'Sin clasificar'];
 const ORIGENES = ['Gestoría / asesoría', 'Referido por gestoría', 'Directo', 'Antiguo cliente AKIRA', 'Sin clasificar'];
@@ -26,6 +26,19 @@ async function guardarFicha(nombre, cambios) {
   if (ORIGENES.includes(cambios.tipo_cliente)) c.tipo_cliente = cambios.tipo_cliente;
   if (typeof cambios.notas === 'string') c.notas = cambios.notas.slice(0, 2000);
   return clientes.guardar(c);
+}
+
+// Cambios de ficha pedidos una sola vez: se aplican al arrancar y se apuntan en «ajustes»,
+// para no pisar lo que se cambie después desde Clientes.
+// 27/10/2026: SHEILOR SLU es Premium, la única Premium real.
+const UNA_VEZ = [['sheilor-premium', () => guardarFicha('SHEILOR SLU', { servicio: 'Premium' })]];
+async function aplicarUnaVez() {
+  for (const [clave, f] of UNA_VEZ) {
+    if ((await ajustes.donde('clave', clave)).length) continue;
+    await f();
+    await ajustes.guardar({ clave, cuando: new Date().toISOString() });
+    console.log(`Ficha: aplicado «${clave}».`);
+  }
 }
 
 async function rutas(req, res, ruta, { json, leerCuerpo }) {
@@ -81,4 +94,4 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
   return false;
 }
 
-module.exports = { rutas, fichas, clasificar, guardarFicha, SERVICIOS, ORIGENES };
+module.exports = { rutas, fichas, clasificar, guardarFicha, aplicarUnaVez, SERVICIOS, ORIGENES };

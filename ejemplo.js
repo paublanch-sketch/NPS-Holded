@@ -1,10 +1,10 @@
 // Datos de ejemplo para que el panel enseñe colores y números mientras no hay clientes
-// Premium ni de Implementación de verdad. Todo lo que se crea lleva «ejemplo: true» (tickets
-// y fichas de cliente) y se quita de golpe sin tocar nada real:
-//   node ejemplo.js            pone los datos (si ya están, no hace nada)
-//   node ejemplo.js --quitar   los borra
-// También desde el panel, en Canales → Datos de ejemplo.
-// Las fechas van relativas a hoy, en días laborables, para que caigan en el periodo actual.
+// Premium ni de Implementación de verdad. Están SIEMPRE puestos: el servidor los crea al
+// arrancar y cada día los rehace con fechas de esa semana, para que caigan en el periodo
+// actual. Todo lo inventado lleva «ejemplo: true» (tickets y fichas de cliente) y se quita
+// de golpe sin tocar nada real, con el botón de Canales → Datos de ejemplo o con
+//   node ejemplo.js --quitar   (y «node ejemplo.js» para volver a ponerlos)
+// Una vez quitados no vuelven solos: lo recuerda el ajuste «ejemplo».
 // Los correos son @example.com y los de WhatsApp no llevan teléfono: un aviso no sale a nadie.
 // Desde la línea de órdenes, el .env antes que store.js (que decide si usa Postgres).
 if (require.main === module) require('./entorno');
@@ -109,29 +109,58 @@ function ticket([cliente, tipo, canal, estado, dias, hora, resp, diasCierre, hor
   };
 }
 
+const hoy = (d = new Date()) => local(d).slice(0, 10);
+
 async function contar() {
   const [t, c] = await Promise.all([store.tickets.todos(), store.clientes.todos()]);
   return { tickets: t.filter(x => x.ejemplo).length, clientes: c.filter(x => x.ejemplo).length };
 }
 
-async function poner(ahora = new Date()) {
-  const ya = await contar();
-  if (ya.tickets || ya.clientes) return { ...ya, yaEstaban: true };
+// El ajuste «ejemplo» guarda si se han quitado a propósito.
+async function ajuste() { return (await store.ajustes.donde('clave', 'ejemplo'))[0] || { clave: 'ejemplo', quitados: false }; }
+async function recordar(quitados) { await store.ajustes.guardar({ ...(await ajuste()), quitados, cuando: new Date().toISOString() }); }
+
+async function borrar() {
+  for (const t of await store.tickets.todos()) if (t.ejemplo) await store.tickets.borrar(t.id);
+  for (const c of await store.clientes.todos()) if (c.ejemplo) await store.clientes.borrar(c.id);
+}
+
+async function crear(ahora) {
   const fichas = await store.clientes.todos();
   for (const [nombre, servicio, tipo_cliente] of CLIENTES) {
     if (fichas.some(f => f.nombre === nombre)) continue;
     await store.clientes.guardar({ nombre, servicio, tipo_cliente, notas: 'Cliente de ejemplo: se quita en Canales → Datos de ejemplo.', ejemplo: true });
   }
-  for (const [i, t] of TICKETS.entries()) await store.tickets.guardar(ticket(t, i, ahora));
+  for (const [i, t] of TICKETS.entries()) await store.tickets.guardar({ ...ticket(t, i, ahora), ejemplo_dia: hoy(ahora) });
+}
+
+async function poner(ahora = new Date()) {
+  await borrar();
+  await crear(ahora);
+  await recordar(false);
   return contar();
 }
 
 async function quitar() {
   const antes = await contar();
-  for (const t of await store.tickets.todos()) if (t.ejemplo) await store.tickets.borrar(t.id);
-  for (const c of await store.clientes.todos()) if (c.ejemplo) await store.clientes.borrar(c.id);
+  await borrar();
+  await recordar(true);
   return { quitados: antes };
 }
+
+// Al arrancar y cada hora: si no se han quitado a propósito, que estén y con fechas de hoy.
+let enMarcha = null;
+function mantener(ahora = new Date()) {
+  return enMarcha ||= (async () => {
+    if ((await ajuste()).quitados) return;
+    const t = (await store.tickets.todos()).filter(x => x.ejemplo);
+    if (t.length === TICKETS.length && t.every(x => x.ejemplo_dia === hoy(ahora))) return;
+    await borrar();
+    await crear(ahora);
+    console.log(`Datos de ejemplo puestos (${TICKETS.length} tickets, fechas del ${hoy(ahora)}).`);
+  })().catch(e => console.error('Datos de ejemplo:', e.message)).finally(() => { enMarcha = null; });
+}
+function vigilar() { mantener(); setInterval(mantener, 3600e3).unref(); }
 
 async function rutas(req, res, ruta, { json, leerCuerpo }) {
   if (ruta !== '/api/ejemplo') return false;
@@ -145,7 +174,7 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
   return false;
 }
 
-module.exports = { rutas, poner, quitar, contar };
+module.exports = { rutas, poner, quitar, contar, mantener, vigilar };
 
 if (require.main === module) {
   (process.argv.includes('--quitar') ? quitar() : poner())

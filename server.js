@@ -167,5 +167,6 @@ http.createServer(async (req, res) => {
 }).listen(PORT, () => {
   console.log(`Servicio Holded en http://localhost:${PORT}`);
   canales.iniciar();
+  clientes.aplicarUnaVez().catch(e => console.error('Fichas:', e.message)).then(() => ejemplo.vigilar());
   google.cargar().then(() => { tickets.iniciarReuniones(); google.vigilar(); });
 });
