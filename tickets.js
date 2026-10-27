@@ -99,7 +99,7 @@ async function recibir(r) {
   const mismo = t => r.canal === 'WhatsApp'
     ? t.telefono && telefonoWa(t.telefono) === telefonoWa(r.telefono)
     : t.email && t.email.toLowerCase() === String(r.email).toLowerCase();
-  const recientes = todos.filter(mismo).sort((a, b) => b.entrada.localeCompare(a.entrada));
+  const recientes = todos.filter(t => !t.archivado && mismo(t)).sort((a, b) => b.entrada.localeCompare(a.entrada));
   const texto = String(r.texto || '').trim().slice(0, 5000) || '(mensaje sin texto)';
   const msg = { de: 'cliente', texto, fecha: ahora(), idExterno: r.idExterno };
 
@@ -462,7 +462,7 @@ async function rutasConsola(req, res, ruta, equipo) {
     return adjuntos.servir(res, a), true;
   }
   if (req.method === 'GET' && ruta === '/api/tickets') {
-    const l = (await store.todos()).map(vistaTecnico).sort((a, b) => b.entrada.localeCompare(a.entrada));
+    const l = (await store.todos()).filter(t => !t.archivado).map(vistaTecnico).sort((a, b) => b.entrada.localeCompare(a.entrada));
     return json(res, l), true;
   }
   // Alta manual desde la consola: llamadas, WhatsApp o correos que llegan fuera del portal.
@@ -489,7 +489,7 @@ async function rutasConsola(req, res, ruta, equipo) {
 
 // Para las métricas: lo justo de cada ticket, sin mensajes.
 async function paraDashboard() {
-  return (await store.todos()).map(t => ({
+  return (await store.todos()).filter(t => !t.archivado).map(t => ({
     id: t.id, origen: t.origen, cliente: t.cliente, tipo_incidencia: t.tipo_incidencia, tecnico: t.tecnico, estado: t.estado,
     entrada: t.entrada, cierre: t.cierre, primera_respuesta: t.primera_respuesta, horas: horas(t), trabajo: trabajo(t),
     nps: t.nps, mejora: t.mejora, servicio: t.servicio, tipo_cliente: t.tipo_cliente, canal: t.canal,

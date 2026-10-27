@@ -45,6 +45,30 @@ const UNA_VEZ = [
     nombres.delete('SHEILOR SLU');
     for (const n of nombres) if (n) await guardarFicha(n, { servicio: 'Kit Digital', tipo_cliente: 'Antiguo cliente AKIRA' });
   }],
+  // 27/10/2026: al conectar el buzón entró el histórico de la bandeja de entrada. Los boletines y
+  // avisos de plataformas (Vercel, LinkedIn, WordPress, Read…) se borran con sus adjuntos; los
+  // correos de personas se archivan: no salen en la bandeja, ni en clientes ni en métricas.
+  ['correo-historico', async () => {
+    const { adjuntos } = require('./store');
+    const PLATAFORMAS = /vercel|wpbeginner|aioseo|duplicator|seedprod|lindris|read\.ai|semrush|holded|google|wordpress|wix|tripadvisor|einforma|supabase|make\.com|linkedin|metricool|gitguardian|emailjs|hosting-webspace|sendgrid|mailchimp|hubspot|customer\.io|stripe|github/i;
+    const NOMBRES = /syed balkhi|all in one seo|read (assistant|support)|equipo de|team|wordpress|vercel|linkedin/i;
+    const AVISO = /^(mailer-daemon|postmaster|bounces?|no-?reply|do-?not-?reply|notifications?|notify|alerts?|system|wordpress|news(letter)?|marketing|mailer|updates?|sh-\d+)([+._-].*)?@/i;
+    let borrados = 0, archivados = 0;
+    for (const t of await tickets.todos()) {
+      if (t.archivado || t.canal !== 'Correo' || !String(t.mensajes?.[0]?.idExterno || '').startsWith('mail:')) continue;
+      const email = String(t.email || '').toLowerCase();
+      if (PLATAFORMAS.test(email.split('@')[1] || '') || AVISO.test(email) || NOMBRES.test(t.cliente || '')) {
+        for (const a of await adjuntos.donde('ticket', t.id)) await adjuntos.borrar(a.id);
+        await tickets.borrar(t.id);
+        borrados++;
+      } else {
+        t.archivado = 'Histórico del buzón al conectarlo (27/10/2026)';
+        await tickets.guardar(t);
+        archivados++;
+      }
+    }
+    console.log(`Correo: histórico del buzón, ${borrados} avisos borrados y ${archivados} correos archivados.`);
+  }],
   // 27/10/2026: lista de clientes del Kit Digital activos (kit-digital-activos.txt, una razón
   // social por línea) y las uniones que no salían solas, comprobadas por correo y en internet.
   ['kit-digital-activos-1', async () => {
@@ -171,7 +195,7 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
     const nuevo = nombre => ({ nombre, tickets: 0, abiertos: 0, horas: 0, ultimo: '', emails: new Set(), telefonos: new Set() });
     const ahora = Date.now();
     for (const t of await tickets.todos()) {
-      if (t.interno) continue;
+      if (t.interno || t.archivado) continue;
       const c = por.get(t.cliente) || nuevo(t.cliente);
       c.tickets++;
       if (t.estado !== 'Cerrado') c.abiertos++;

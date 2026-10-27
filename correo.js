@@ -4,6 +4,7 @@
 const crypto = require('crypto');
 const dns = require('dns').promises;
 const tickets = require('./tickets');
+const { ajustes } = require('./store');
 
 const env = process.env;
 const URL_PUBLICA = (env.PUBLIC_URL || '').replace(/\/$/, '');
@@ -170,11 +171,17 @@ function sinCita(texto) {
   return (corte >= 0 ? lineas.slice(0, corte) : lineas).join('\n').trim();
 }
 
+// Lo que no es una incidencia: boletines, avisos de plataformas y respuestas automáticas.
+// Los envíos masivos llevan List-Unsubscribe, List-Id o Feedback-ID; los avisos, remitentes
+// como no-reply@, notifications@ o wordpress@.
 const automatico = p => {
   const v = k => String(p.headers.get(k) || '').toLowerCase();
   const de = String(p.from?.value?.[0]?.address || '').toLowerCase();
+  const local = de.split('@')[0];
   return (v('auto-submitted') && v('auto-submitted') !== 'no') || /bulk|list|junk/.test(v('precedence'))
-    || /^(mailer-daemon|postmaster|no-?reply|noreply)@/.test(de) || p.headers.has('x-autoreply') || p.headers.has('x-autorespond');
+    || ['list-unsubscribe', 'list-id', 'list-post', 'feedback-id', 'x-campaign', 'x-campaignid', 'x-autoreply', 'x-autorespond', 'x-auto-response-suppress'].some(k => p.headers.has(k))
+    || /^(mailer-daemon|postmaster|bounces?|notifications?|notify|alerts?|system|wordpress|news(letter)?|marketing|mailer|updates?)([+._-].*)?$/.test(local)
+    || /no-?reply|do-?not-?reply/.test(local);
 };
 
 // Número de incidencia del asunto o de las cabeceras de respuesta.
@@ -206,7 +213,22 @@ async function revisarCorreo() {
     try {
       const nuevos = [];
       // En la carpeta dedicada vale todo lo que haya, aunque ya se haya leído.
-      if (c.mailbox?.exists !== 0) for await (const m of c.fetch(dedicada ? '1:*' : { seen: false }, { uid: true, source: true })) nuevos.push(m);
+      // En la bandeja de entrada, solo lo que llegue desde que se conectó el buzón: se apunta el
+      // último UID visto y la primera vez se empieza por el final, así el histórico no entra.
+      // No se marca nada como leído.
+      let marca = null;
+      if (dedicada) {
+        if (c.mailbox?.exists !== 0) for await (const m of c.fetch('1:*', { uid: true, source: true })) nuevos.push(m);
+      } else {
+        const validez = String(c.mailbox.uidValidity), ultimo = Number(c.mailbox.uidNext) - 1;
+        marca = (await ajustes.donde('clave', 'correo-uid'))[0];
+        if (!marca || marca.validez !== validez) {
+          marca = { ...(marca || { clave: 'correo-uid' }), validez, uid: ultimo, desde: new Date().toISOString() };
+          await ajustes.guardar(marca);
+          console.log(`Correo: se leen solo los correos nuevos (desde el UID ${ultimo}).`);
+        }
+        if (ultimo > marca.uid) for await (const m of c.fetch(`${marca.uid + 1}:*`, { uid: true, source: true }, { uid: true })) if (m.uid > marca.uid) nuevos.push(m);
+      }
       for (const m of nuevos) {
         const p = await simpleParser(m.source);
         const de = p.from?.value?.[0] || {};
@@ -227,7 +249,7 @@ async function revisarCorreo() {
           n++;
         }
         if (dedicada) await c.messageMove({ uid: m.uid }, procesados, { uid: true });
-        else await c.messageFlagsAdd({ uid: m.uid }, ['\\Seen'], { uid: true });
+        else if (m.uid > marca.uid) { marca.uid = m.uid; await ajustes.guardar(marca); }
       }
     } finally { lock.release(); }
     await c.logout();
