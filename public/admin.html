@@ -1185,7 +1185,9 @@ async function cargarCanales(r) {
     <section class="tarjeta">
       <h2 style="margin:0 0 6px;font-size:18px">Portal del cliente</h2>
       <p style="margin:0;color:var(--bruma);font-size:13px">${r.publica ? `Los clientes abren incidencias en <a href="${esc(r.publica)}" target="_blank" rel="noopener">${esc(r.publica)}</a>, sin login.` : 'Falta PUBLIC_URL en Render para que los enlaces de los correos apunten al portal.'}</p>
-    </section>`;
+    </section>
+    <section class="tarjeta" id="ejemploCaja"></section>`;
+  pintarEjemplo();
   const b = $('revisar');
   if (b) b.onclick = async () => {
     b.disabled = true; b.textContent = 'Revisando…';
@@ -1208,6 +1210,26 @@ async function cargarCanales(r) {
     p.disabled = true;
     try { const r2 = await api('/api/canales/prueba', { para: $('pruebaPara').value || c.usuario }); cargarCanales(r2); aviso('Correo de prueba enviado.'); }
     catch (e) { fallo(e); p.disabled = false; }
+  };
+}
+// Datos de ejemplo (ejemplo.js): clientes y tickets inventados para ver el panel con números.
+// Se quitan de golpe sin tocar los reales.
+async function pintarEjemplo() {
+  const caja = $('ejemploCaja');
+  if (!caja) return;
+  let n;
+  try { n = await api('/api/ejemplo'); } catch (e) { return fallo(e); }
+  const hay = n.tickets || n.clientes;
+  caja.innerHTML = `<div style="display:flex;gap:10px;align-items:center;margin-bottom:6px"><h2 style="margin:0;font-size:18px">Datos de ejemplo</h2>${hay ? `<span class="pastilla" style="background:var(--at-f);color:var(--at-t)">Puestos</span>` : '<span class="pastilla">Sin datos de ejemplo</span>'}</div>
+    <p style="margin:0 0 12px;color:var(--bruma);font-size:13px">${hay
+      ? `Hay ${n.tickets} tickets y ${n.clientes} clientes inventados (Premium e Implementación) para ver las métricas con colores. Quitarlos borra solo esos: los clientes y tickets reales no se tocan.`
+      : 'Clientes y tickets inventados de Premium e Implementación, con fechas de estos días, para ver las métricas con colores y números. Se quitan con un botón sin tocar nada real.'}</p>
+    <button class="boton${hay ? ' rojo' : ''}" id="ejemploBoton">${hay ? 'Quitar los datos de ejemplo' : 'Poner datos de ejemplo'}</button>`;
+  $('ejemploBoton').onclick = async e => {
+    if (hay && !confirm(`¿Quitar los ${n.tickets} tickets y ${n.clientes} clientes de ejemplo?`)) return;
+    e.target.disabled = true;
+    try { await api('/api/ejemplo', { accion: hay ? 'quitar' : 'poner' }); aviso(hay ? 'Datos de ejemplo quitados.' : 'Datos de ejemplo puestos: míralos en Métricas.'); pintarEjemplo(); }
+    catch (err) { fallo(err); e.target.disabled = false; }
   };
 }
 const botonGoogle = href => `<a class="boton-google" href="${href}"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Continuar con Google</span></a>`;

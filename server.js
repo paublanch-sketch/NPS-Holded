@@ -13,6 +13,7 @@ const canales = require('./canales');
 const auth = require('./auth');
 const clientes = require('./clientes');
 const metricas = require('./metricas');
+const ejemplo = require('./ejemplo');
 const google = require('./google');
 
 const PORT = process.env.PORT || 3000;
@@ -147,6 +148,7 @@ http.createServer(async (req, res) => {
       return res.end(metricas.csvHoras(r));
     }
     if (await clientes.rutas(req, res, ruta, { json, leerCuerpo })) return;
+    if (await ejemplo.rutas(req, res, ruta, { json, leerCuerpo })) return;
     if (await canales.correo.rutas(req, res, ruta, { json, leerCuerpo })) return;
     if (req.method === 'POST' && ruta === '/api/google/probar') {
       try { return json(res, { ...(await google.probar()), google: google.resumen() }); }
