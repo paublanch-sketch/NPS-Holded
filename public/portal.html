@@ -197,39 +197,44 @@
   .escribir textarea:focus { box-shadow: none; }
   .clip { border: 0; background: none; color: var(--bruma); padding: 10px; cursor: pointer; border-radius: 10px; }
   .clip:hover { background: var(--cal); color: var(--pizarra); }
-  /* Valoración al cerrar: el diseño de «Valoración Interactivos» (cabecera oscura, tres caras y reseña). */
-  .tarjeta.valorar, .tarjeta.gracias { padding: 0; overflow: hidden; }
-  .val-cab { background: var(--pizarra); color: #fff; padding: 28px 32px 30px; }
-  .val-cab img { display: block; height: 20px; width: auto; margin-bottom: 24px; }
-  .val-cab h2 { font-size: 24px; margin: 0 0 8px; line-height: 1.3; }
-  .val-cab p { margin: 0; color: rgba(255, 255, 255, .82); font-size: 14px; }
-  .val-cuerpo { padding: 28px 32px 30px; }
-  .val-pregunta { text-align: center; font-size: 16px; font-weight: 600; margin: 0 0 24px; line-height: 1.5; }
-  .caras { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 24px; }
-  .cara { flex: 1; background: none; border: 0; padding: 6px 0; border-radius: 12px; cursor: pointer; font: inherit; color: var(--c); }
-  .cara.f1 { --c: var(--rojo); } .cara.f3 { --c: var(--bruma); } .cara.f4 { --c: #6E9B5E; }
-  .cara .circulo { width: 56px; height: 56px; border-radius: 50%; border: 2px solid currentColor; display: grid; place-items: center; margin: 0 auto 10px; transition: background .15s, color .15s, transform .15s; }
-  .cara:hover .circulo { transform: scale(1.06); }
-  .cara[aria-checked="true"] .circulo { background: var(--c); border-color: var(--c); color: #fff; }
-  .cara .et { display: block; font-size: 12px; font-weight: 600; }
-  .cara:focus-visible { outline: 2px solid var(--c); outline-offset: 2px; }
-  .val-cuerpo hr { border: 0; border-top: 1px solid #E7E7E5; margin: 4px 0 24px; }
-  .val-et { font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block; }
-  .val-et span { font-weight: 400; color: var(--bruma); }
-  #mejora { min-height: 76px; }
-  .val-contador { text-align: right; font-size: 12px; color: var(--bruma); margin: 6px 0 22px; }
-  .cta { display: block; width: 100%; border: 0; border-radius: 10px; padding: 15px; background: var(--pizarra); color: #fff; font-weight: 600; font-size: 15px; cursor: pointer; transition: filter .15s; }
-  .cta:hover { filter: brightness(1.25); }
-  .cta:disabled { opacity: .4; cursor: default; filter: none; }
-  .resena { background: var(--cal); border-radius: 12px; padding: 24px; text-align: center; margin-top: 24px; }
-  .resena .google { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .resena .google svg { width: 26px; height: 26px; }
-  .estrellas { color: #C9A227; font-size: 20px; letter-spacing: 4px; }
-  .resena p { color: var(--bruma); font-size: 13.5px; line-height: 1.6; margin: 0 0 18px; }
-  .boton-resena { display: inline-flex; align-items: center; gap: 8px; background: var(--blanco); border: 1.5px solid var(--pizarra); color: var(--pizarra); font-weight: 600; font-size: 14px; padding: 11px 22px; border-radius: 10px; text-decoration: none; }
-  .boton-resena svg { width: 18px; height: 18px; }
-  .gracias .val-cuerpo { text-align: center; }
-  .gracias .val-cuerpo > p { color: var(--bruma); margin: 0; }
+  /* Valoración al cerrar: tal cual el diseño «valoracion-interactivos» (mismos tamaños, colores y
+     márgenes), con INTERACTIVOS subrayado, la pregunta nueva y el logo de Google en la reseña. */
+  .val { max-width: 560px; width: 100%; margin: 8px auto; background: #FFFFFF; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 3px rgba(28, 28, 28, .08); font-family: Inter, sans-serif; color: #1C1C1C; line-height: normal; }
+  .val-cab { background: #1C1C1C; padding: 32px 40px 40px; }
+  .val-cab img { height: 44px; width: auto; display: block; margin-bottom: 28px; }
+  .val-cab h2 { color: #FFFFFF; font-size: 26px; font-weight: 600; margin: 0 0 10px; line-height: 1.3; }
+  .val-cab p { color: rgba(255, 255, 255, .82); font-size: 14px; margin: 0; line-height: 1.5; }
+  .val-cuerpo { padding: 36px 40px 8px; }
+  .val-pregunta { text-align: center; font-size: 16px; font-weight: 600; color: #1C1C1C; line-height: 1.5; margin: 0 0 28px; }
+  .caras { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 28px; }
+  .cara { flex: 1; text-align: center; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; color: var(--c); }
+  .cara.f1 { --c: #C81D25; } .cara.f3 { --c: #5B616A; } .cara.f4 { --c: #6E9B5E; }
+  .cara .circulo { width: 56px; height: 56px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; transition: background .15s, color .15s; }
+  .cara .et { display: block; font-size: 12px; font-weight: 600; line-height: 1.3; }
+  .cara:hover .circulo { background: color-mix(in srgb, var(--c) 8%, #fff); }
+  .cara[aria-checked="true"] .circulo { background: var(--c); color: #fff; }
+  .cara:focus-visible { outline: 2px solid var(--c); outline-offset: 4px; border-radius: 8px; }
+  .val-cuerpo hr { border: none; border-top: 1px solid #E7E7E5; margin: 8px 0 28px; }
+  .val-et { display: block; font-size: 14px; font-weight: 600; color: #1C1C1C; margin-bottom: 2px; }
+  .val-et span { font-weight: 400; color: #5B616A; }
+  .val textarea#mejora { display: block; width: 100%; margin-top: 10px; border: 1.5px solid #1C1C1C; border-radius: 4px; padding: 14px 16px; min-height: 70px; font: 14px Inter, sans-serif; color: #1C1C1C; box-shadow: none; resize: none; }
+  .val textarea#mejora::placeholder { color: #9AA0A6; }
+  .val textarea#mejora:focus { outline: none; box-shadow: 0 0 0 3px rgba(28, 28, 28, .08); }
+  .val-contador { text-align: right; font-size: 12px; color: #5B616A; margin: 6px 0 28px; }
+  .cta { display: block; width: 100%; background: #1C1C1C; color: #FFFFFF; text-align: center; padding: 15px; border: 0; border-radius: 4px; font: 600 15px Inter, sans-serif; cursor: pointer; margin-bottom: 28px; }
+  .cta:disabled { opacity: .6; cursor: default; }
+  .caras.falta .circulo { box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 18%, #fff); }
+  .val-aviso { text-align: center; color: #C81D25; font-size: 12px; font-weight: 600; margin: -14px 0 20px; }
+  .resena { background: #F9F9F8; border-radius: 4px; padding: 28px 24px; text-align: center; margin-bottom: 8px; }
+  .resena .google { display: block; width: 28px; height: 28px; margin: 0 auto 10px; }
+  .estrellas { color: #C9A227; font-size: 20px; letter-spacing: 4px; margin-bottom: 14px; }
+  .resena p { color: #5B616A; font-size: 13.5px; line-height: 1.6; margin: 0 0 20px; }
+  .boton-resena { display: inline-block; background: #FFFFFF; border: 1.5px solid #1C1C1C; color: #1C1C1C; font-weight: 600; font-size: 14px; padding: 11px 24px; border-radius: 4px; text-decoration: none; }
+  .val-pie { border-top: 1px solid #E7E7E5; margin-top: 24px; padding: 24px 40px 32px; text-align: center; }
+  .val-pie p { color: #5B616A; font-size: 12px; line-height: 1.6; margin: 0 0 10px; }
+  .val-pie .contacto { color: #1C1C1C; font-weight: 500; }
+  .val-pie .copy { color: #B4B7BC; font-size: 11px; margin: 0; }
+  .gracias .val-cuerpo > p { text-align: center; color: #5B616A; font-size: 14px; margin: 0 0 28px; }
 
   @media (max-width: 1100px) { .heroe .ilustracion { display: none; } .rejilla { grid-template-columns: minmax(0, 1fr) 380px; } }
   @media (max-width: 900px) { .rejilla { grid-template-columns: 1fr; } .heroe { grid-template-columns: auto minmax(0, 1fr); } .tiempo { grid-column: 1 / -1; justify-self: start; } }
@@ -240,7 +245,7 @@
     .cat { font-size: 13px; padding: 8px 12px; } .cat[aria-pressed="true"] { padding: 7px 11px; }
     .dos { grid-template-columns: 1fr; } .seguro { margin-left: 0; } .adjuntar { flex-wrap: wrap; }
     .lista a { grid-template-columns: 44px minmax(0, 1fr) auto 16px; } .lista time { display: none; }
-    .val-cab, .val-cuerpo { padding-left: 20px; padding-right: 20px; } .val-cab h2 { font-size: 21px; } .msg { max-width: 92%; }
+    .val-cab, .val-cuerpo, .val-pie { padding-left: 24px; padding-right: 24px; } .val-cab h2 { font-size: 23px; } .msg { max-width: 92%; }
   }
   @media (max-width: 370px) { .insignia { display: none; } }
 </style>
@@ -387,33 +392,36 @@
 
     <div class="chat" id="chat" aria-live="polite"></div>
 
-    <div class="tarjeta valorar oculto" id="valorar">
+    <div class="val valorar oculto" id="valorar">
       <div class="val-cab">
-        <img src="/img/interactivos-blanco-linea.png" alt="Interactivos" width="1025" height="134">
+        <img src="/img/interactivos-blanco-linea.png" alt="Interactivos" width="1190" height="265">
         <h2>¿Cómo ha sido tu experiencia?</h2>
         <p>Tu opinión nos ayuda a mejorar el servicio para ti y para todos nuestros clientes.</p>
       </div>
       <div class="val-cuerpo">
         <p class="val-pregunta"><span id="saludo">Hola.</span><br>¿Cómo valoras el último servicio que te hemos ofrecido?</p>
         <div class="caras" id="caras" role="radiogroup" aria-label="Tu valoración"></div>
+        <p class="val-aviso oculto" id="valAviso" role="alert">Elige una de las tres caras para valorar.</p>
         <hr>
         <label class="val-et" for="mejora">¿Quieres añadir algo? <span>Opcional</span></label>
         <textarea id="mejora" maxlength="100" placeholder="Cuéntanos tu experiencia en pocas palabras..."></textarea>
         <div class="val-contador" id="valContador">0/100</div>
-        <button type="button" class="cta" id="btnNps" disabled>Enviar valoración</button>
+        <button type="button" class="cta" id="btnNps">Enviar valoración</button>
         <div class="resena oculto" data-resena></div>
       </div>
+      <div class="val-pie" data-pie></div>
     </div>
-    <div class="tarjeta gracias oculto" id="gracias">
+    <div class="val gracias oculto" id="gracias">
       <div class="val-cab">
-        <img src="/img/interactivos-blanco-linea.png" alt="Interactivos" width="1025" height="134">
+        <img src="/img/interactivos-blanco-linea.png" alt="Interactivos" width="1190" height="265">
         <h2>¡Gracias por tu valoración!</h2>
-        <p>Nos ayuda a mejorar el servicio para ti y para todos nuestros clientes.</p>
+        <p>Tu opinión nos ayuda a mejorar el servicio para ti y para todos nuestros clientes.</p>
       </div>
       <div class="val-cuerpo">
         <p id="graciasTexto">Si necesitas algo más, escríbenos por este mismo chat.</p>
         <div class="resena oculto" data-resena></div>
       </div>
+      <div class="val-pie" data-pie></div>
     </div>
 
     <div class="escribir" id="escribir">
@@ -596,16 +604,18 @@ if (token) {
   const recordar = t => guardar('soporte-mias', [{ token, id: t.id }, ...leer('soporte-mias', []).filter(m => m.token !== token)].slice(0, 40));
   $('caras').innerHTML = CARAS.map(([n, cls, et, cara]) => `<button type="button" class="cara ${cls}" role="radio" aria-checked="${n === nota}" data-n="${n}">
     <span class="circulo"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/>${cara}</svg></span><span class="et">${et}</span></button>`).join('');
-  $('btnNps').disabled = nota == null;
   $('caras').onclick = e => {
     const b = e.target.closest('.cara');
     if (!b) return;
     nota = Number(b.dataset.n);
     [...$('caras').children].forEach(x => x.setAttribute('aria-checked', x === b));
-    $('btnNps').disabled = false;
+    $('caras').classList.remove('falta');
+    $('valAviso').classList.add('oculto');
   };
   $('mejora').oninput = () => { $('valContador').textContent = `${$('mejora').value.length}/100`; };
+  // El botón está siempre negro, como en el diseño: si falta la cara, se marcan y se avisa.
   $('btnNps').onclick = async () => {
+    if (nota == null) { $('caras').classList.add('falta'); $('valAviso').classList.remove('oculto'); $('caras').querySelector('.cara').focus(); return; }
     $('btnNps').disabled = true;
     try { enviado = true; pintar(await api(`/api/soporte/${token}/nps`, { nps: nota, mejora: $('mejora').value })); }
     catch (e) { $('btnNps').disabled = false; alerta(e.message); }
@@ -718,9 +728,15 @@ if (token) {
     // La reseña de Google se ofrece a todos por igual (Google no permite pedirla solo a los contentos).
     document.querySelectorAll('[data-resena]').forEach(r => {
       r.classList.toggle('oculto', !config.google);
-      if (config.google && !r.innerHTML) r.innerHTML = `<div class="google">${G_LOGO}<span class="estrellas" aria-hidden="true">★★★★★</span></div>
+      if (config.google && !r.innerHTML) r.innerHTML = `<span class="google">${G_LOGO}</span><div class="estrellas" aria-hidden="true">★★★★★</div>
         <p>Nos ayudaría mucho que pudieses dejar una pequeña reseña en Google.<br>Solo te lleva un minuto y es muy importante para nosotros.</p>
-        <a class="boton-resena" href="${esc(config.google)}" target="_blank" rel="noopener">${G_LOGO}Dejar reseña</a>`;
+        <a class="boton-resena" href="${esc(config.google)}" target="_blank" rel="noopener">Dejar reseña</a>`;
+    });
+    // El pie del diseño, con el contacto de soporte.
+    document.querySelectorAll('[data-pie]').forEach(p => {
+      if (!p.innerHTML) p.innerHTML = `<p>Te lo pedimos por ser cliente del Soporte Holded de Interactivos.</p>
+        <p class="contacto">${esc(config.email || 'holded@interactivos.net')} &nbsp;·&nbsp; ${esc(config.telefono || '665 405 148')} &nbsp;·&nbsp; www.interactivos.net</p>
+        <p class="copy">© ${new Date().getFullYear()} Interactivos. Todos los derechos reservados.</p>`;
     });
     const html = t.mensajes.map(m => `<div class="msg ${m.de}">${m.adjunto ? adjunto(m.adjunto) : esc(m.texto)}${m.enlace ? `<br><a href="${esc(m.enlace)}" target="_blank" rel="noopener">Unirme a la videollamada</a>` : ''}${m.de === 'sistema' ? '' : `<small>${m.de === 'tecnico' ? esc(m.autor || 'Soporte') + ' · ' : ''}${hora(m.fecha)}</small>`}</div>`).join('');
     if (html !== ultimo) {
