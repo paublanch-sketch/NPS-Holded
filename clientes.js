@@ -11,10 +11,12 @@ async function fichas() {
 }
 
 // Servicio y origen efectivos de un ticket: los de la ficha del cliente si existe.
+// Manda la ficha del cliente, salvo un ticket con «servicio_fijo» (p. ej., unas horas de
+// implementación de un cliente Premium), que cuenta en ese servicio.
 function clasificar(t, mapa) {
   const c = mapa.get(t.cliente);
   return {
-    servicio: c?.servicio || (SERVICIOS.includes(t.servicio) ? t.servicio : 'Sin clasificar'),
+    servicio: (SERVICIOS.includes(t.servicio_fijo) && t.servicio_fijo) || c?.servicio || (SERVICIOS.includes(t.servicio) ? t.servicio : 'Sin clasificar'),
     tipo_cliente: c?.tipo_cliente || (ORIGENES.includes(t.tipo_cliente) ? t.tipo_cliente : 'Sin clasificar'),
   };
 }

@@ -492,7 +492,7 @@ async function paraDashboard() {
   return (await store.todos()).map(t => ({
     id: t.id, origen: t.origen, cliente: t.cliente, tipo_incidencia: t.tipo_incidencia, tecnico: t.tecnico, estado: t.estado,
     entrada: t.entrada, cierre: t.cierre, primera_respuesta: t.primera_respuesta, horas: horas(t), trabajo: trabajo(t),
-    nps: t.nps, mejora: t.mejora, servicio: t.servicio, tipo_cliente: t.tipo_cliente, canal: t.canal,
+    nps: t.nps, mejora: t.mejora, servicio: t.servicio, servicio_fijo: t.servicio_fijo || null, tipo_cliente: t.tipo_cliente, canal: t.canal,
     interno: !!t.interno,
   }));
 }
