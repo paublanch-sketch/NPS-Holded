@@ -1,4 +1,4 @@
-// Datos de ejemplo para que el panel enseñe colores y números mientras no hay clientes
+// Datos de ejemplo (15 clientes y 42 tickets) para que el panel enseñe colores y números mientras no hay clientes
 // Premium ni de Implementación de verdad. Están SIEMPRE puestos: el servidor los crea al
 // arrancar y cada día los rehace con fechas de esa semana, para que caigan en el periodo
 // actual. Todo lo inventado lleva «ejemplo: true» (tickets y fichas de cliente) y se quita
@@ -17,12 +17,18 @@ const CLIENTES = [
   ['Assessoria Montseny', 'Premium', 'Gestoría / asesoría', 'Jordi Vidal'],
   ['Fusteria Roca SL', 'Premium', 'Directo', 'Pere Roca'],
   ['Clínica Dental Mar', 'Premium', 'Antiguo cliente AKIRA', 'Laura Mas'],
+  ['Assessors Penedès', 'Premium', 'Gestoría / asesoría', 'Núria Sala'],
+  ['Gestoria Vallès Nord', 'Premium', 'Gestoría / asesoría', 'Marc Puig'],
+  ['Òptica Llum SL', 'Premium', 'Directo', 'Anna Riera'],
   // Implementación
   ['Talleres Ebre SL', 'Implementación', 'Referido por gestoría', 'Toni Ferré'],
   ['Café Nòmada', 'Implementación', 'Referido por gestoría', 'Irene Soler'],
   ['Bodega Can Rovira', 'Implementación', 'Referido por gestoría', 'Quim Rovira'],
   ['Distribucions Garraf SL', 'Implementación', 'Directo', 'Sergi Pons'],
   ['Estudi Vela Arquitectes', 'Implementación', 'Directo', 'Clara Vela'],
+  ['Forn Sant Jordi', 'Implementación', 'Referido por gestoría', 'Jordi Mir'],
+  ['Hotel Cala Blava', 'Implementación', 'Referido por gestoría', 'Elena Font'],
+  ['Logística Delta SL', 'Implementación', 'Directo', 'Pau Serra'],
 ];
 
 // [cliente, categoría, canal, estado, días laborables atrás, hora de entrada, minutos hasta la
@@ -52,6 +58,32 @@ const TICKETS = [
   ['Bodega Can Rovira', 'Facturación y Verifactu', 'Portal', 'Cerrado', 12, '11:00', 35, 11, 1.5, 8, 'Pako', 'Plantilla de factura con los lotes del vino.'],
   ['Talleres Ebre SL', 'Bancos y conciliación', 'Correo', 'Cerrado', 15, '12:30', 55, 12, 5, 7, 'Blanch', 'Alta de tres cuentas bancarias y reglas de conciliación.'],
   ['Distribucions Garraf SL', 'Contabilidad e impuestos', 'Portal', 'Cerrado', 9, '16:00', 30, 7, 2, 10, 'David', 'Asientos de amortización automáticos.'],
+  // Segunda tanda: cada técnico tiene casos abiertos y cerrados en los cuatro grupos, para que
+  // el panel enseñe números y colores también filtrando por una sola persona.
+  // Premium · gestorías
+  ['Assessors Penedès', 'Facturación y Verifactu', 'Portal', 'En curso', 0, '10:15', 20, null, 0.5, null, 'David', 'Las facturas de un cliente suyo salen sin el recargo de equivalencia.'],
+  ['Assessors Penedès', 'Contabilidad e impuestos', 'Correo', 'Cerrado', 4, '09:30', 15, 3, 1.5, 10, 'Pablo', 'Exportar el libro de IVA para el modelo 390.'],
+  ['Gestoria Vallès Nord', 'Bancos y conciliación', 'Portal', 'Pendiente cliente', 1, '12:30', 35, null, 1, null, 'Pako', 'Duplicados al importar el extracto del Sabadell.'],
+  ['Gestoria Vallès Nord', 'Facturación y Verifactu', 'Portal', 'En curso', 2, '15:30', 75, null, 1, null, 'Pablo', 'Activar Verifactu en tres empresas de su cartera.'],
+  ['Gestoria Vallès Nord', 'Acceso y usuarios', 'Teléfono', 'Cerrado', 7, '11:00', 25, 6, 0.5, 9, 'Blanch', 'Permisos de solo lectura para un cliente final.'],
+  ['Gestoría Albiol & Puig', 'Formación', 'Teléfono', 'Cerrado', 12, '10:00', 30, 11, 2, 10, 'Pablo', 'Sesión sobre cierres trimestrales en Holded.'],
+  // Premium · directos
+  ['Òptica Llum SL', 'Facturación y Verifactu', 'WhatsApp', 'En curso', 1, '10:00', 20, null, 0.5, null, 'Pablo', 'El ticket de la tienda no lleva el QR de Verifactu.'],
+  ['Òptica Llum SL', 'Contabilidad e impuestos', 'Portal', 'Cerrado', 6, '16:00', 40, 5, 1, 9, 'David', 'Amortizar el equipo nuevo de optometría.'],
+  ['Clínica Dental Mar', 'Acceso y usuarios', 'Portal', 'Pendiente cliente', 3, '10:30', 30, null, 0.5, null, 'Blanch', 'La recepcionista no puede ver las citas.'],
+  ['Fusteria Roca SL', 'Bancos y conciliación', 'Teléfono', 'Cerrado', 13, '10:00', 25, 12, 1.5, 7, 'Pako', 'Conciliar los pagos a proveedores por remesa.'],
+  // Implementación · referidos por gestoría
+  ['Forn Sant Jordi', 'Facturación y Verifactu', 'WhatsApp', 'En curso', 1, '11:20', 45, null, 1, null, 'Pablo', 'Dar de alta los productos del obrador con su IVA.'],
+  ['Forn Sant Jordi', 'Formación', 'Teléfono', 'Cerrado', 8, '10:00', 30, 7, 3, 9, 'David', 'Formación de facturación para las dos tiendas.'],
+  ['Hotel Cala Blava', 'Bancos y conciliación', 'Correo', 'Pendiente cliente', 2, '13:00', 110, null, 1.5, null, 'Blanch', 'Conectar la cuenta de la pasarela de pago.'],
+  ['Hotel Cala Blava', 'Contabilidad e impuestos', 'Portal', 'Cerrado', 11, '09:30', 40, 9, 2.5, 8, 'Pablo', 'Plan de cuentas para las reservas y los anticipos.'],
+  ['Bodega Can Rovira', 'Acceso y usuarios', 'Portal', 'Cerrado', 5, '10:15', 20, 4, 0.5, 10, 'David', 'Usuario para la enóloga con acceso a inventario.'],
+  // Implementación · directos
+  ['Logística Delta SL', 'Equipo y fichajes', 'Portal', 'En curso', 1, '09:15', 50, null, 1, null, 'Pablo', 'Los conductores fichan desde el móvil y no se guarda la ubicación.'],
+  ['Logística Delta SL', 'Facturación y Verifactu', 'Correo', 'Cerrado', 6, '12:00', 35, 5, 2, 7, 'Pako', 'Facturas recapitulativas mensuales por cliente.'],
+  ['Estudi Vela Arquitectes', 'Bancos y conciliación', 'Portal', 'Cerrado', 14, '11:00', 25, 13, 1, 8, 'David', 'Reglas para los cobros por transferencia.'],
+  ['Distribucions Garraf SL', 'Formación', 'Teléfono', 'Cerrado', 4, '15:00', 70, 3, 2, 6, 'Pablo', 'Formación de almacenes y pedidos de compra.'],
+  ['Estudi Vela Arquitectes', 'Facturación y Verifactu', 'WhatsApp', 'Pendiente cliente', 0, '09:30', 15, null, 0.5, null, 'Pako', 'Factura de anticipo de un proyecto.'],
 ];
 
 const RESPUESTAS = ['Hola, lo miro ahora mismo y te digo algo.', 'Recibido. ¿Me pasas una captura del error?', 'Ya lo tengo localizado, dame unos minutos.', 'Hola, te llamo en un momento para verlo juntos.'];
