@@ -158,6 +158,14 @@
   .cl-vista button.on { background: var(--azul); color: #fff; }
   .cl-vista svg { width: 16px; height: 16px; }
   .cl-tabla th { background: #fafbfc; }
+  .cl-tabla th.ord { cursor: pointer; user-select: none; }
+  .cl-tabla th.ord:hover, .cl-tabla th.ord.on { color: var(--pizarra); }
+  .cl-tabla th .fl { margin-left: 5px; font-size: 10px; opacity: .45; }
+  .cl-tabla th.ord.on .fl { opacity: 1; color: var(--azul); }
+  .cl-tabla tbody tr[data-nombre] { cursor: pointer; }
+  .cl-tabla tbody tr[data-nombre]:hover td { background: #f7f9ff; }
+  .cl-card { cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+  .cl-card:hover { border-color: var(--azul-l); box-shadow: 0 4px 14px rgba(37, 99, 235, .08); }
   .cl-tabla td { font-size: 13px; }
   .av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; flex: none; letter-spacing: .02em; }
   .cl-nom { display: flex; gap: 10px; align-items: center; min-width: 190px; }
@@ -1125,8 +1133,27 @@ async function cargarClientes() {
   return clientesCache;
 }
 // Filtros de la lista. «tick» sustituye a las pestañas: por defecto, los que tienen incidencias.
-let filtroCli = { q: '', serv: '', orig: '', tick: 'con', estado: '', contacto: '', horas: '', orden: 'nombre', vista: 'lista', mas: false, pag: 1 };
+let filtroCli = { q: '', serv: '', orig: '', tick: 'con', estado: '', contacto: '', horas: '', orden: 'cliente:1', vista: 'lista', mas: false, pag: 1 };
 const POR_PAGINA = 25;
+// Orden «columna:sentido». Al tocar una cabecera se ordena por ella y, si se vuelve a tocar, al revés.
+// Primero: textos de la A a la Z, números de más a menos y último contacto de los más recientes.
+// Sin fecha o sin correo siempre van al final.
+const cmpNom = (a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
+const ORDEN_CLI = {
+  cliente: { dir: 1, f: cmpNom, txt: ['Nombre (A-Z)', 'Nombre (Z-A)'] },
+  servicio: { dir: 1, f: (a, b) => a.servicio.localeCompare(b.servicio, 'es'), txt: ['Servicio (A-Z)', 'Servicio (Z-A)'] },
+  origen: { dir: 1, f: (a, b) => a.tipo_cliente.localeCompare(b.tipo_cliente, 'es'), txt: ['Origen (A-Z)', 'Origen (Z-A)'] },
+  tickets: { dir: -1, f: (a, b) => a.tickets - b.tickets, txt: ['Menos tickets', 'Más tickets'] },
+  abiertos: { dir: -1, f: (a, b) => a.abiertos - b.abiertos, txt: ['Menos abiertos', 'Más abiertos'] },
+  horas: { dir: -1, f: (a, b) => a.horas - b.horas, txt: ['Menos horas', 'Más horas'] },
+  ultimo: { dir: -1, f: (a, b) => a.ultimo.localeCompare(b.ultimo), vacio: x => !x.ultimo, txt: ['Contacto más antiguo', 'Contacto más reciente'] },
+  email: { dir: 1, f: (a, b) => a.emails[0].localeCompare(b.emails[0]), vacio: x => !x.emails[0], txt: ['Email (A-Z)', 'Email (Z-A)'] },
+};
+const ordenCli = () => { const [col, d] = filtroCli.orden.split(':'); return ORDEN_CLI[col] ? [col, Number(d) || ORDEN_CLI[col].dir] : ['cliente', 1]; };
+function ordenarClientes(l) {
+  const [col, dir] = ordenCli(), o = ORDEN_CLI[col];
+  return l.sort((a, b) => (o.vacio ? o.vacio(a) - o.vacio(b) : 0) || (o.vacio && o.vacio(a) ? 0 : dir * o.f(a, b)) || cmpNom(a, b));
+}
 // Clientes de la lista del Kit Digital activos que aún no han abierto ninguna incidencia.
 const kitSinTickets = x => x.kitDigital && !x.tickets;
 // Falta clasificar: sin servicio, o Implementación/Premium sin origen (en Kit Digital el origen no aplica).
@@ -1182,7 +1209,7 @@ function vistaClientes(arg) {
         <div class="cl-barra">
           <b id="ccuenta">Cargando…</b>
           <span class="orden">Ordenar por <select class="campo" data-f="orden" style="padding:6px 8px">
-            ${[['nombre', 'Nombre (A-Z)'], ['nombreZ', 'Nombre (Z-A)'], ['ultimo', 'Último contacto'], ['tickets', 'Más tickets'], ['abiertos', 'Más abiertos'], ['horas', 'Más horas']].map(([k, t]) => `<option value="${k}" ${k === f.orden ? 'selected' : ''}>${t}</option>`).join('')}</select></span>
+            ${Object.entries(ORDEN_CLI).flatMap(([k, o]) => [[o.dir, o.txt[o.dir === 1 ? 0 : 1]], [-o.dir, o.txt[o.dir === 1 ? 1 : 0]]].map(([d, t]) => `<option value="${k}:${d}" ${`${k}:${d}` === f.orden ? 'selected' : ''}>${t}</option>`)).join('')}</select></span>
           <div class="cl-vista" id="cliVista"><button type="button" data-v="lista" class="${f.vista === 'lista' ? 'on' : ''}" title="Lista" aria-label="Ver como lista">${ICO_CLI.lista}</button><button type="button" data-v="grid" class="${f.vista === 'grid' ? 'on' : ''}" title="Tarjetas" aria-label="Ver como tarjetas">${ICO_CLI.grid}</button></div>
         </div>
         <div id="cltabla"><div class="vacio">Cargando…</div></div>
@@ -1220,15 +1247,15 @@ function pintarClientes() {
     && (!f.contacto || (f.contacto === 'nunca' ? !x.ultimo : f.contacto === 'viejo' ? x.ultimo && dias(x.ultimo) > 365 : dias(x.ultimo) <= Number(f.contacto)))
     && (!f.horas || (f.horas === 'con' ? x.horas > 0 : f.horas === 'sin' ? !x.horas : x.horas >= Number(f.horas)))
     && (!q || `${x.nombre} ${x.kitDigital || ''} ${x.codigo} ${x.emails.join(' ')} ${x.telefonos.join(' ')}`.toLowerCase().includes(q)));
-  const nom = (a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
-  l.sort({ nombre: nom, nombreZ: (a, b) => nom(b, a), ultimo: (a, b) => b.ultimo.localeCompare(a.ultimo), tickets: (a, b) => b.tickets - a.tickets || nom(a, b), abiertos: (a, b) => b.abiertos - a.abiertos || nom(a, b), horas: (a, b) => b.horas - a.horas || nom(a, b) }[f.orden] || nom);
+  ordenarClientes(l);
   const paginas = Math.max(1, Math.ceil(l.length / POR_PAGINA));
   f.pag = Math.min(f.pag, paginas);
   const ini = (f.pag - 1) * POR_PAGINA, pag = l.slice(ini, ini + POR_PAGINA);
   $('ccuenta').textContent = `${l.length} ${l.length === 1 ? 'cliente' : 'clientes'}`;
   const ficha = x => `#/clientes/${encodeURIComponent(x.nombre)}`;
   const correo = x => x.emails[0] ? `<span class="cl-mail" title="${esc(x.emails.join(', '))}">${ICO_CLI.mail}${esc(x.emails[0])}${x.emails.length > 1 ? ` +${x.emails.length - 1}` : ''}</span>` : (x.telefonos[0] ? `<span class="cl-mail">${esc(x.telefonos[0])}</span>` : '<span style="color:var(--muted)">—</span>');
-  const acciones = x => `<div class="cl-acc"><a class="boton sec peq" href="${ficha(x)}" style="text-decoration:none">Ver</a><button class="cl-menu-b" data-menu aria-label="Más acciones">⋯</button></div>`;
+  // Toda la fila (o tarjeta) abre la ficha; «⋯» edita o fusiona.
+  const acciones = () => `<div class="cl-acc"><button class="cl-menu-b" data-menu aria-label="Más acciones" title="Más acciones">⋯</button></div>`;
   const sub = x => `<small>${esc(x.codigo || '')}${x.kitDigital ? `${x.codigo ? ' · ' : ''}Kit Digital activo${x.kitDigital !== x.nombre ? ` · ${esc(x.kitDigital)}` : ''}` : ''}</small>`;
   $('cltabla').innerHTML = !l.length ? '<div class="vacio">Ningún cliente coincide con los filtros.</div>'
     : f.vista === 'grid' ? `<div class="cl-grid">${pag.map(x => `<div class="cl-card" data-nombre="${esc(x.nombre)}">
@@ -1237,7 +1264,7 @@ function pintarClientes() {
         <div class="num3"><div><b>${x.tickets}</b><span>Tickets</span></div><div><b>${x.abiertos}</b><span>Abiertos</span></div><div><b>${num(x.horas, 1)}</b><span>Horas</span></div></div>
         <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:12px">${x.ultimo ? `<span class="cl-fecha">${ICO_CLI.cal}${fechaLarga(x.ultimo)}</span>` : '<span style="color:var(--muted)">Sin contacto</span>'}${acciones(x)}</div>
       </div>`).join('')}</div>`
-    : `<div class="tabla"><table><thead><tr><th>Cliente</th><th>Servicio</th><th>Origen</th><th class="num">Tickets</th><th class="num">Abiertos</th><th class="num">Horas</th><th>Último contacto</th><th>Email</th><th style="text-align:right">Acciones</th></tr></thead><tbody>
+    : `<div class="tabla"><table><thead><tr>${[['cliente', 'Cliente'], ['servicio', 'Servicio'], ['origen', 'Origen'], ['tickets', 'Tickets', 'num'], ['abiertos', 'Abiertos', 'num'], ['horas', 'Horas', 'num'], ['ultimo', 'Último contacto'], ['email', 'Email']].map(([k, t, cl]) => { const [col, dir] = ordenCli(); return `<th class="ord ${cl || ''} ${k === col ? 'on' : ''}" data-ord="${k}" title="Ordenar por ${t.toLowerCase()}" aria-sort="${k === col ? (dir === 1 ? 'ascending' : 'descending') : 'none'}">${t}<span class="fl">${k === col ? (dir === 1 ? '▲' : '▼') : '↕'}</span></th>`; }).join('')}<th></th></tr></thead><tbody>
       ${pag.map(x => `<tr data-nombre="${esc(x.nombre)}">
         <td><div class="cl-nom">${avatar(x.nombre)}<div style="min-width:0"><a href="${ficha(x)}">${esc(x.nombre)}</a>${sub(x)}</div></div></td>
         <td>${pildoraServ(x.servicio)}</td><td>${pildoraOrig(x.tipo_cliente)}</td>
@@ -1252,9 +1279,22 @@ function pintarClientes() {
   $('clpie').onclick = e => { const b = e.target.closest('button[data-p]'); if (!b || b.disabled) return; f.pag = Number(b.dataset.p); pintarClientes(); $('cltabla').scrollIntoView({ block: 'nearest' }); };
   // Menú «⋯»: editar o fusionar.
   $('cltabla').onclick = e => {
+    const th = e.target.closest('th[data-ord]');
+    if (th) {
+      const [col, dir] = ordenCli(), k = th.dataset.ord;
+      f.orden = `${k}:${k === col ? -dir : ORDEN_CLI[k].dir}`;
+      const s = $('vista').querySelector('select[data-f="orden"]');
+      if (s) s.value = f.orden;
+      f.pag = 1;
+      return pintarClientes();
+    }
     const b = e.target.closest('[data-menu]');
     document.querySelectorAll('.cl-menu').forEach(m => m.remove());
-    if (!b) return;
+    if (!b) {
+      const fila = e.target.closest('[data-nombre]');
+      if (fila && !e.target.closest('a, button, .cl-menu')) location.hash = `#/clientes/${encodeURIComponent(fila.dataset.nombre)}`;
+      return;
+    }
     const nombre = b.closest('[data-nombre]').dataset.nombre;
     const m = document.createElement('div');
     m.className = 'cl-menu';
