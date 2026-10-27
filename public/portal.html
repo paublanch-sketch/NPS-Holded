@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --rojo: #C81D25; --rojo-o: #a8161d; --rosa: #fdf0f0; --rosa-l: #f6d3d4; --cal: #F9F9F8; --bruma: #5B616A; --pizarra: #1C1C1C;
+    --acento: #2563eb; --acento-o: #1d4ed8; --acento-f: #eef3fe; --acento-l: #c7d7fb; --error: #C81D25; --cal: #F9F9F8; --bruma: #5B616A; --pizarra: #1C1C1C;
     --linea: #e8e7e3; --linea2: #dcdbd6; --blanco: #fff; --muted: #8a8f97;
     --ok: #13803a; --ok-f: #e6f4ea; --azul: #2457c5; --azul-f: #e8eefb; --ambar: #946200; --ambar-f: #fdf3dc;
     --radio: 16px; --sombra: 0 1px 2px rgba(28,28,28,.04), 0 10px 30px rgba(28,28,28,.06);
@@ -19,7 +19,7 @@
   html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
   body { margin: 0; font: 15px/1.55 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--cal); color: var(--pizarra); }
   button, input, textarea { font: inherit; color: inherit; }
-  a { color: var(--rojo); }
+  a { color: var(--acento); }
   .oculto { display: none !important; }
   svg.i { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 
@@ -34,9 +34,9 @@
 
   /* Héroe */
   .heroe { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 18px 24px; align-items: center; margin-bottom: 28px; }
-  .heroe .auri { color: var(--rojo); align-self: start; margin-top: 2px; }
+  .heroe .auri { color: var(--acento); align-self: start; margin-top: 2px; }
   .heroe .auri svg { width: 44px; height: 44px; stroke-width: 1.6; }
-  .antetitulo { color: var(--rojo); font-weight: 700; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
+  .antetitulo { color: var(--acento); font-weight: 700; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
   .heroe h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.1; margin: 0 0 10px; letter-spacing: -.02em; }
   .heroe p { color: var(--bruma); margin: 0; font-size: 16px; max-width: 540px; }
   .tiempo { display: flex; gap: 14px; align-items: center; background: var(--blanco); border: 1px solid var(--linea); border-radius: 16px; padding: 16px 22px; box-shadow: var(--sombra); white-space: nowrap; }
@@ -51,7 +51,7 @@
   form.tarjeta { padding: 26px 26px 22px; }
   .bloque + .bloque { margin-top: 28px; }
   .paso { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 16px; }
-  .paso .n { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--rojo); color: #fff; font-weight: 700; font-size: 14px; display: grid; place-items: center; }
+  .paso .n { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--acento); color: #fff; font-weight: 700; font-size: 14px; display: grid; place-items: center; }
   .paso h2 { font-size: 19px; margin: 1px 0 2px; letter-spacing: -.01em; }
   .paso p { margin: 0; color: var(--bruma); font-size: 14px; }
 
@@ -59,11 +59,11 @@
   .categorias { display: flex; flex-wrap: wrap; gap: 8px; }
   .cat { position: relative; display: inline-flex; align-items: center; gap: 8px; text-align: left; padding: 9px 14px; border: 1px solid var(--linea2); background: var(--blanco); border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500; white-space: nowrap; transition: border-color .15s, background .15s, box-shadow .15s; }
   .cat:hover { border-color: #c4c2bc; }
-  .cat:focus-visible { outline: 3px solid var(--rosa-l); outline-offset: 1px; }
+  .cat:focus-visible { outline: 3px solid var(--acento-l); outline-offset: 1px; }
   .cat svg { color: var(--bruma); width: 18px; height: 18px; }
-  .cat[aria-pressed="true"] { border: 2px solid var(--rojo); background: var(--rosa); padding: 8px 13px; }
-  .cat[aria-pressed="true"] svg { color: var(--rojo); }
-  .cat .check { position: absolute; top: -7px; right: -7px; width: 18px; height: 18px; border-radius: 50%; background: var(--rojo); color: #fff; display: none; place-items: center; box-shadow: 0 0 0 3px var(--blanco); }
+  .cat[aria-pressed="true"] { border: 2px solid var(--acento); background: var(--acento-f); padding: 8px 13px; }
+  .cat[aria-pressed="true"] svg { color: var(--acento); }
+  .cat .check { position: absolute; top: -7px; right: -7px; width: 18px; height: 18px; border-radius: 50%; background: var(--acento); color: #fff; display: none; place-items: center; box-shadow: 0 0 0 3px var(--blanco); }
   .cat .check svg { color: #fff; width: 11px; height: 11px; stroke-width: 3; }
   .cat[aria-pressed="true"] .check { display: grid; }
 
@@ -74,7 +74,7 @@
   .contador { position: absolute; right: 14px; bottom: 10px; font-size: 12px; color: var(--muted); pointer-events: none; }
 
   .adjuntar { margin-top: 14px; border: 1.5px dashed var(--linea2); border-radius: 12px; padding: 14px 16px; display: flex; gap: 14px; align-items: center; transition: border-color .15s, background .15s; }
-  .adjuntar.arrastrando { border-color: var(--rojo); background: var(--rosa); }
+  .adjuntar.arrastrando { border-color: var(--acento); background: var(--acento-f); }
   .adjuntar > svg { color: var(--bruma); width: 22px; height: 22px; }
   .adjuntar .txt { flex: 1; min-width: 0; }
   .adjuntar .txt b { font-weight: 600; font-size: 14px; }
@@ -88,8 +88,8 @@
   .archivo small { color: var(--muted); }
   .archivo button { border: 0; background: var(--linea); width: 22px; height: 22px; border-radius: 50%; cursor: pointer; line-height: 1; }
 
-  .urgente { margin-top: 14px; display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 12px; background: var(--rosa); border: 1px solid var(--rosa-l); cursor: pointer; }
-  .urgente input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--rojo); flex: none; }
+  .urgente { margin-top: 14px; display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 12px; background: var(--acento-f); border: 1px solid var(--acento-l); cursor: pointer; }
+  .urgente input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--acento); flex: none; }
   .urgente b { font-weight: 600; }
   .urgente small { display: block; color: var(--bruma); font-size: 13px; }
 
@@ -101,24 +101,24 @@
   .con-icono input { padding: 12px 14px 12px 42px; }
 
   .pie { display: flex; align-items: center; gap: 18px; margin-top: 26px; flex-wrap: wrap; }
-  .boton { display: inline-flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; padding: 14px 24px; font-weight: 700; background: var(--rojo); color: #fff; cursor: pointer; transition: background .15s, transform .05s; text-decoration: none; }
-  .boton:hover { background: var(--rojo-o); }
+  .boton { display: inline-flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; padding: 14px 24px; font-weight: 700; background: var(--acento); color: #fff; cursor: pointer; transition: background .15s, transform .05s; text-decoration: none; }
+  .boton:hover { background: var(--acento-o); }
   .boton:active { transform: translateY(1px); }
   .boton:disabled { opacity: .6; cursor: default; }
   .enlace { background: none; border: 0; color: var(--bruma); font-size: 14px; display: inline-flex; gap: 6px; align-items: center; cursor: pointer; padding: 6px; }
   .enlace:hover { color: var(--pizarra); }
   .seguro { margin-left: auto; color: var(--muted); font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
   .seguro svg { width: 16px; height: 16px; }
-  .error { color: var(--rojo); font-size: 14px; margin-top: 12px; min-height: 1em; font-weight: 500; }
+  .error { color: var(--error); font-size: 14px; margin-top: 12px; min-height: 1em; font-weight: 500; }
 
   /* Lateral */
   .lateral { display: flex; flex-direction: column; gap: 22px; }
   .lateral .tarjeta { padding: 22px; }
   .lateral .cab { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
-  .bola { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--rosa); color: var(--rojo); display: grid; place-items: center; }
+  .bola { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--acento-f); color: var(--acento); display: grid; place-items: center; }
   .lateral h3 { font-size: 18px; margin: 0 0 2px; letter-spacing: -.01em; }
   .lateral .cab p { margin: 0; color: var(--bruma); font-size: 14px; }
-  .contacto-t { background: linear-gradient(180deg, #fff5f5 0%, var(--blanco) 55%); }
+  .contacto-t { background: linear-gradient(180deg, #f3f7ff 0%, var(--blanco) 55%); }
   .filas { border: 1px solid var(--linea); border-radius: 12px; overflow: hidden; background: var(--blanco); }
   .fila { display: flex; gap: 14px; align-items: center; padding: 14px 16px; text-decoration: none; color: inherit; border-top: 1px solid var(--linea); transition: background .15s; }
   .fila:first-child { border-top: 0; }
@@ -133,7 +133,7 @@
 
   .pestanas { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
   .pestanas button { border: 0; background: var(--cal); color: var(--bruma); padding: 7px 16px; border-radius: 99px; font-size: 13px; font-weight: 600; cursor: pointer; }
-  .pestanas button.on { background: var(--rojo); color: #fff; }
+  .pestanas button.on { background: var(--acento); color: #fff; }
   .lista a { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto 84px 16px; gap: 10px; align-items: center; padding: 12px 4px; border-top: 1px solid var(--linea); text-decoration: none; color: inherit; font-size: 14px; }
   .lista a:first-child { border-top: 0; }
   .lista a:hover { background: var(--cal); }
@@ -142,7 +142,7 @@
   .lista time { color: var(--muted); font-size: 12px; text-align: right; }
   .lista svg { color: var(--muted); width: 16px; height: 16px; }
   .est { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 99px; white-space: nowrap; text-align: center; }
-  .est.abierta { background: var(--rosa); color: var(--rojo); }
+  .est.abierta { background: var(--acento-f); color: var(--acento); }
   .est.curso { background: var(--azul-f); color: var(--azul); }
   .est.espera { background: var(--ambar-f); color: var(--ambar); }
   .est.resuelta { background: var(--ok-f); color: var(--ok); }
@@ -164,13 +164,13 @@
   .pasos div { font-size: 12px; font-weight: 600; color: var(--muted); }
   .pasos div::before { content: ""; display: block; height: 6px; border-radius: 6px; background: var(--linea); margin-bottom: 8px; }
   .pasos div.on { color: var(--pizarra); }
-  .pasos div.on::before { background: var(--rojo); }
+  .pasos div.on::before { background: var(--acento); }
   .video { display: flex; gap: 14px; align-items: center; justify-content: space-between; background: var(--ok-f); border-radius: 12px; padding: 14px 16px; margin-top: 18px; flex-wrap: wrap; }
   .chat { display: flex; flex-direction: column; gap: 12px; margin: 22px 0; }
   .cita { margin-top: 16px; }
   .cita .tarjeta { padding: 20px 22px; }
   .cita h2 { font-size: 17px; margin: 0 0 4px; display: flex; gap: 10px; align-items: center; }
-  .cita h2 svg { color: var(--rojo); }
+  .cita h2 svg { color: var(--acento); }
   .cita p { margin: 0; color: var(--bruma); font-size: 14px; }
   .cita .fila-cita { display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
   .cita .cuando { font-size: 16px; font-weight: 700; margin-top: 6px; }
@@ -178,11 +178,11 @@
   .dias button { flex: none; border: 1px solid var(--linea2); background: var(--blanco); border-radius: 12px; padding: 8px 12px; cursor: pointer; text-align: center; line-height: 1.25; }
   .dias button small { display: block; color: var(--muted); font-size: 11px; text-transform: capitalize; }
   .dias button b { font-size: 15px; }
-  .dias button[aria-pressed="true"] { border-color: var(--rojo); background: var(--rosa); }
+  .dias button[aria-pressed="true"] { border-color: var(--acento); background: var(--acento-f); }
   .horas { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 8px; }
   .horas button { border: 1px solid var(--linea2); background: var(--blanco); border-radius: 10px; padding: 9px 0; font-weight: 600; cursor: pointer; }
   .horas button:hover { border-color: var(--pizarra); }
-  .horas button[aria-pressed="true"] { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+  .horas button[aria-pressed="true"] { background: var(--acento); border-color: var(--acento); color: #fff; }
   .msg { max-width: 84%; padding: 11px 14px; border-radius: 16px; white-space: pre-wrap; overflow-wrap: anywhere; }
   .msg small { display: block; font-size: 11px; opacity: .7; margin-top: 4px; }
   .msg.cliente { align-self: flex-end; background: var(--pizarra); color: #fff; border-bottom-right-radius: 4px; }
@@ -297,9 +297,9 @@
       <div class="tiempo"><svg class="i"><use href="#i-reloj"/></svg><span><small>Tiempo de respuesta</small><b>&lt; 1 hora laborable</b></span></div>
       <svg class="ilustracion" viewBox="0 0 200 150" aria-hidden="true">
         <defs>
-          <radialGradient id="g-halo" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#f7c9cb" stop-opacity=".9"/><stop offset="1" stop-color="#fdf0f0" stop-opacity="0"/></radialGradient>
-          <linearGradient id="g-bocadillo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ec4a4f"/><stop offset="1" stop-color="#b8161e"/></linearGradient>
-          <filter id="f-sombra" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#C81D25" flood-opacity=".28"/></filter>
+          <radialGradient id="g-halo" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#c7d7fb" stop-opacity=".9"/><stop offset="1" stop-color="#eef3fe" stop-opacity="0"/></radialGradient>
+          <linearGradient id="g-bocadillo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4f8af7"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient>
+          <filter id="f-sombra" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#2563eb" flood-opacity=".28"/></filter>
         </defs>
         <ellipse cx="96" cy="78" rx="78" ry="62" fill="url(#g-halo)"/>
         <ellipse cx="104" cy="132" rx="52" ry="7" fill="#1C1C1C" opacity=".07"/>
@@ -308,8 +308,8 @@
           <path d="M66 30h76a16 16 0 0 1 16 16v6c-30-8-70-9-108-2v-4a16 16 0 0 1 16-16z" fill="#fff" opacity=".12"/>
         </g>
         <circle cx="83" cy="65" r="7" fill="#fff"/><circle cx="104" cy="65" r="7" fill="#fff"/><circle cx="125" cy="65" r="7" fill="#fff"/>
-        <path d="M168 18l-8 13M180 34l-14 6" stroke="#C81D25" stroke-width="4" stroke-linecap="round"/>
-        <circle cx="36" cy="96" r="4.5" fill="#C81D25"/>
+        <path d="M168 18l-8 13M180 34l-14 6" stroke="#2563eb" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="36" cy="96" r="4.5" fill="#2563eb"/>
       </svg>
     </div>
 
@@ -583,7 +583,7 @@ if (!token) {
     const email = $('emailRecuperar').value.trim();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return $('emailRecuperar').focus();
     try { await api('/api/soporte/recuperar', { email }); $('recuperado').classList.remove('oculto'); }
-    catch (err) { $('recuperado').textContent = err.message; $('recuperado').style.color = 'var(--rojo)'; $('recuperado').classList.remove('oculto'); }
+    catch (err) { $('recuperado').textContent = err.message; $('recuperado').style.color = 'var(--error)'; $('recuperado').classList.remove('oculto'); }
   };
 }
 
@@ -648,7 +648,7 @@ if (token) {
   };
   if (q.get('fallidos')) setTimeout(() => alerta(`No se ${q.get('fallidos') === '1' ? 'ha' : 'han'} podido subir ${q.get('fallidos')} archivo(s). Puedes adjuntarlos con el clip.`), 800);
 
-  const alerta = t => { const d = document.createElement('div'); d.className = 'msg sistema'; d.style.color = 'var(--rojo)'; d.textContent = t; $('chat').append(d); };
+  const alerta = t => { const d = document.createElement('div'); d.className = 'msg sistema'; d.style.color = 'var(--error)'; d.textContent = t; $('chat').append(d); };
 
   async function cargar() {
     if (document.hidden) return;
