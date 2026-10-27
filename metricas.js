@@ -220,7 +220,7 @@ function resumen(todos, { desde, hasta, servicio, tecnico, tipo_cliente }, comer
     mejoras: cerrados.filter(t => t.mejora || t.nps != null).sort((a, b) => b.cierre.localeCompare(a.cierre))
       .map(t => ({ id: t.id, cliente: t.cliente, nps: t.nps, mejora: t.mejora, fecha: dia(t.cierre) })),
     comercial: comercial.datos.map(c => ({ ...c, dias: Math.floor((ahora - new Date(c.fecha)) / 864e5) })),
-    comercialEjemplo: comercial.ejemplo,
+    comercialConectado: comercial.conectado,
     diasRespuesta: RESPUESTA_CLIENTE,
   };
 }

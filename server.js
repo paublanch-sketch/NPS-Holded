@@ -23,10 +23,9 @@ const { json, leerCuerpo } = tickets;
 // Se guardan 10 minutos para no gastar llamadas de la API en cada refresco del panel.
 let cacheComercial = { hasta: 0, datos: null };
 async function cargarComercial() {
-  if (!HOLDED_API_KEY) {
-    return { ejemplo: true, datos: JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'comercial-ejemplo.json'), 'utf8')) };
-  }
-  if (cacheComercial.hasta > Date.now()) return { ejemplo: false, datos: cacheComercial.datos };
+  // Sin la clave de Holded no se enseña nada comercial (nada de datos inventados).
+  if (!HOLDED_API_KEY) return { conectado: false, datos: [] };
+  if (cacheComercial.hasta > Date.now()) return { conectado: true, datos: cacheComercial.datos };
   const h = { key: HOLDED_API_KEY };
   const base = 'https://api.holded.com/api/invoicing/v1/documents/';
   const [estimates, invoices] = await Promise.all([
@@ -44,7 +43,7 @@ async function cargarComercial() {
     };
   });
   cacheComercial = { hasta: Date.now() + 10 * 60000, datos };
-  return { ejemplo: false, datos };
+  return { conectado: true, datos };
 }
 
 // Tickets con el servicio y el origen de la ficha de su cliente.

@@ -210,7 +210,6 @@
   .mk-cab p { margin: 0; color: var(--bruma); font-size: 13px; }
   .mk-chips { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
   .mk-chip { font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 99px; border: 1px solid var(--linea2); background: var(--blanco); white-space: nowrap; }
-  .mk-chip.ejemplo { background: #fff7e0; border-color: #f6dc9b; color: #8a5a00; }
   .mk-leyenda { display: flex; gap: 22px; flex-wrap: wrap; align-items: center; background: var(--blanco); border: 1px solid var(--linea); border-radius: 12px; padding: 12px 18px; font-size: 13px; color: var(--bruma); }
   .mk-leyenda .tit { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--muted); }
   .mk-leyenda b { color: var(--pizarra); }
@@ -876,7 +875,7 @@ function vistaMetricas() {
       <div class="mk-cab">
         <div class="mk-logo">${ICO.pulso}</div>
         <div><h1>Servicio Holded</h1><p>Dashboard operativo — Implementación y Soporte Premium</p></div>
-        <div class="mk-chips"><span class="mk-chip oculto ejemplo" id="chipEjemplo">Comercial: datos de ejemplo</span><span class="mk-chip" id="chipHoy"></span></div>
+        <div class="mk-chips"><span class="mk-chip" id="chipHoy"></span></div>
       </div>
       <div class="filtros">
         <div class="seg" id="seg">${Object.entries(PERIODOS).map(([k, [n]]) => `<button data-p="${k}" class="${fm.periodo === k ? 'on' : ''}">${n}</button>`).join('')}<button data-p="custom" class="${fm.periodo === 'custom' ? 'on' : ''}">Fechas…</button></div>
@@ -920,7 +919,6 @@ async function cargarMetricas() {
   try { r = await api('/api/resumen?' + q); } catch (e) { return fallo(e); }
   if (!$('met')) return;
   $('actualizado').textContent = `${fecha(d)} – ${fecha(h)} · actualizado ${new Date(r.actualizado).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
-  $('chipEjemplo').classList.toggle('oculto', !r.comercialEjemplo);
   const s = r.resumen, n = r.nps;
   const kpi = (et, v, sub = '') => `<div class="kpi"><div class="et">${et}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`;
   // Primero lo del mockup (Implementación y Premium); después los demás servicios si tienen datos.
@@ -1095,11 +1093,12 @@ function bloqueNps(r) {
 }
 
 function bloqueComercial(r) {
+  if (!r.comercialConectado) return '<div class="vacio">Se llena con los presupuestos de Holded cuando se conecte su API (variable HOLDED_API_KEY en Render).</div>';
+  if (!r.comercial.length) return '<div class="vacio">Holded no tiene presupuestos todavía.</div>';
   const max = r.diasRespuesta;
   const pend = r.comercial.filter(c => c.estado === 'Firmado, pendiente de pago');
   const firm = r.comercial.filter(c => c.estado.startsWith('Firmado') || c.estado === 'Pagado');
-  return `${r.comercialEjemplo ? '<div class="aviso" style="margin-bottom:12px">Datos de ejemplo: falta conectar la API de Holded (variable HOLDED_API_KEY en Render).</div>' : ''}
-    <div class="extra"><span>Firmados sin pagar: <b>${pend.length} de ${firm.length}</b> (${firm.length ? Math.round(pend.length / firm.length * 100) : 0}%)</span><span>Plazo de respuesta del cliente: <b>${max} días</b></span></div>
+  return `<div class="extra"><span>Firmados sin pagar: <b>${pend.length} de ${firm.length}</b> (${firm.length ? Math.round(pend.length / firm.length * 100) : 0}%)</span><span>Plazo de respuesta del cliente: <b>${max} días</b></span></div>
     <div class="tabla"><table><thead><tr><th>Cliente</th><th>Documento</th><th>Tipo</th><th class="num">Importe</th><th>Fecha</th><th>Estado</th><th>Tiempo</th></tr></thead><tbody>
     ${r.comercial.map(c => {
       const cerrado = c.estado === 'Pagado' || c.estado === 'Rechazado';

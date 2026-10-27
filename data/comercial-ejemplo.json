@@ -1,7 +1,0 @@
-[
-  {"cliente":"Gestoría Puig SLP","documento":"P26-041","tipo":"Contrato Premium","importe":499,"fecha":"2026-10-21","estado":"Firmado, pendiente de pago"},
-  {"cliente":"Clínica Dental Bonavista","documento":"P26-038","tipo":"Licencia","importe":360,"fecha":"2026-10-14","estado":"Firmado, pendiente de pago"},
-  {"cliente":"Taller Mecànic Garcia","documento":"P26-033","tipo":"Presupuesto","importe":1200,"fecha":"2026-10-05","estado":"Enviado"},
-  {"cliente":"Asesoría Fontclara","documento":"P26-030","tipo":"Contrato Premium","importe":499,"fecha":"2026-10-01","estado":"Pagado"},
-  {"cliente":"Restaurant Can Ferrer","documento":"P26-044","tipo":"Presupuesto","importe":850,"fecha":"2026-10-24","estado":"Enviado"}
-]
