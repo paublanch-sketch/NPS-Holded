@@ -1075,7 +1075,9 @@ async function cargarClientes() {
   if (!clientesCache) clientesCache = await api('/api/clientes');
   return clientesCache;
 }
-let filtroCli = { q: '', sin: false };
+let filtroCli = { q: '', sin: false, tab: 'con' };
+// Segunda pestaña: clientes de la lista del Kit Digital activos que aún no han abierto ninguna incidencia.
+const kitSinTickets = x => x.kitDigital && !x.tickets;
 // Falta clasificar: sin servicio, o Implementación/Premium sin origen (en Kit Digital el origen no aplica).
 const pendiente = x => x.servicio === 'Sin clasificar' || (['Implementación', 'Premium'].includes(x.servicio) && x.tipo_cliente === 'Sin clasificar');
 function vistaClientes(arg) {
@@ -1083,6 +1085,7 @@ function vistaClientes(arg) {
   $('vista').innerHTML = `
     <div class="cabeza"><h1>Clientes</h1><span style="color:var(--muted);font-size:13px">El servicio y el origen se guardan por cliente y cuentan en todas sus incidencias.</span></div>
     <div class="filtros">
+      <div class="seg" id="ctab"><button type="button" data-t="con" class="${filtroCli.tab === 'con' ? 'on' : ''}">Con incidencias</button><button type="button" data-t="kit" class="${filtroCli.tab === 'kit' ? 'on' : ''}">Kit Digital activos sin incidencias</button></div>
       <input class="campo" id="cq" placeholder="Buscar cliente, correo o teléfono…" style="min-width:260px" value="${esc(filtroCli.q)}">
       <label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" id="csin" ${filtroCli.sin ? 'checked' : ''}> Solo pendientes de clasificar</label>
       <span class="der" style="font-size:13px;color:var(--muted)" id="ccuenta"></span>
@@ -1090,6 +1093,13 @@ function vistaClientes(arg) {
     <div class="contenido"><section class="tarjeta" style="padding:6px 8px"><div class="tabla" id="ctabla"><div class="vacio">Cargando…</div></div></section></div>`;
   $('cq').oninput = e => { filtroCli.q = e.target.value; pintarClientes(); };
   $('csin').onchange = e => { filtroCli.sin = e.target.checked; pintarClientes(); };
+  $('ctab').onclick = e => {
+    const b = e.target.closest('button[data-t]');
+    if (!b) return;
+    filtroCli.tab = b.dataset.t;
+    $('ctab').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    pintarClientes();
+  };
   clientesCache = null;
   cargarClientes().then(pintarClientes).catch(fallo);
 }
@@ -1097,13 +1107,15 @@ function pintarClientes() {
   const c = clientesCache;
   if (!c || !$('ctabla')) return;
   const q = filtroCli.q.trim().toLowerCase();
-  const l = c.clientes.filter(x => (!filtroCli.sin || pendiente(x))
+  const enTab = c.clientes.filter(x => filtroCli.tab === 'kit' ? kitSinTickets(x) : !kitSinTickets(x));
+  const l = enTab.filter(x => (!filtroCli.sin || pendiente(x))
     && (!q || `${x.nombre} ${x.emails.join(' ')} ${x.telefonos.join(' ')}`.toLowerCase().includes(q)));
-  $('ccuenta').textContent = `${l.length} de ${c.clientes.length} clientes · ${c.clientes.filter(pendiente).length} por clasificar`;
+  $('ccuenta').innerHTML = `${l.length} de ${enTab.length} clientes · ${enTab.filter(pendiente).length} por clasificar${filtroCli.tab === 'kit' ? ' <button class="boton sec peq" id="kitPegar" style="margin-left:8px">Pegar lista…</button>' : ''}`;
+  if ($('kitPegar')) $('kitPegar').onclick = pegarKitDigital;
   const sel = (campo, lista, v) => `<select class="campo" data-campo="${campo}" style="padding:5px 7px;font-size:13px">${lista.map(o => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
   $('ctabla').innerHTML = l.length ? `<table><thead><tr><th>Cliente</th><th>Servicio</th><th>Origen</th><th class="num">Tickets</th><th class="num">Abiertos</th><th>Último</th><th>Contacto</th><th></th></tr></thead><tbody>
-    ${l.slice(0, 300).map(x => `<tr data-nombre="${esc(x.nombre)}"><td><a class="cli" href="#/clientes/${encodeURIComponent(x.nombre)}"><b>${esc(x.nombre)}</b></a></td><td>${sel('servicio', c.servicios, x.servicio)}</td><td>${sel('tipo_cliente', c.origenes, x.tipo_cliente)}</td><td class="num">${x.tickets}</td><td class="num">${x.abiertos || ''}</td><td>${x.ultimo ? fecha(x.ultimo) : ''}</td><td style="font-size:12px;color:var(--bruma);overflow-wrap:anywhere">${esc(x.emails[0] || x.telefonos[0] || '')}${x.emails.length > 1 ? ` +${x.emails.length - 1}` : ''}</td><td><button class="boton sec peq" data-fusion>Fusionar…</button></td></tr>`).join('')}
-  </tbody></table>` : '<div class="vacio">Ningún cliente coincide.</div>';
+    ${l.slice(0, 300).map(x => `<tr data-nombre="${esc(x.nombre)}"><td><a class="cli" href="#/clientes/${encodeURIComponent(x.nombre)}"><b>${esc(x.nombre)}</b></a>${x.kitDigital && x.tickets ? `<div style="font-size:11px;color:var(--muted)">Kit Digital activo${x.kitDigital !== x.nombre ? ` · ${esc(x.kitDigital)}` : ''}</div>` : ''}</td><td>${sel('servicio', c.servicios, x.servicio)}</td><td>${sel('tipo_cliente', c.origenes, x.tipo_cliente)}</td><td class="num">${x.tickets}</td><td class="num">${x.abiertos || ''}</td><td>${x.ultimo ? fecha(x.ultimo) : ''}</td><td style="font-size:12px;color:var(--bruma);overflow-wrap:anywhere">${esc(x.emails[0] || x.telefonos[0] || '')}${x.emails.length > 1 ? ` +${x.emails.length - 1}` : ''}</td><td><button class="boton sec peq" data-fusion>Fusionar…</button></td></tr>`).join('')}
+  </tbody></table>` : `<div class="vacio">${filtroCli.tab === 'kit' && !enTab.length ? 'Todavía no hay lista del Kit Digital. Pulsa «Pegar lista…» y pega las razones sociales, una por línea.' : 'Ningún cliente coincide.'}</div>`;
   $('ctabla').onchange = async e => {
     const s = e.target.closest('select[data-campo]');
     if (!s) return;
@@ -1131,6 +1143,44 @@ function pintarClientes() {
         await cargarClientes();
         pintarClientes();
       });
+  };
+}
+
+// Pegar la lista de clientes del Kit Digital activos. Los que ya tienen incidencias se unen a su
+// ficha (aunque el nombre esté escrito distinto); el resto van a la pestaña «sin incidencias».
+function pegarKitDigital() {
+  dialogo(`<h3>Clientes del Kit Digital activos</h3><p class="sub">Pega las razones sociales, una por línea. Si alguno ya tiene incidencias se une a su ficha; los demás van a «Kit Digital activos sin incidencias». Pegar la misma lista otra vez no duplica nada.</p>
+    <textarea class="campo" name="lista" rows="12" style="width:100%;font-family:inherit" placeholder="EMPRESA EJEMPLO SL&#10;NOMBRE APELLIDO APELLIDO"></textarea>
+    <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Importar</button></div>`,
+    async f => {
+      const r = await api('/api/clientes/kit-digital', { lista: f.lista.value });
+      clientesCache = null;
+      await cargarClientes();
+      pintarClientes();
+      setTimeout(() => resultadoKitDigital(r), 0);
+    });
+}
+function resultadoKitDigital(r) {
+  const distintos = r.unidos.filter(u => u.oficial !== u.cliente);
+  dialogo(`<h3>Lista importada</h3>
+    <p class="sub">${r.unidos.length} unidos a un cliente con incidencias · ${r.nuevos} nuevos sin incidencias${r.yaEstaban ? ` · ${r.yaEstaban} ya estaban` : ''}.</p>
+    ${distintos.length ? `<details style="margin-top:10px"><summary style="cursor:pointer;font-size:13px;font-weight:600">Unidos con otro nombre (${distintos.length})</summary><div style="font-size:12px;color:var(--bruma);margin-top:6px">${distintos.map(u => `${esc(u.oficial)} → <b>${esc(u.cliente)}</b>`).join('<br>')}</div></details>` : ''}
+    ${r.dudosos.length ? `<p style="font-size:13px;margin:14px 0 6px"><b>¿Son el mismo cliente?</b> Se han creado aparte; si lo son, pulsa Unir.</p>
+      <div id="kitDudosos">${r.dudosos.map((u, i) => `<div style="display:flex;gap:10px;align-items:center;border-top:1px solid var(--linea);padding:7px 0;font-size:13px"><span style="flex:1">${esc(u.oficial)} <span style="color:var(--muted)">→</span> <b>${esc(u.cliente)}</b></span><button type="button" class="boton sec peq" data-i="${i}">Unir</button></div>`).join('')}</div>` : ''}
+    <div class="pie"><button type="submit" class="boton">Hecho</button></div>`, () => {});
+  const caja = $('kitDudosos');
+  if (caja) caja.onclick = async e => {
+    const b = e.target.closest('button[data-i]');
+    if (!b) return;
+    const u = r.dudosos[Number(b.dataset.i)];
+    b.disabled = true;
+    try {
+      await api('/api/clientes/fusionar', { de: u.oficial, a: u.cliente });
+      b.textContent = 'Unido';
+      clientesCache = null;
+      await cargarClientes();
+      pintarClientes();
+    } catch (err) { fallo(err); b.disabled = false; }
   };
 }
 
@@ -1169,7 +1219,7 @@ async function vistaFicha(nombre) {
     <div class="contenido">
       <section class="tarjeta" style="padding:18px 20px">
         <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
-          <div style="flex:1;min-width:220px"><h1 style="margin:0 0 4px;font-size:22px">${esc(x.nombre)}</h1>
+          <div style="flex:1;min-width:220px"><h1 style="margin:0 0 4px;font-size:22px">${esc(x.nombre)}</h1>${x.kitDigital ? `<div style="font-size:12px;color:var(--muted);margin-bottom:4px">Kit Digital activo${x.kitDigital !== x.nombre ? ` · ${esc(x.kitDigital)}` : ''}</div>` : ''}
             <div style="font-size:13px;color:var(--bruma);overflow-wrap:anywhere">${[...x.emails, ...x.telefonos].map(esc).join(' · ') || 'Sin datos de contacto'}</div></div>
           <div id="fsel" style="display:flex;gap:10px;flex-wrap:wrap">
             <label style="font-size:12px;color:var(--bruma)">Servicio<br>${sel('servicio', c.servicios, x.servicio)}</label>
