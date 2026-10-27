@@ -220,7 +220,10 @@ async function revisarCorreo() {
       if (dedicada) {
         if (c.mailbox?.exists !== 0) for await (const m of c.fetch('1:*', { uid: true, source: true })) nuevos.push(m);
       } else {
-        const validez = String(c.mailbox.uidValidity), ultimo = Number(c.mailbox.uidNext) - 1;
+        // Algunos servidores no dan UIDNEXT al abrir el buzón: se pide aparte.
+        const uidNext = Number(c.mailbox.uidNext) || Number((await c.status(MAIL.carpeta, { uidNext: true })).uidNext);
+        if (!uidNext) throw new Error('El servidor de correo no da el UIDNEXT del buzón');
+        const validez = String(c.mailbox.uidValidity), ultimo = uidNext - 1;
         marca = (await ajustes.donde('clave', 'correo-uid'))[0];
         if (!marca || marca.validez !== validez) {
           marca = { ...(marca || { clave: 'correo-uid' }), validez, uid: ultimo, desde: new Date().toISOString() };
@@ -230,24 +233,27 @@ async function revisarCorreo() {
         if (ultimo > marca.uid) for await (const m of c.fetch(`${marca.uid + 1}:*`, { uid: true, source: true }, { uid: true })) if (m.uid > marca.uid) nuevos.push(m);
       }
       for (const m of nuevos) {
-        const p = await simpleParser(m.source);
-        const de = p.from?.value?.[0] || {};
-        const propio = String(de.address || '').toLowerCase() === String(MAIL.usuario).toLowerCase();
-        if (de.address && !automatico(p) && !propio) {
-          const id = ticketDe(p);
-          const cuerpo = sinCita(p.text) || p.subject || '';
-          // Adjuntos de verdad (no los logos pequeños incrustados en las firmas).
-          const archivos = (p.attachments || [])
-            .filter(a => a.filename && !(a.contentDisposition === 'inline' && a.size < 30000))
-            .map(a => ({ nombre: a.filename, buffer: a.content }));
-          await tickets.recibir({
-            canal: 'Correo', email: de.address.toLowerCase(), nombre: de.name, ticketId: id,
-            asunto: (p.subject || '').replace(/^(re|fw|fwd|rv)\s*:\s*/i, '').trim(),
-            texto: id ? cuerpo : `${p.subject ? p.subject + '\n\n' : ''}${cuerpo}`,
-            idExterno: 'mail:' + (p.messageId || m.uid), adjuntos: archivos,
-          });
-          n++;
-        }
+        // Un correo que falla no bloquea los demás: se apunta en el log y se sigue.
+        try {
+          const p = await simpleParser(m.source);
+          const de = p.from?.value?.[0] || {};
+          const propio = String(de.address || '').toLowerCase() === String(MAIL.usuario).toLowerCase();
+          if (de.address && !automatico(p) && !propio) {
+            const id = ticketDe(p);
+            const cuerpo = sinCita(p.text) || p.subject || '';
+            // Adjuntos de verdad (no los logos pequeños incrustados en las firmas).
+            const archivos = (p.attachments || [])
+              .filter(a => a.filename && !(a.contentDisposition === 'inline' && a.size < 30000))
+              .map(a => ({ nombre: a.filename, buffer: a.content }));
+            await tickets.recibir({
+              canal: 'Correo', email: de.address.toLowerCase(), nombre: de.name, ticketId: id,
+              asunto: (p.subject || '').replace(/^(re|fw|fwd|rv)\s*:\s*/i, '').trim(),
+              texto: id ? cuerpo : `${p.subject ? p.subject + '\n\n' : ''}${cuerpo}`,
+              idExterno: 'mail:' + (p.messageId || m.uid), adjuntos: archivos,
+            });
+            n++;
+          }
+        } catch (e) { console.error(`Correo UID ${m.uid}:`, e.message); }
         if (dedicada) await c.messageMove({ uid: m.uid }, procesados, { uid: true });
         else if (m.uid > marca.uid) { marca.uid = m.uid; await ajustes.guardar(marca); }
       }
