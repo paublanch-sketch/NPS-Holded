@@ -942,7 +942,8 @@ const PERIODOS = {
   d90: ['90 días', () => { const h = new Date(); return [iso(new Date(h - 89 * 864e5)), iso(h)]; }],
   anio: ['Este año', () => { const h = new Date(); return [iso(new Date(h.getFullYear(), 0, 1)), iso(h)]; }],
 };
-let fm = leer('filtrosMetricas', { periodo: 'trim', servicio: '', tecnico: '', tipo_cliente: '' });
+// El periodo se recuerda; el técnico no: al entrar siempre se ve todo el equipo.
+let fm = { ...leer('filtrosMetricas', { periodo: 'trim', servicio: '', tipo_cliente: '' }), tecnico: '' };
 const DESC = {
   'Implementación': 'Clientes fuera de Kit Digital: referidos por una gestoría/asesoría, o antiguos clientes de AKIRA sin Holded que lo solicitan.',
   'Premium': 'Gestorías y asesorías con servicio Premium, más cualquier cliente que lo contrate directamente.',
@@ -989,7 +990,7 @@ function vistaMetricas() {
     </div>`;
   $('chipHoy').textContent = 'Hoy · ' + new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
   $('fTec').innerHTML += equipo.map(x => `<option ${x === fm.tecnico ? 'selected' : ''}>${esc(x)}</option>`).join('');
-  const cambiar = () => { escribir('filtrosMetricas', fm); cargarMetricas(); };
+  const cambiar = () => { escribir('filtrosMetricas', { ...fm, tecnico: '' }); cargarMetricas(); };
   // Periodos fijos en el segmento; «Fechas» abre el rango a medida.
   const modoFechas = si => {
     $('btnFechas').classList.toggle('on', si);
