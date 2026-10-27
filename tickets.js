@@ -106,7 +106,7 @@ async function recibir(r) {
   const citado = r.ticketId && recientes.find(x => x.id === r.ticketId);
   let t = citado && citado.estado !== 'Cerrado' ? citado : recientes.find(x => x.estado !== 'Cerrado');
   // Los importados del Sheet nunca pidieron valoración: un número suyo no es un NPS.
-  const recienCerrado = x => x && x.origen !== 'Sheet' && x.estado === 'Cerrado' && (new Date() - new Date(x.cierre)) / 864e5 < NPS_DIAS;
+  const recienCerrado = x => x && x.origen !== 'Sheet' && !x.historico && x.estado === 'Cerrado' && (new Date() - new Date(x.cierre)) / 864e5 < NPS_DIAS;
   const cerrado = !t && (recienCerrado(citado) ? citado : recientes.find(recienCerrado));
   if (cerrado && cerrado.esperaMejora) {
     cerrado.mejora = texto;
@@ -127,6 +127,7 @@ async function recibir(r) {
   if (t) {
     if (t.estado === 'Cerrado') ACCIONES.reabrir(t);
     if (t.estado === 'Pendiente cliente') t.estado = 'En curso';
+    if (r.buzon && !t.buzon) t.buzon = r.buzon;
     t.mensajes.push(msg);
     await adjuntar(t, r.adjuntos);
     return store.guardar(t);
@@ -136,10 +137,36 @@ async function recibir(r) {
     email: r.email, telefono: r.telefono, tipo: 'Sin clasificar', descripcion: texto, asunto: r.asunto,
   });
   t.mensajes[0].idExterno = r.idExterno;
+  // En qué buzón entró, para saber de dónde viene y responder desde ahí.
+  if (r.buzon) t.buzon = r.buzon;
   await adjuntar(t, r.adjuntos);
   await store.guardar(t);
   avisar(t, 'nuevo');
   return t;
+}
+
+// Correos antiguos de un buzón («leer el historial»): tickets cerrados marcados «historico»,
+// sin avisos al cliente y fuera de las métricas. Los del mismo remitente y asunto van juntos.
+async function importarHistorico(r) {
+  const todos = await store.todos();
+  if (todos.some(t => t.mensajes.some(m => m.idExterno === r.idExterno))) return null;
+  const tema = s => String(s || '').replace(/^((re|fw|fwd|rv)\s*:\s*)+/i, '').trim().toLowerCase();
+  const texto = String(r.texto || '').trim().slice(0, 5000) || '(mensaje sin texto)';
+  const fecha = r.fecha || ahora();
+  const msg = { de: 'cliente', texto, fecha, idExterno: r.idExterno };
+  let t = todos.find(x => x.historico && x.email === r.email && tema(x.asunto) === tema(r.asunto));
+  if (t) {
+    t.mensajes.push(msg);
+    t.mensajes.sort((a, b) => a.fecha.localeCompare(b.fecha));
+    if (fecha < t.entrada) t.entrada = t.primera_respuesta = fecha;
+    if (fecha > t.cierre) t.cierre = fecha;
+    await adjuntar(t, r.adjuntos);
+    return store.guardar(t);
+  }
+  t = await crear({ canal: 'Correo', empresa: r.nombre || r.email, contacto: r.nombre, email: r.email, tipo: 'Sin clasificar', descripcion: texto, asunto: r.asunto });
+  Object.assign(t, { historico: true, buzon: r.buzon, estado: 'Cerrado', entrada: fecha, cierre: fecha, primera_respuesta: fecha, mensajes: [msg] });
+  await adjuntar(t, r.adjuntos);
+  return store.guardar(t);
 }
 const ENTRADA_KEY = process.env.ENTRADA_KEY || '';
 
@@ -489,7 +516,8 @@ async function rutasConsola(req, res, ruta, equipo) {
 
 // Para las métricas: lo justo de cada ticket, sin mensajes.
 async function paraDashboard() {
-  return (await store.todos()).filter(t => !t.archivado).map(t => ({
+  // Ni archivados ni el historial de los buzones cuentan en las métricas.
+  return (await store.todos()).filter(t => !t.archivado && !t.historico).map(t => ({
     id: t.id, origen: t.origen, cliente: t.cliente, tipo_incidencia: t.tipo_incidencia, tecnico: t.tecnico, estado: t.estado,
     entrada: t.entrada, cierre: t.cierre, primera_respuesta: t.primera_respuesta, horas: horas(t), trabajo: trabajo(t),
     nps: t.nps, mejora: t.mejora, servicio: t.servicio, tipo_cliente: t.tipo_cliente, canal: t.canal,
@@ -497,4 +525,4 @@ async function paraDashboard() {
   }));
 }
 
-module.exports = { cuando, iniciarReuniones, contabilizarReuniones, alRecuperar, porId, rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };
+module.exports = { importarHistorico, cuando, iniciarReuniones, contabilizarReuniones, alRecuperar, porId, rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };
