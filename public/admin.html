@@ -153,7 +153,7 @@
   .cl-barra { display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-bottom: 1px solid var(--linea); flex-wrap: wrap; }
   .cl-barra > b { font-size: 15px; }
   .cl-tabs { display: inline-flex; gap: 4px; background: var(--suave); border-radius: 10px; padding: 4px; }
-  .cl-tabs button { border: 0; background: none; padding: 6px 12px; border-radius: 7px; font: inherit; font-size: 13px; font-weight: 600; color: var(--bruma); cursor: pointer; white-space: nowrap; }
+  .cl-tabs button { border: 0; background: none; padding: 9px 16px; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 600; color: var(--bruma); cursor: pointer; white-space: nowrap; }
   .cl-tabs button.on { background: var(--blanco); color: var(--pizarra); box-shadow: var(--sombra-b); }
   .cl-tabs .n { font-weight: 700; color: var(--azul); margin-left: 4px; }
   .cl-barra .orden { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--bruma); }
@@ -1369,15 +1369,15 @@ function vistaClientes(arg) {
   $('vista').innerHTML = `
     <div class="cl-cab">
       <div><h1>Clientes</h1><p>Gestiona y da seguimiento a tus clientes. Filtra, busca y ordena la información fácilmente.</p></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="boton sec" id="kitPegar">Importar lista Kit Digital…</button><button class="boton" id="cliNuevo">+ Nuevo cliente</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="boton" id="cliNuevo">+ Nuevo cliente</button></div>
     </div>
     <div class="contenido">
       <section class="cl-filtros">
         <div class="cl-buscar">${ICO_CLI.buscar}<input class="campo" id="cq" placeholder="Buscar por nombre, email, teléfono o código de cliente…" value="${esc(f.q)}"><kbd>${/Mac/.test(navigator.platform) ? '⌘' : 'Ctrl'} K</kbd></div>
         <div class="cl-f"><label>Servicio</label><select class="campo" data-f="serv"></select></div>
         <div class="cl-f"><label>Origen</label><select class="campo" data-f="orig"></select></div>
-        <div class="cl-f"><label>Tickets</label><select class="campo" data-f="tick">
-          ${[['con', 'Con incidencias'], ['abiertas', 'Con incidencias abiertas'], ['kit', 'Kit Digital activos sin incidencias'], ['todos', 'Todos']].map(([k, t]) => `<option value="${k}" ${k === f.tick ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+        <div class="cl-f" id="cliTick"><label>Tickets</label><select class="campo" data-f="tick">
+          ${[['con', 'Todos'], ['abiertas', 'Con incidencias abiertas']].map(([k, t]) => `<option value="${k}" ${k === f.tick ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
         <div class="cl-f"><label>Estado</label><select class="campo" data-f="estado">${opc([['pend', 'Por clasificar'], ['clas', 'Clasificados'], ['kit', 'Kit Digital activo']], f.estado)}</select></div>
         <button class="boton sec" id="cliMas" style="align-self:end">${ICO_CLI.filtro}Más filtros</button>
         <div class="cl-mas ${f.mas ? 'on' : ''}" id="cliMasCaja">
@@ -1401,10 +1401,9 @@ function vistaClientes(arg) {
   $('cq').oninput = e => { f.q = e.target.value; f.pag = 1; pintarClientes(); };
   $('vista').querySelectorAll('select[data-f]').forEach(s => s.onchange = () => { f[s.dataset.f] = s.value; f.pag = 1; pintarClientes(); });
   $('cliMas').onclick = () => { f.mas = !f.mas; $('cliMasCaja').classList.toggle('on', f.mas); };
-  $('cliLimpiar').onclick = () => { Object.assign(f, { q: '', serv: '', orig: '', tick: 'con', estado: '', contacto: '', horas: '', pag: 1 }); vistaClientes(); };
+  $('cliLimpiar').onclick = () => { Object.assign(f, { q: '', serv: '', orig: '', tick: f.tick === 'kit' ? 'kit' : 'con', estado: '', contacto: '', horas: '', pag: 1 }); vistaClientes(); };
   $('cliVista').onclick = e => { const b = e.target.closest('button[data-v]'); if (!b) return; f.vista = b.dataset.v; $('cliVista').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); pintarClientes(); };
   $('cliNuevo').onclick = nuevoCliente;
-  $('kitPegar').onclick = pegarKitDigital;
   // Ctrl/⌘ + K: al buscador.
   const tecla = e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('cq')?.focus(); } };
   document.addEventListener('keydown', tecla);
@@ -1423,7 +1422,8 @@ function pintarClientes() {
   const q = f.q.trim().toLowerCase();
   const hoy = Date.now(), dias = iso => iso ? (hoy - new Date(iso)) / 864e5 : Infinity;
   const l = c.clientes.filter(x =>
-    (f.tick === 'todos' || (f.tick === 'kit' ? kitSinTickets(x) : f.tick === 'abiertas' ? x.abiertos > 0 : !kitSinTickets(x)))
+    // Dos grupos que nunca se mezclan: los que tienen incidencias y los del Kit Digital que no han abierto ninguna.
+    (f.tick === 'kit' ? kitSinTickets(x) : !kitSinTickets(x) && (f.tick !== 'abiertas' || x.abiertos > 0))
     && (!f.serv || x.servicio === f.serv) && (!f.orig || x.tipo_cliente === f.orig)
     && (!f.estado || (f.estado === 'pend' ? pendiente(x) : f.estado === 'clas' ? !pendiente(x) : !!x.kitDigital))
     && (!f.contacto || (f.contacto === 'nunca' ? !x.ultimo : f.contacto === 'viejo' ? x.ultimo && dias(x.ultimo) > 365 : dias(x.ultimo) <= Number(f.contacto)))
@@ -1435,15 +1435,16 @@ function pintarClientes() {
   const ini = (f.pag - 1) * POR_PAGINA, pag = l.slice(ini, ini + POR_PAGINA);
   $('ccuenta').textContent = `${l.length} ${l.length === 1 ? 'cliente' : 'clientes'}`;
   // Pestañas: con incidencias / Kit Digital activos que nunca han abierto ninguna / todos.
-  const cuantos = { con: c.clientes.filter(x => !kitSinTickets(x)).length, kit: c.clientes.filter(kitSinTickets).length, todos: c.clientes.length };
-  $('cliTabs').innerHTML = [['con', 'Con incidencias'], ['kit', 'Kit Digital sin incidencias'], ['todos', 'Todos']]
+  const cuantos = { con: c.clientes.filter(x => !kitSinTickets(x)).length, kit: c.clientes.filter(kitSinTickets).length };
+  if ($('cliTick')) $('cliTick').style.visibility = f.tick === 'kit' ? 'hidden' : '';
+  $('cliTabs').innerHTML = [['con', 'Con incidencias'], ['kit', 'Kit Digital sin incidencias']]
     .map(([k, t]) => `<button type="button" data-t="${k}" class="${(f.tick === k || (k === 'con' && f.tick === 'abiertas')) ? 'on' : ''}">${t} <span class="n">${num(cuantos[k])}</span></button>`).join('');
   $('cliTabs').onclick = e => {
     const b = e.target.closest('button[data-t]');
     if (!b) return;
     f.tick = b.dataset.t; f.pag = 1;
     const sel = $('vista').querySelector('select[data-f="tick"]');
-    if (sel) sel.value = f.tick;
+    if (sel) sel.value = 'con';
     pintarClientes();
   };
   const ficha = x => `#/clientes/${encodeURIComponent(x.nombre)}`;
@@ -1552,44 +1553,6 @@ function fusionarCliente(de) {
       await cargarClientes();
       pintarClientes();
     });
-}
-
-// Pegar la lista de clientes del Kit Digital activos. Los que ya tienen incidencias se unen a su
-// ficha (aunque el nombre esté escrito distinto); el resto van a la pestaña «sin incidencias».
-function pegarKitDigital() {
-  dialogo(`<h3>Clientes del Kit Digital activos</h3><p class="sub">Pega las razones sociales, una por línea. Si alguno ya tiene incidencias se une a su ficha; los demás van a «Kit Digital activos sin incidencias». Pegar la misma lista otra vez no duplica nada.</p>
-    <textarea class="campo" name="lista" rows="12" style="width:100%;font-family:inherit" placeholder="EMPRESA EJEMPLO SL&#10;NOMBRE APELLIDO APELLIDO"></textarea>
-    <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Importar</button></div>`,
-    async f => {
-      const r = await api('/api/clientes/kit-digital', { lista: f.lista.value });
-      clientesCache = null;
-      await cargarClientes();
-      pintarClientes();
-      setTimeout(() => resultadoKitDigital(r), 0);
-    });
-}
-function resultadoKitDigital(r) {
-  const distintos = r.unidos.filter(u => u.oficial !== u.cliente);
-  dialogo(`<h3>Lista importada</h3>
-    <p class="sub">${r.unidos.length} unidos a un cliente con incidencias · ${r.nuevos} nuevos sin incidencias${r.yaEstaban ? ` · ${r.yaEstaban} ya estaban` : ''}.</p>
-    ${distintos.length ? `<details style="margin-top:10px"><summary style="cursor:pointer;font-size:13px;font-weight:600">Unidos con otro nombre (${distintos.length})</summary><div style="font-size:12px;color:var(--bruma);margin-top:6px">${distintos.map(u => `${esc(u.oficial)} → <b>${esc(u.cliente)}</b>`).join('<br>')}</div></details>` : ''}
-    ${r.dudosos.length ? `<p style="font-size:13px;margin:14px 0 6px"><b>¿Son el mismo cliente?</b> Se han creado aparte; si lo son, pulsa Unir.</p>
-      <div id="kitDudosos">${r.dudosos.map((u, i) => `<div style="display:flex;gap:10px;align-items:center;border-top:1px solid var(--linea);padding:7px 0;font-size:13px"><span style="flex:1">${esc(u.oficial)} <span style="color:var(--muted)">→</span> <b>${esc(u.cliente)}</b></span><button type="button" class="boton sec peq" data-i="${i}">Unir</button></div>`).join('')}</div>` : ''}
-    <div class="pie"><button type="submit" class="boton">Hecho</button></div>`, () => {});
-  const caja = $('kitDudosos');
-  if (caja) caja.onclick = async e => {
-    const b = e.target.closest('button[data-i]');
-    if (!b) return;
-    const u = r.dudosos[Number(b.dataset.i)];
-    b.disabled = true;
-    try {
-      await api('/api/clientes/fusionar', { de: u.oficial, a: u.cliente });
-      b.textContent = 'Unido';
-      clientesCache = null;
-      await cargarClientes();
-      pintarClientes();
-    } catch (err) { fallo(err); b.disabled = false; }
-  };
 }
 
 // ---- Ficha de un cliente: sus incidencias (lo que pidió y cómo se le respondió) y, aparte,

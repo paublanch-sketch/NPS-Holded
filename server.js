@@ -110,6 +110,13 @@ http.createServer(async (req, res) => {
   try {
     // ---- Público ----
     // Con la versión desplegada (Render pone RENDER_GIT_COMMIT), para saber si ya está lo último.
+    // Cuántos clientes del Kit Digital hay cargados (solo números), para comprobar la importación.
+    if (ruta === '/salud/kit') {
+      const fichas = [...(await clientes.fichas()).values()].filter(c => !c.ejemplo);
+      const conTickets = new Set((await tickets.paraDashboard()).filter(t => !t.interno).map(t => t.cliente));
+      const kit = fichas.filter(c => c.kitDigital);
+      return json(res, { fichas: fichas.length, kitDigital: kit.length, kitSinTickets: kit.filter(c => !conTickets.has(c.nombre)).length });
+    }
     if (ruta === '/salud') { res.writeHead(200); return res.end(`ok ${(process.env.RENDER_GIT_COMMIT || '').slice(0, 7)}`.trim()); }
     if (/^\/img\/[a-z0-9-]+\.(png|svg|webp)$/.test(ruta)) return imagen(res, ruta.slice(5));
     if (ruta === '/' || /^\/t\/[a-f0-9]{32}$/.test(ruta)) return pagina(res, 'portal.html');
