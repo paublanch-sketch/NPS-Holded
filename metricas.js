@@ -97,7 +97,9 @@ function resumen(todos, { desde, hasta, servicio, tecnico, tipo_cliente }, comer
     const medibles = periodo.filter(juzgable);
     const fuera = medibles.filter(t => espera(t) > SLA_MIN).length;
     const excedido = abiertas.filter(t => conSla(t) && !t.primera_respuesta).reduce((s, t) => s + Math.max(0, espera(t) - SLA_MIN), 0);
-    const val = nps(lista.filter(cerradoEnPeriodo));
+    const cerradasPeriodo = lista.filter(cerradoEnPeriodo);
+    const val = nps(cerradasPeriodo);
+    const dias = cerradasPeriodo.map(t => (new Date(t.cierre) - new Date(t.entrada)) / 864e5).filter(d => d >= 0);
     // Sin ninguna incidencia no hay nada que juzgar: «Sin datos», no «OK».
     const vacio = !lista.length;
     const niveles = vacio ? { abiertas: null, fueraSla: null, excedido: null, valoracion: null }
@@ -113,8 +115,13 @@ function resumen(todos, { desde, hasta, servicio, tecnico, tipo_cliente }, comer
       excedidoMin: excedido,
       valoracion: val.media5,
       respuestasNps: val.respuestas,
+      // Lo del periodo elegido (los indicadores de arriba son de ahora mismo).
       tickets: periodo.length,
       horas: horasDe(lista),
+      clientes: new Set(periodo.map(t => t.cliente)).size,
+      diasResolucion: dias.length ? r1(media(dias)) : null,
+      // Del antiguo formulario: no guardaba la primera respuesta ni la valoración.
+      historico: periodo.filter(t => !conSla(t)).length,
       casos: abiertas.sort((a, b) => a.entrada.localeCompare(b.entrada)).map(t => ({
         id: t.id, cliente: t.cliente, origen: t.tipo_cliente, canal: t.canal, tipo: t.tipo_incidencia,
         tecnico: t.tecnico, estado: t.estado, entrada: t.entrada, respondido: !!t.primera_respuesta,

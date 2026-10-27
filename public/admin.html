@@ -239,6 +239,13 @@
   .mk-pill.nada { background: #ececee; color: var(--muted); }
   .mk-pill.resp { background: #e9eefb; color: #2a4fa8; }
   .c-ok { color: var(--mk-ok); } .c-atencion { color: var(--mk-at); } .c-critico { color: var(--mk-cr); } .c-nada { color: var(--muted); }
+  /* Franja del periodo elegido, encima de los indicadores de ahora. */
+  .mk-periodo { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid #ececee; border-radius: 12px; margin-bottom: 14px; }
+  .mk-periodo > div { padding: 10px 16px; border-left: 1px solid #ececee; min-width: 0; }
+  .mk-periodo > div:first-child { border-left: 0; }
+  .mk-periodo b { display: block; font-size: 18px; letter-spacing: -.01em; }
+  .mk-periodo span { font-size: 12px; color: var(--bruma); }
+  .mk-nota { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
   .mk-casos { margin-top: 20px; }
   .mk-casos .tit { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--muted); margin-bottom: 4px; }
   .mk-casos th { font-size: 11px; }
@@ -259,6 +266,9 @@
     .mk-sec { padding: 18px 16px; } .mk-cab { padding: 18px 16px 4px; } .mk-estado { margin-left: 0; } .mk-sec-cab { flex-wrap: wrap; }
     /* Tarjetas en filas compactas: icono · valor y etiqueta · semáforo */
     .mk-tiles { grid-template-columns: 1fr; gap: 8px; }
+    .mk-periodo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .mk-periodo > div:nth-child(3) { border-left: 0; }
+    .mk-periodo > div:nth-child(n+3) { border-top: 1px solid #ececee; }
     .mk-tile { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; grid-template-areas: "i v p" "i l p"; column-gap: 12px; align-items: center; padding: 12px 14px; }
     .mk-tile .top { display: contents; }
     .mk-tile .top > span:first-child { grid-area: i; align-self: start; padding-top: 4px; }
@@ -978,11 +988,18 @@ function bloqueServicio(b) {
   const casos = b.casos || [];
   return `<section class="mk-sec">
     <div class="mk-sec-cab"><span class="mk-ico">${ICONO_SERVICIO[b.nombre] || ICO.capas}</span><div><h2>${esc(TITULO[b.nombre] || b.nombre)}</h2><p>${esc(DESC[b.nombre] || '')}</p></div>${chip}</div>
+    ${b.vacio ? '' : `<div class="mk-periodo" title="Del periodo elegido arriba">
+      <div><b>${num(b.tickets || 0)}</b><span>incidencias en el periodo</span></div>
+      <div><b>${num(b.horas || 0, 1)} h</b><span>de soporte</span></div>
+      <div><b>${num(b.clientes || 0)}</b><span>clientes</span></div>
+      <div><b>${b.diasResolucion == null ? '—' : `${num(b.diasResolucion, 1)} días`}</b><span>resolución media</span></div>
+    </div>`}
     <div class="mk-tiles">
-      ${tile(ICO.alerta, niveles.abiertas, num(b.abiertas || 0), '', 'Incidencias abiertas')}
+      ${tile(ICO.alerta, niveles.abiertas, num(b.abiertas || 0), '', 'Incidencias abiertas ahora')}
       ${tile(ICO.reloj, niveles.excedido, exceso(b.excedidoMin || 0), '', 'Tiempo excedido sobre la 1h de SLA')}
       ${tile(ICO.estrella, niveles.valoracion, b.valoracion == null ? '—' : num(b.valoracion, 1), b.valoracion == null ? '' : '/5', `Valoración media (NPS / Google)${b.respuestasNps ? ` · ${b.respuestasNps} resp.` : ''}`)}
     </div>
+    ${b.historico ? `<p class="mk-nota">${b.historico === b.tickets ? 'Todas' : `${num(b.historico)} de ${num(b.tickets)}`} las incidencias del periodo vienen del antiguo formulario, que no guardaba la primera respuesta ni la valoración: el SLA y el NPS se miden con las que entran por la app.</p>` : ''}
     <div class="mk-casos">
       <div class="tit">CASOS ABIERTOS AHORA</div>
       ${casos.length ? `<div class="tabla"><table><thead><tr><th>Cliente</th><th>${conCanal ? 'Canal' : 'Origen'}</th><th>Entrada</th><th>Tiempo</th><th>Estado</th></tr></thead><tbody>
