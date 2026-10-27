@@ -17,7 +17,6 @@
     --at: #fab219; --at-t: #7a5200; --at-f: #fdf3dc;
     --cr: #d03b3b; --cr-t: #a32020; --cr-f: #fbe9e9;
     /* Gráficos */
-    --serie: #2a78d6; --serie-2: #eb6834; --rejilla: #e1e0d9; --eje: #c3c2b7;
     --nota: #fff8e1; --nota-l: #f0d58a;
   }
   * { box-sizing: border-box; }
@@ -167,37 +166,7 @@
   .filtros select, .filtros input { padding: 7px 9px; font-size: 13px; }
   .filtros .der { margin-left: auto; }
   .contenido { padding: 20px 28px 48px; display: flex; flex-direction: column; gap: 20px; max-width: 1360px; }
-  .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 12px; }
-  .kpi { background: var(--blanco); border: 1px solid var(--linea); border-radius: 14px; padding: 14px 16px; }
-  .kpi .et { font-size: 12px; color: var(--bruma); font-weight: 500; }
-  .kpi .v { font-size: 28px; font-weight: 700; letter-spacing: -.02em; margin-top: 2px; }
-  .kpi .v small { font-size: 14px; font-weight: 600; color: var(--bruma); margin-left: 2px; }
-  .kpi .s { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .leyenda { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--bruma); }
-  .bloque .cab { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .bloque .cab h2 { font-size: 18px; margin: 0; }
-  .bloque .desc { color: var(--bruma); font-size: 13px; margin: 4px 0 0; }
-  .medidores { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin: 18px 0 6px; }
-  .medidor { text-align: center; }
-  .medidor svg { width: 104px; height: 104px; display: block; margin: 0 auto 4px; }
-  .medidor .et { font-size: 12px; color: var(--bruma); min-height: 32px; }
-  .extra { display: flex; gap: 18px; font-size: 13px; color: var(--bruma); margin: 8px 0 4px; flex-wrap: wrap; }
-  .extra b { color: var(--pizarra); }
-  .dosc { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: 20px; }
-  .dosc > * { min-width: 0; }
-  .barras .fila { display: grid; grid-template-columns: minmax(90px, 160px) 1fr 52px; gap: 10px; align-items: center; font-size: 13px; padding: 4px 0; }
-  .barras .fila .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .barras .pista { height: 12px; }
-  .barras .bar { height: 12px; border-radius: 0 4px 4px 0; background: var(--serie); min-width: 2px; }
-  .barras .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--bruma); }
-  .grafico svg { width: 100%; height: auto; display: block; overflow: visible; }
-  .grafico .t { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
-  .apilada { display: flex; gap: 2px; height: 14px; border-radius: 4px; overflow: hidden; margin: 12px 0 8px; }
-  .apilada div { height: 100%; }
-  .claves { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--bruma); }
-  .claves i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
   .aviso { background: var(--at-f); color: var(--at-t); border-radius: 10px; padding: 10px 14px; font-size: 13px; }
-  #tip { position: fixed; pointer-events: none; z-index: 50; background: var(--pizarra); color: #fff; font-size: 12px; padding: 6px 9px; border-radius: 7px; white-space: nowrap; opacity: 0; transition: opacity .1s; }
 
   /* Métricas con el diseño del mockup (PDF) */
   .mk { --mk-ok: #16a34a; --mk-ok-t: #15803d; --mk-ok-f: #e8f7ee; --mk-ok-p: #d6f2df;
@@ -238,13 +207,6 @@
   .mk-pill.nada { background: #ececee; color: var(--muted); }
   .mk-pill.resp { background: #e9eefb; color: #2a4fa8; }
   .c-ok { color: var(--mk-ok); } .c-atencion { color: var(--mk-at); } .c-critico { color: var(--mk-cr); } .c-nada { color: var(--muted); }
-  /* Franja del periodo elegido, encima de los indicadores de ahora. */
-  .mk-periodo { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid #ececee; border-radius: 12px; margin-bottom: 14px; }
-  .mk-periodo > div { padding: 10px 16px; border-left: 1px solid #ececee; min-width: 0; }
-  .mk-periodo > div:first-child { border-left: 0; }
-  .mk-periodo b { display: block; font-size: 18px; letter-spacing: -.01em; }
-  .mk-periodo span { font-size: 12px; color: var(--bruma); }
-  .mk-nota { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
   .mk-casos { margin-top: 20px; }
   .mk-casos .tit { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--muted); margin-bottom: 4px; }
   .mk-casos th { font-size: 11px; }
@@ -253,21 +215,27 @@
   .mk-grupo + .mk-grupo { border-top: 1px solid var(--linea); margin-top: 16px; padding-top: 16px; }
   .mk-grupo .nom { font-weight: 700; font-size: 14px; display: flex; gap: 8px; align-items: center; }
   .mk-precio { font-size: 11px; font-weight: 700; color: var(--mk-azul); background: var(--mk-azul-f); padding: 2px 8px; border-radius: 99px; }
-  .mk-aros { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-  .mk-aro { text-align: center; }
-  .mk-aro .max { font-size: 11px; color: var(--muted); }
-  .mk-aro svg { width: 92px; height: 92px; display: block; margin: 2px auto 6px; }
-  .mk-aro .l { font-size: 12px; color: var(--bruma); line-height: 1.35; min-height: 32px; }
-  .mk-aro .e { font-size: 12px; font-weight: 700; margin-top: 2px; }
-  .mk-detalle { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 10px 0 -6px; }
+  .mk-aros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 6px; }
+  /* Aros del PDF: pista en el tono suave del estado y arco del color, de arriba en el sentido del reloj. */
+  .mk-aro { text-align: center; min-width: 0; --c: #c9c8c3; --p: #eeeeec; --t: var(--muted); }
+  .mk-aro.ok { --c: var(--mk-ok); --p: var(--mk-ok-p); --t: var(--mk-ok-t); }
+  .mk-aro.atencion { --c: var(--mk-at); --p: var(--mk-at-p); --t: var(--mk-at-t); }
+  .mk-aro.critico { --c: var(--mk-cr); --p: var(--mk-cr-p); --t: var(--mk-cr-t); }
+  .mk-aro .max { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: var(--muted); }
+  .mk-aro .max i { width: 1.5px; height: 9px; border-radius: 1px; background: #c9c8c3; }
+  .mk-aro svg { display: block; width: 100%; max-width: 112px; height: auto; margin: 4px auto 8px; }
+  .mk-aro .pista { fill: none; stroke: var(--p); stroke-width: 12; }
+  .mk-aro .arco { fill: none; stroke: var(--c); stroke-width: 12; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 64px 64px; animation: mk-arco .9s cubic-bezier(.2, .7, .2, 1) both; }
+  .mk-aro text { font: 700 30px/1 Inter, system-ui, sans-serif; fill: #111; letter-spacing: -.02em; }
+  .mk-aro .l { font-size: 12.5px; color: var(--bruma); line-height: 1.35; }
+  .mk-aro .e { font-size: 12px; font-weight: 700; margin-top: 3px; color: var(--t); }
+  @keyframes mk-arco { from { stroke-dasharray: 0 400; } }
+  @media (prefers-reduced-motion: reduce) { .mk-aro .arco { animation: none; } }
   .mk-sec-cab .mk-ico svg { width: 18px; height: 18px; }
   @media (max-width: 760px) {
     .mk-sec { padding: 18px 16px; } .mk-cab { padding: 18px 16px 4px; } .mk-estado { margin-left: 0; } .mk-sec-cab { flex-wrap: wrap; }
     /* Tarjetas en filas compactas: icono · valor y etiqueta · semáforo */
     .mk-tiles { grid-template-columns: 1fr; gap: 8px; }
-    .mk-periodo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .mk-periodo > div:nth-child(3) { border-left: 0; }
-    .mk-periodo > div:nth-child(n+3) { border-top: 1px solid #ececee; }
     .mk-tile { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; grid-template-areas: "i v p" "i l p"; column-gap: 12px; align-items: center; padding: 12px 14px; }
     .mk-tile .top { display: contents; }
     .mk-tile .top > span:first-child { grid-area: i; align-self: start; padding-top: 4px; }
@@ -352,7 +320,6 @@
   </div>
 </nav>
 <div id="vista"></div>
-<div id="tip" role="tooltip"></div>
 <div id="avisos" aria-live="polite"></div>
 <dialog id="dlg"></dialog>
 
@@ -410,18 +377,6 @@ function laborables(a, b = new Date()) {
   }
   return Math.round(total);
 }
-
-// Tooltip compartido de los gráficos.
-document.addEventListener('mousemove', e => {
-  const el = e.target.closest('[data-tip]');
-  const tip = $('tip');
-  if (!el) { tip.style.opacity = 0; return; }
-  tip.textContent = el.dataset.tip;
-  tip.style.opacity = 1;
-  const x = Math.min(e.clientX + 12, innerWidth - tip.offsetWidth - 8);
-  tip.style.left = x + 'px';
-  tip.style.top = (e.clientY - 34) + 'px';
-});
 
 // ================= Estado global =================
 let equipo = [], tickets = [], clientesCache = null, portal = {}, googleInfo = { activo: false };
@@ -845,23 +800,18 @@ let fm = leer('filtrosMetricas', { periodo: 'trim', servicio: '', tecnico: '', t
 const DESC = {
   'Implementación': 'Clientes fuera de Kit Digital: referidos por una gestoría/asesoría, o antiguos clientes de AKIRA sin Holded que lo solicitan.',
   'Premium': 'Gestorías y asesorías con servicio Premium, más cualquier cliente que lo contrate directamente.',
-  'Kit Digital': 'Soporte del año de servicio del Kit Digital (el histórico del antiguo formulario).',
-  'Sin clasificar': 'Clientes a los que aún no se ha asignado servicio. Clasifícalos en Clientes.',
 };
-const TITULO = { 'Implementación': 'Implementación Holded', 'Premium': 'Servicio Premium Holded', 'Kit Digital': 'Kit Digital (histórico)', 'Sin clasificar': 'Sin clasificar' };
-const NIVEL = { ok: ['ok', '✓ OK'], atencion: ['atencion', '! Atención'], critico: ['critico', '✕ Crítico'], null: ['', 'Sin datos'] };
+const TITULO = { 'Implementación': 'Implementación Holded', 'Premium': 'Servicio Premium Holded' };
 const PALABRA = { ok: 'OK', atencion: 'Atención', critico: 'Crítico' };
 const ICO = {
   pulso: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></svg>',
   capas: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg>',
   boya: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="m5.6 5.6 3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6"/></svg>',
-  arroba: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/></svg>',
-  historial: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2"/></svg>',
   alerta: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/></svg>',
   reloj: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
   estrella: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg>',
 };
-const ICONO_SERVICIO = { 'Implementación': ICO.capas, 'Premium': ICO.boya, 'Kit Digital': ICO.historial, 'Sin clasificar': ICO.alerta };
+const ICONO_SERVICIO = { 'Implementación': ICO.capas, 'Premium': ICO.boya };
 
 function rango() {
   if (fm.periodo === 'custom' && fm.desde && fm.hasta) return [fm.desde, fm.hasta];
@@ -880,8 +830,6 @@ function vistaMetricas() {
       <div class="filtros">
         <div class="seg" id="seg">${Object.entries(PERIODOS).map(([k, [n]]) => `<button data-p="${k}" class="${fm.periodo === k ? 'on' : ''}">${n}</button>`).join('')}<button data-p="custom" class="${fm.periodo === 'custom' ? 'on' : ''}">Fechas…</button></div>
         <span id="fechas" class="${fm.periodo === 'custom' ? '' : 'oculto'}"><input type="date" class="campo" id="fDesde" value="${d}"> – <input type="date" class="campo" id="fHasta" value="${h}"></span>
-        <select class="campo" id="fServ"><option value="">Todos los servicios</option></select>
-        <select class="campo" id="fOrig"><option value="">Todos los orígenes</option></select>
         <select class="campo" id="fTec"><option value="">Todo el equipo</option></select>
         <span class="der" style="font-size:12px;color:var(--muted)" id="actualizado"></span>
         <a class="boton sec peq" id="csv">Descargar horas (CSV)</a>
@@ -889,9 +837,7 @@ function vistaMetricas() {
       <div class="contenido" id="met"><div class="vacio">Cargando métricas…</div></div>
     </div>`;
   $('chipHoy').textContent = 'Hoy · ' + new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-  const opts = (sel, l, v) => { $(sel).innerHTML = $(sel).options[0].outerHTML + l.map(x => `<option ${x === v ? 'selected' : ''}>${esc(x)}</option>`).join(''); };
-  cargarClientes().then(c => { opts('fServ', c.servicios, fm.servicio); opts('fOrig', c.origenes, fm.tipo_cliente); });
-  opts('fTec', equipo, fm.tecnico);
+  $('fTec').innerHTML += equipo.map(x => `<option ${x === fm.tecnico ? 'selected' : ''}>${esc(x)}</option>`).join('');
   const cambiar = () => { escribir('filtrosMetricas', fm); cargarMetricas(); };
   $('seg').onclick = e => {
     const b = e.target.closest('button');
@@ -903,8 +849,6 @@ function vistaMetricas() {
     cambiar();
   };
   $('fDesde').onchange = $('fHasta').onchange = () => { fm.desde = $('fDesde').value; fm.hasta = $('fHasta').value; cambiar(); };
-  $('fServ').onchange = e => { fm.servicio = e.target.value; cambiar(); };
-  $('fOrig').onchange = e => { fm.tipo_cliente = e.target.value; cambiar(); };
   $('fTec').onchange = e => { fm.tecnico = e.target.value; cambiar(); };
   cargarMetricas();
   const i = setInterval(() => !document.hidden && cargarMetricas(), 60000);
@@ -913,52 +857,20 @@ function vistaMetricas() {
 
 async function cargarMetricas() {
   const [d, h] = rango();
-  const q = new URLSearchParams({ desde: d, hasta: h, servicio: fm.servicio, tecnico: fm.tecnico, tipo_cliente: fm.tipo_cliente });
+  const q = new URLSearchParams({ desde: d, hasta: h, tecnico: fm.tecnico });
   if ($('csv')) $('csv').href = '/api/horas.csv?' + q;
   let r;
   try { r = await api('/api/resumen?' + q); } catch (e) { return fallo(e); }
   if (!$('met')) return;
   $('actualizado').textContent = `${fecha(d)} – ${fecha(h)} · actualizado ${new Date(r.actualizado).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
-  const s = r.resumen, n = r.nps;
-  const kpi = (et, v, sub = '') => `<div class="kpi"><div class="et">${et}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`;
-  // Primero lo del mockup (Implementación y Premium); después los demás servicios si tienen datos.
-  const principales = ['Implementación', 'Premium'];
-  const otros = r.servicios.filter(b => !principales.includes(b.nombre) && !b.vacio);
+  // Tal cual el mockup: leyenda, Implementación y Premium, y los KPI por tipo de cliente.
   $('met').innerHTML = `
     <div class="mk-leyenda"><span class="tit">LEYENDA</span>
       <span><i class="mk-dot" style="background:var(--mk-ok)"></i><b>OK</b> — dentro de la calidad de servicio</span>
       <span><i class="mk-dot" style="background:var(--mk-at)"></i><b>Atención</b> — hay riesgo, requiere seguimiento</span>
       <span><i class="mk-dot" style="background:var(--mk-cr)"></i><b>Crítico</b> — servicio mal hecho o SLA superado</span></div>
-    ${principales.map(nombre => bloqueServicio(r.servicios.find(b => b.nombre === nombre) || { nombre, vacio: true, casos: [] })).join('')}
-    ${otros.map(bloqueServicio).join('')}
-    ${bloqueTipos(r)}
-    <div class="mk-detalle">Más detalle del periodo</div>
-    <div class="kpis">
-      ${kpi('Abiertas ahora', num(s.abiertas), s.sinAsignar ? `${s.sinAsignar} sin asignar` : 'todas asignadas')}
-      ${kpi('Entradas', num(s.entrados), `${num(s.cerrados)} cerradas en el periodo`)}
-      ${kpi('Horas de soporte', `${num(s.horas, 1)}<small>h</small>`, s.cerrados ? `${num(s.horas / Math.max(1, s.cerrados), 1)} h por ticket cerrado` : '')}
-      ${kpi('1.ª respuesta', s.primeraRespuestaMediana == null ? '—' : dur(s.primeraRespuestaMediana), s.slaCumplido == null ? 'sin datos aún (se mide desde la app)' : `${s.slaCumplido}% en menos de 1 h · ${s.slaMedibles} tickets`)}
-      ${kpi('Resolución media', s.diasResolucion == null ? '—' : `${num(s.diasResolucion, 1)}<small>días</small>`, 'de la entrada al cierre')}
-      ${kpi('NPS', n.score == null ? '—' : (n.score > 0 ? '+' : '') + n.score, n.respuestas ? `${num(n.media5, 1)}/5 de media · ${n.respuestas} respuestas` : 'aún sin valoraciones')}
-      ${kpi('Clientes atendidos', num(s.clientes), `${num(s.satisfechos)} satisfechos (9–10)`)}
-    </div>
-    <div class="dosc">
-      <section class="tarjeta grafico"><h3>Incidencias entradas por ${r.periodo.porMes ? 'mes' : 'semana'}</h3>${columnas(r.serie, 'tickets', r.periodo.porMes, v => `${num(v)} incidencias`)}</section>
-      <section class="tarjeta grafico"><h3>Horas de soporte por ${r.periodo.porMes ? 'mes' : 'semana'}</h3>${columnas(r.serie, 'horas', r.periodo.porMes, v => `${num(v, 1)} h`)}</section>
-    </div>
-    <div class="dosc">
-      <section class="tarjeta"><h3>Horas por técnico</h3>${barras(r.porTecnico, 'horas', x => `${num(x.horas, 1)} h`, x => `${x.nombre}: ${num(x.horas, 1)} h · ${x.tickets} tickets entrados`)}</section>
-      <section class="tarjeta"><h3>Tipos de incidencia</h3>${barras(r.porTipoIncidencia.slice(0, 8), 'tickets', x => num(x.tickets), x => `${x.nombre}: ${x.tickets}`)}${r.porTipoIncidencia.length > 8 ? `<div style="font-size:12px;color:var(--muted);margin-top:6px">y ${r.porTipoIncidencia.length - 8} tipos más</div>` : ''}</section>
-    </div>
-    <div class="dosc">
-      <section class="tarjeta"><h3>Horas por cliente</h3>${tablaClientes(r.porCliente)}</section>
-      <section class="tarjeta"><h3>Satisfacción (NPS)</h3>${bloqueNps(r)}</section>
-    </div>
-    <div class="dosc">
-      <section class="tarjeta"><h3>De dónde vienen los clientes</h3>${r.porOrigen.length ? barras(r.porOrigen, 'clientes', x => num(x.clientes), x => `${x.nombre}: ${x.clientes} clientes con tickets en el periodo`) : '<div class="vacio">Se llena cuando clasifiques clientes de Implementación o Premium con su origen.</div>'}</section>
-      <section class="tarjeta"><h3>Canales de entrada</h3>${barras(r.porCanal, 'tickets', x => num(x.tickets), x => `${x.nombre}: ${x.tickets}`)}</section>
-    </div>
-    <section class="tarjeta"><h3>Comercial · contratos, licencias y presupuestos</h3>${bloqueComercial(r)}</section>`;
+    ${r.servicios.map(bloqueServicio).join('')}
+    ${bloqueTipos(r)}`;
   $('met').querySelectorAll('tr[data-id]').forEach(tr => tr.onclick = () => { location.hash = `#/bandeja/${tr.dataset.id}`; });
 }
 
@@ -986,18 +898,11 @@ function bloqueServicio(b) {
   const casos = b.casos || [];
   return `<section class="mk-sec">
     <div class="mk-sec-cab"><span class="mk-ico">${ICONO_SERVICIO[b.nombre] || ICO.capas}</span><div><h2>${esc(TITULO[b.nombre] || b.nombre)}</h2><p>${esc(DESC[b.nombre] || '')}</p></div>${chip}</div>
-    ${b.vacio ? '' : `<div class="mk-periodo" title="Del periodo elegido arriba">
-      <div><b>${num(b.tickets || 0)}</b><span>incidencias en el periodo</span></div>
-      <div><b>${num(b.horas || 0, 1)} h</b><span>de soporte</span></div>
-      <div><b>${num(b.clientes || 0)}</b><span>clientes</span></div>
-      <div><b>${b.diasResolucion == null ? '—' : `${num(b.diasResolucion, 1)} días`}</b><span>resolución media</span></div>
-    </div>`}
     <div class="mk-tiles">
-      ${tile(ICO.alerta, niveles.abiertas, num(b.abiertas || 0), '', 'Incidencias abiertas ahora')}
+      ${tile(ICO.alerta, niveles.abiertas, num(b.abiertas || 0), '', 'Incidencias abiertas')}
       ${tile(ICO.reloj, niveles.excedido, exceso(b.excedidoMin || 0), '', 'Tiempo excedido sobre la 1h de SLA')}
       ${tile(ICO.estrella, niveles.valoracion, b.valoracion == null ? '—' : num(b.valoracion, 1), b.valoracion == null ? '' : '/5', `Valoración media (NPS / Google)${b.respuestasNps ? ` · ${b.respuestasNps} resp.` : ''}`)}
     </div>
-    ${b.historico ? `<p class="mk-nota">${b.historico === b.tickets ? 'Todas' : `${num(b.historico)} de ${num(b.tickets)}`} las incidencias del periodo vienen del antiguo formulario, que no guardaba la primera respuesta ni la valoración: el SLA y el NPS se miden con las que entran por la app.</p>` : ''}
     <div class="mk-casos">
       <div class="tit">CASOS ABIERTOS AHORA</div>
       ${casos.length ? `<div class="tabla"><table><thead><tr><th>Cliente</th><th>${conCanal ? 'Canal' : 'Origen'}</th><th>Entrada</th><th>Tiempo</th><th>Estado</th></tr></thead><tbody>
@@ -1010,101 +915,39 @@ function bloqueServicio(b) {
   </section>`;
 }
 
-// Aro de la página 2 del mockup: pista y arco del color del estado, máximo arriba.
+// Aro de la página 2 del mockup: pista suave y arco del color del estado que arranca arriba,
+// con el máximo encima («| 20»), el número dentro y la palabra del estado debajo.
 function aro(valor, max, etiqueta, nivel, numero) {
   const n = nivel || 'nada';
-  const color = { ok: 'var(--mk-ok)', atencion: 'var(--mk-at)', critico: 'var(--mk-cr)', nada: '#d4d3ce' }[n];
-  const pista = { ok: 'var(--mk-ok-p)', atencion: 'var(--mk-at-p)', critico: 'var(--mk-cr-p)', nada: '#efeeea' }[n];
-  const r = 38, c = 2 * Math.PI * r, f = Math.max(0, Math.min(1, (numero ?? Number(valor) ?? 0) / max));
-  return `<div class="mk-aro"><div class="max">/ ${max}</div>
-    <svg viewBox="0 0 100 100" role="img" aria-label="${esc(etiqueta)}: ${esc(valor)} de ${max}">
-      <circle cx="50" cy="50" r="${r}" fill="none" stroke="${pista}" stroke-width="9"/>
-      ${f ? `<circle cx="50" cy="50" r="${r}" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${c * f} ${c}" transform="rotate(-90 50 50)"/>` : ''}
-      <text x="50" y="58" text-anchor="middle" font-size="24" font-weight="700" fill="#1C1C1C" font-family="Inter, system-ui">${esc(valor)}</text></svg>
-    <div class="l">${etiqueta}</div><div class="e c-${n}">${nivel ? PALABRA[nivel] : 'Sin datos'}</div></div>`;
+  const r = 52, c = 2 * Math.PI * r;
+  const f = Math.max(0, Math.min(1, (numero || 0) / max));
+  return `<div class="mk-aro ${n}"><div class="max"><i></i>${max}</div>
+    <svg viewBox="0 0 128 128" role="img" aria-label="${esc(etiqueta.replace('<br>', ' '))}: ${esc(valor)} de ${max}">
+      <circle class="pista" cx="64" cy="64" r="${r}"/>
+      ${f ? `<circle class="arco" cx="64" cy="64" r="${r}" stroke-dasharray="${(c * f).toFixed(1)} ${c.toFixed(1)}"/>` : ''}
+      <text x="64" y="64" dy=".36em" text-anchor="middle">${esc(valor)}</text></svg>
+    <div class="l">${etiqueta}</div><div class="e">${nivel ? PALABRA[nivel] : 'Sin datos'}</div></div>`;
 }
 
 function bloqueTipos(r) {
   const tarjeta = s => {
     const impl = s.servicio === 'Implementación';
     return `<section class="mk-sec">
-      <div class="mk-sec-cab" style="margin-bottom:12px"><span class="mk-ico">${impl ? ICO.capas : ICO.arroba}</span><div><h2>${esc(TITULO[s.servicio])}</h2>${s.sinOrigen ? `<p>${s.sinOrigen} cliente${s.sinOrigen > 1 ? 's' : ''} sin origen asignado no entra${s.sinOrigen > 1 ? 'n' : ''} aquí.</p>` : ''}</div></div>
+      <div class="mk-sec-cab" style="margin-bottom:6px"><span class="mk-ico">${impl ? ICO.capas : ICO.boya}</span><div><h2>${esc(TITULO[s.servicio])}</h2>${s.sinOrigen ? `<p>${s.sinOrigen} cliente${s.sinOrigen > 1 ? 's' : ''} sin origen asignado no entra${s.sinOrigen > 1 ? 'n' : ''} aquí.</p>` : ''}</div></div>
       ${s.grupos.map(g => `<div class="mk-grupo"><div class="nom">${esc(g.nombre)}${g.precio ? `<span class="mk-precio">${esc(g.precio)}</span>` : ''}</div>
         <div class="mk-aros">
-          ${aro(num(g.abiertas || 0), impl ? 10 : 20, impl ? 'Casos<br>activos' : 'Incidencias<br>abiertas', g.vacio ? null : g.niveles.abiertas, g.abiertas || 0)}
-          ${aro(num(g.fueraSla || 0), impl ? 5 : 10, 'Incidencias<br>fuera de SLA', g.vacio ? null : g.niveles.fueraSla, g.fueraSla || 0)}
-          ${aro(g.valoracion == null ? '—' : num(g.valoracion, 1), 5, 'Valoración<br>NPS / Google', g.vacio ? null : g.niveles.valoracion, g.valoracion || 0)}
+          ${aro(num(g.abiertas || 0), impl ? 10 : 20, impl ? 'Casos<br>activos' : 'Incidencias<br>abiertas', g.vacio ? null : g.niveles.abiertas, g.abiertas)}
+          ${aro(num(g.fueraSla || 0), impl ? 5 : 10, 'Incidencias<br>fuera de SLA', g.vacio ? null : g.niveles.fueraSla, g.fueraSla)}
+          ${aro(g.valoracion == null ? '—' : num(g.valoracion, 1), 5, 'Valoración<br>NPS / Google', g.vacio ? null : g.niveles.valoracion, g.valoracion)}
         </div></div>`).join('')}
     </section>`;
   };
   return `<div><div class="mk-cab" style="padding:8px 0 12px"><div class="mk-logo">${ICO.pulso}</div><div><h1 style="font-size:19px">KPI por tipo de cliente</h1><p>Cada servicio separado por el origen del cliente.</p></div></div>
-    <div class="mk-tipos">${r.porTipo.map(tarjeta).join('')}</div></div>`;
-}
-
-// Columnas verticales: una serie, barras ≤24 px con remate redondeado, rejilla discreta.
-function columnas(serie, campo, porMes, fmt) {
-  if (!serie.length || serie.every(p => !p[campo])) return '<div class="vacio">Sin datos en el periodo.</div>';
-  const W = 600, H = 190, L = 34, B = 24, T = 8;
-  const max = Math.max(...serie.map(p => p[campo]));
-  const paso = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500].find(s => max / s <= 4) || Math.ceil(max / 4);
-  const tope = Math.ceil(max / paso) * paso || 1;
-  const banda = (W - L) / serie.length, ancho = Math.min(24, banda * .6);
-  const y = v => T + (H - T - B) * (1 - v / tope);
-  const marcas = [];
-  for (let v = 0; v <= tope; v += paso) marcas.push(v);
-  const cada = Math.ceil(serie.length / 8);
-  const et = p => porMes ? new Date(p.desde).toLocaleDateString('es-ES', { month: 'short' }) : fecha(p.desde);
-  return `<svg viewBox="0 0 ${W} ${H}" role="img">
-    ${marcas.map(v => `<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="${v ? 'var(--rejilla)' : 'var(--eje)'}" stroke-width="1"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#898781">${num(v)}</text>`).join('')}
-    ${serie.map((p, i) => {
-      const x = L + banda * i + (banda - ancho) / 2, v = p[campo], top = y(v), alto = H - B - top, r = Math.min(4, alto);
-      const barra = v ? `<path d="M${x},${H - B} V${top + r} Q${x},${top} ${x + r},${top} H${x + ancho - r} Q${x + ancho},${top} ${x + ancho},${top + r} V${H - B} Z" fill="var(--serie)"/>` : '';
-      return `<g data-tip="${porMes ? 'Mes de' : 'Semana del'} ${et(p)} · ${fmt(v)}">${barra}<rect x="${L + banda * i}" y="${T}" width="${banda}" height="${H - T - B}" fill="transparent"/>${i % cada === 0 ? `<text x="${x + ancho / 2}" y="${H - 6}" text-anchor="middle" font-size="11" fill="#898781">${et(p)}</text>` : ''}</g>`;
-    }).join('')}
-  </svg>`;
-}
-
-function barras(l, campo, fmt, tip) {
-  if (!l.length) return '<div class="vacio">Sin datos en el periodo.</div>';
-  const max = Math.max(...l.map(x => x[campo])) || 1;
-  return `<div class="barras">${l.map(x => `<div class="fila" data-tip="${esc(tip(x))}"><span class="n" title="${esc(x.nombre)}">${esc(x.nombre)}</span><div class="pista"><div class="bar" style="width:${x[campo] / max * 100}%"></div></div><span class="val">${fmt(x)}</span></div>`).join('')}</div>`;
-}
-
-let verTodosClientes = false;
-function tablaClientes(l) {
-  if (!l.length) return '<div class="vacio">Sin datos en el periodo.</div>';
-  const vista = verTodosClientes ? l : l.slice(0, 12);
-  setTimeout(() => { const b = $('masClientes'); if (b) b.onclick = () => { verTodosClientes = !verTodosClientes; cargarMetricas(); }; });
-  return `<div class="tabla"><table><thead><tr><th>Cliente</th><th>Servicio</th><th class="num">Tickets</th><th class="num">Horas</th></tr></thead><tbody>
-    ${vista.map(c => `<tr><td>${esc(c.nombre)}</td><td><span class="pastilla">${esc(c.servicio)}</span></td><td class="num">${num(c.tickets)}</td><td class="num"><b>${num(c.horas, 1)}</b></td></tr>`).join('')}
-  </tbody></table></div>${l.length > 12 ? `<button class="boton sec peq" id="masClientes" style="margin-top:10px">${verTodosClientes ? 'Ver menos' : `Ver los ${l.length} clientes`}</button>` : ''}`;
-}
-
-function bloqueNps(r) {
-  const n = r.nps;
-  if (!n.respuestas) return `<div class="vacio" style="padding:20px 0">Aún no hay valoraciones en el periodo. Llegan al cerrar cada ticket.</div>`;
-  const seg = [['Detractores (0–6)', n.detractores, '#e34948'], ['Pasivos (7–8)', n.pasivos, '#c3c2b7'], ['Promotores (9–10)', n.promotores, '#2a78d6']];
-  const mejoras = r.mejoras.filter(m => m.mejora);
-  return `<div style="display:flex;gap:18px;align-items:baseline"><div style="font-size:40px;font-weight:700;letter-spacing:-.02em">${n.score > 0 ? '+' : ''}${n.score}</div><div style="color:var(--bruma);font-size:13px">NPS · ${num(n.media5, 1)}/5 de media · ${n.respuestas} respuestas</div></div>
-    <div class="apilada">${seg.filter(s => s[1]).map(s => `<div style="flex:${s[1]};background:${s[2]}" data-tip="${s[0]}: ${s[1]}"></div>`).join('')}</div>
-    <div class="claves">${seg.map(s => `<span><i style="background:${s[2]}"></i>${s[0]}: <b style="color:var(--pizarra)">${s[1]}</b></span>`).join('')}</div>
-    <h3 style="margin-top:16px">Mejoras que piden los clientes</h3>
-    ${mejoras.length ? `<div class="tabla"><table><tbody>${mejoras.slice(0, 8).map(m => `<tr class="clic" data-id="${m.id}"><td style="width:42px"><span class="pastilla ${m.nps >= 9 ? 'ok' : m.nps >= 7 ? '' : 'critico'}">${m.nps ?? '—'}</span></td><td>«${esc(m.mejora)}»<div style="font-size:12px;color:var(--muted)">${esc(m.cliente)} · ${fecha(m.fecha)}</div></td></tr>`).join('')}</tbody></table></div>` : '<div style="font-size:13px;color:var(--muted)">Nadie ha dejado comentarios todavía.</div>'}`;
-}
-
-function bloqueComercial(r) {
-  if (!r.comercialConectado) return '<div class="vacio">Se llena con los presupuestos de Holded cuando se conecte su API (variable HOLDED_API_KEY en Render).</div>';
-  if (!r.comercial.length) return '<div class="vacio">Holded no tiene presupuestos todavía.</div>';
-  const max = r.diasRespuesta;
-  const pend = r.comercial.filter(c => c.estado === 'Firmado, pendiente de pago');
-  const firm = r.comercial.filter(c => c.estado.startsWith('Firmado') || c.estado === 'Pagado');
-  return `<div class="extra"><span>Firmados sin pagar: <b>${pend.length} de ${firm.length}</b> (${firm.length ? Math.round(pend.length / firm.length * 100) : 0}%)</span><span>Plazo de respuesta del cliente: <b>${max} días</b></span></div>
-    <div class="tabla"><table><thead><tr><th>Cliente</th><th>Documento</th><th>Tipo</th><th class="num">Importe</th><th>Fecha</th><th>Estado</th><th>Tiempo</th></tr></thead><tbody>
-    ${r.comercial.map(c => {
-      const cerrado = c.estado === 'Pagado' || c.estado === 'Rechazado';
-      const [n, t] = cerrado ? ['', c.estado] : c.dias <= max / 2 ? ['ok', `✓ ${c.dias} días`] : c.dias <= max ? ['atencion', `! ${c.dias} días`] : ['critico', `✕ ${c.dias} días`];
-      return `<tr><td>${esc(c.cliente)}</td><td>${esc(c.documento)}</td><td>${esc(c.tipo)}</td><td class="num">${num(c.importe, 2)} €</td><td>${fecha(c.fecha)}</td><td>${esc(c.estado)}</td><td><span class="pastilla ${n}">${t}</span></td></tr>`;
-    }).join('')}</tbody></table></div>`;
+    <div class="mk-tipos">${r.porTipo.map(tarjeta).join('')}</div>
+    <div class="mk-leyenda" style="margin-top:20px">
+      <span><i class="mk-dot" style="background:var(--mk-ok)"></i>OK</span>
+      <span><i class="mk-dot" style="background:var(--mk-at)"></i>Atención</span>
+      <span><i class="mk-dot" style="background:var(--mk-cr)"></i>Crítico</span></div></div>`;
 }
 
 // ================= Clientes =================

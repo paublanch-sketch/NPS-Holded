@@ -1,8 +1,8 @@
 // Servicio Holded (Node 18+).
 //   /            portal público: cualquiera abre una incidencia y la sigue en /t/<token>
 //   /admin       panel interno con un único acceso de admin: bandeja, métricas y clientes
-// Datos: tickets de la app (con el histórico del Sheet importado con importar.js),
-// fichas de clientes y, para la parte comercial, la API de Holded.
+// Datos: tickets de la app (con el histórico del Sheet importado con importar.js) y
+// fichas de clientes.
 require('./entorno');
 const http = require('http');
 const crypto = require('crypto');
@@ -16,35 +16,7 @@ const metricas = require('./metricas');
 const google = require('./google');
 
 const PORT = process.env.PORT || 3000;
-const HOLDED_API_KEY = process.env.HOLDED_API_KEY || '';
 const { json, leerCuerpo } = tickets;
-
-// Presupuestos de Holded. En teoría status 1 = aceptado; el cobro sale de la factura enlazada.
-// Se guardan 10 minutos para no gastar llamadas de la API en cada refresco del panel.
-let cacheComercial = { hasta: 0, datos: null };
-async function cargarComercial() {
-  // Sin la clave de Holded no se enseña nada comercial (nada de datos inventados).
-  if (!HOLDED_API_KEY) return { conectado: false, datos: [] };
-  if (cacheComercial.hasta > Date.now()) return { conectado: true, datos: cacheComercial.datos };
-  const h = { key: HOLDED_API_KEY };
-  const base = 'https://api.holded.com/api/invoicing/v1/documents/';
-  const [estimates, invoices] = await Promise.all([
-    fetch(base + 'estimate', { headers: h }).then(r => r.json()),
-    fetch(base + 'invoice', { headers: h }).then(r => r.json()),
-  ]);
-  const pagada = new Map(invoices.map(f => [f.id, f.paymentsPending === 0]));
-  const datos = estimates.map(e => {
-    let estado = 'Enviado';
-    if (e.status === 1) estado = pagada.get(e.invoiceId) ? 'Pagado' : 'Firmado, pendiente de pago';
-    if (e.status === 2) estado = 'Rechazado';
-    return {
-      cliente: e.contactName, documento: e.docNumber, tipo: e.tags?.includes('licencia') ? 'Licencia' : 'Presupuesto',
-      importe: e.total, fecha: new Date(e.date * 1000).toISOString().slice(0, 10), estado,
-    };
-  });
-  cacheComercial = { hasta: Date.now() + 10 * 60000, datos };
-  return { conectado: true, datos };
-}
 
 // Tickets con el servicio y el origen de la ficha de su cliente.
 async function ticketsClasificados() {
@@ -60,7 +32,7 @@ function filtros(url) {
   return {
     desde: valida(p('desde')) ? p('desde') : f(new Date(hoy.getFullYear(), hoy.getMonth(), 1)),
     hasta: valida(p('hasta')) ? p('hasta') : f(hoy),
-    servicio: p('servicio'), tecnico: p('tecnico'), tipo_cliente: p('tipo_cliente'),
+    tecnico: p('tecnico'),
   };
 }
 
@@ -169,8 +141,7 @@ http.createServer(async (req, res) => {
 
     if (ruta === '/api/resumen' || ruta === '/api/horas.csv') {
       const f = filtros(url);
-      const [t, c] = await Promise.all([ticketsClasificados(), cargarComercial()]);
-      const r = metricas.resumen(t, f, c);
+      const r = metricas.resumen(await ticketsClasificados(), f);
       if (ruta === '/api/resumen') return json(res, r);
       res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="horas-${f.desde}-${f.hasta}.csv"` });
       return res.end(metricas.csvHoras(r));

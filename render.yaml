@@ -73,5 +73,3 @@ services:
         sync: false
       - key: MANTENER_DESPIERTO # 0 para no visitarse cada 10 min (solo hace falta en el plan gratuito)
         sync: false
-      - key: HOLDED_API_KEY   # vacía = sin la parte comercial (no se inventa nada)
-        sync: false
