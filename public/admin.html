@@ -259,6 +259,33 @@
   .adj .ico { width: 34px; height: 34px; border-radius: 8px; background: var(--suave); display: grid; place-items: center; font-size: 11px; font-weight: 700; color: var(--bruma); flex: none; }
   .adj b { display: block; font-weight: 600; }
   .adj small { margin: 0 !important; }
+  /* Canales: resumen arriba y una tarjeta por canal */
+  .can-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .can-mini { display: flex; gap: 12px; align-items: center; background: var(--blanco); border: 1px solid var(--linea); border-radius: 14px; padding: 14px 16px; box-shadow: var(--sombra-b); }
+  .can-mini b { display: block; font-size: 14px; }
+  .can-ico { width: 40px; height: 40px; border-radius: 11px; background: var(--azul-f); color: var(--azul); display: grid; place-items: center; flex: none; }
+  .can-ico svg { width: 21px; height: 21px; }
+  .can-est { font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .can-est.ok { color: var(--ok-t); } .can-est.mal { color: var(--cr-t); } .can-est.pend { color: var(--muted); }
+  .can-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(460px, 100%), 1fr)); gap: 16px; align-items: start; }
+  .tarjeta.can { padding: 20px 22px; border-radius: 14px; }
+  .can-cab { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
+  .can-cab > div { flex: 1; min-width: 0; }
+  .can-cab h2 { margin: 0; font-size: 17px; letter-spacing: -.01em; }
+  .can-cab p { margin: 3px 0 0; font-size: 13px; color: var(--bruma); }
+  .can-cab .can-est { background: var(--suave); padding: 4px 10px; border-radius: 99px; }
+  .can-cab .can-est.ok { background: var(--ok-f); } .can-cab .can-est.mal { background: var(--cr-f); }
+  .can-fila { display: grid; grid-template-columns: 140px 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid var(--linea); font-size: 13px; }
+  .can-fila > span { color: var(--bruma); }
+  .can-fila > div { min-width: 0; overflow-wrap: anywhere; }
+  .can-fila small { display: block; margin-top: 4px; }
+  .can-fila a { color: var(--azul); text-decoration: none; }
+  .can-mal { color: var(--cr-t); }
+  .can-pend { margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--cal); color: var(--bruma); font-size: 13px; }
+  .can-acc { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+  .can-prueba { display: flex; gap: 8px; flex: 1; min-width: 260px; }
+  .can-prueba input { flex: 1; min-width: 0; }
+  @media (max-width: 760px) { .can-fila { grid-template-columns: 1fr; gap: 2px; } }
   .estado-linea { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-top: 1px solid var(--linea); font-size: 13px; }
   .estado-linea:first-of-type { border-top: 0; }
   .estado-linea .k { width: 150px; color: var(--bruma); flex: none; }
@@ -554,6 +581,7 @@
       <select id="yo" class="campo" aria-label="Técnico"></select>
       <hr>
       <a href="/" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>Abrir el portal del cliente</a>
+      <button type="button" class="salir oculto" id="ejemploMenu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><span>Datos de ejemplo</span></button>
       <button type="button" class="salir" id="salir"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l5-5-5-5M15 12H3"/></svg>Cerrar sesión</button>
     </div>
   </div>
@@ -1631,9 +1659,16 @@ function adjuntoHtml(a) {
 }
 
 // ================= Canales (buzón y WhatsApp) =================
+const ICO_CAN = {
+  correo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>',
+  whatsapp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8.5 8.5 0 0 1-12.6 7.4L3 21l1.6-5.2A8.5 8.5 0 1 1 21 12z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 1c-1-.5-1.5-1-2-2l1-1-1-2z"/></svg>',
+  meet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg>',
+  portal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg>',
+};
+
 function vistaCanales() {
   $('vista').innerHTML = `
-    <div class="cabeza"><h1>Canales</h1><span style="color:var(--muted);font-size:13px">Cómo entran y salen los mensajes de los clientes.</span></div>
+    <div class="cl-cab"><div><h1>Canales</h1><p>Por dónde entran y salen los mensajes de los clientes.</p></div></div>
     <div class="contenido" id="can"><div class="vacio">Cargando…</div></div>`;
   cargarCanales();
   const i = setInterval(() => !document.hidden && cargarCanales(), 30000);
@@ -1643,60 +1678,57 @@ async function cargarCanales(r) {
   try { r = r || await api('/api/canales'); } catch (e) { return fallo(e); }
   marcarCanales(r);
   if (!$('can')) return;
-  const c = r.correo;
-  const pill = (ok, si, no) => ok == null ? `<span class="pastilla">Sin comprobar</span>` : ok ? `<span class="pastilla ok">✓ ${si}</span>` : `<span class="pastilla critico">✕ ${no}</span>`;
-  const cuando = iso => iso ? `${hace(iso)} (${fechaHora(iso)})` : 'todavía no';
+  const c = r.correo, g = r.google;
+  // Estado de cada canal: activo, con fallo o pendiente.
+  const correoOk = c.configurado && c.lectura.ok !== false && c.envio.ok !== false;
+  const googleOk = g.activo && g.ok !== false;
+  const est = (ok, falla, si = 'Activo', no = 'Pendiente') => ok ? `<span class="can-est ok">● ${si}</span>` : falla ? `<span class="can-est mal">● Con errores</span>` : `<span class="can-est pend">● ${no}</span>`;
+  const cuando = iso => iso ? hace(iso) : 'todavía no';
+  const fila = (k, v) => `<div class="can-fila"><span>${k}</span><div>${v}</div></div>`;
+  const cab = (ico, titulo, sub, estado) => `<div class="can-cab"><span class="can-ico">${ico}</span><div><h2>${titulo}</h2><p>${sub}</p></div>${estado}</div>`;
   $('can').innerHTML = `
-    <section class="tarjeta">
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px"><h2 style="margin:0;font-size:18px">Buzón de soporte</h2>
-        ${c.configurado ? `<span class="pastilla oscura">${esc(c.usuario)}</span>` : '<span class="pastilla atencion">! Sin configurar</span>'}</div>
-      ${c.configurado ? `
-        <div class="estado-linea"><span class="k">Servidores</span><span>Lee de <b>${esc(c.imap || '—')}</b> y envía por <b>${esc(c.smtp || '—')}</b>${c.deteccion ? `<br><small style="color:var(--muted)">${esc(c.deteccion)}</small>` : ''}</span></div>
-        <div class="estado-linea"><span class="k">Correo entrante</span><span>${pill(c.lectura.ok, 'Conectado', 'Falla')} Revisado ${cuando(c.lectura.ultimo)} · cada ${c.intervalo} s · ${c.lectura.procesados} correos convertidos desde el arranque${c.carpeta !== 'INBOX' ? ` · carpeta «${esc(c.carpeta)}»` : ''}${c.lectura.error ? `<br><span style="color:var(--cr-t)">${esc(c.lectura.error)}</span>` : ''}</span></div>
-        <div class="estado-linea"><span class="k">Correo saliente</span><span>${pill(c.envio.ok, 'Funciona', 'Falla')} Último envío ${cuando(c.envio.ultimo)} · ${c.envio.enviados} enviados desde el arranque${c.envio.error ? `<br><span style="color:var(--cr-t)">${esc(c.envio.error)}</span>` : ''}</span></div>
-        <div class="estado-linea"><span class="k">Siempre despierto</span><span>${r.despierto ? '✓ El servicio se visita solo cada 10 minutos para seguir leyendo el correo.' : `No: ${r.publica ? 'desactivado con MANTENER_DESPIERTO=0.' : 'falta PUBLIC_URL en Render.'} En el plan gratuito el servicio se duerme sin visitas y deja de leer el correo.`}</span></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center">
-          <button class="boton sec" id="revisar">Revisar el buzón ahora</button>
-          <input class="campo" id="pruebaPara" type="email" placeholder="correo para la prueba" style="min-width:240px">
-          <button class="boton" id="prueba">Enviar correo de prueba</button>
-        </div>`
-      : `<p style="margin:6px 0 0;color:var(--bruma)">Con el buzón activo, cada correo a soporte se convierte en ticket y el cliente recibe el acuse, tus respuestas y la valoración por correo.</p>
-        <ol class="pasos-ayuda">
-          <li>Crea el usuario <b>holded@interactivos.net</b> en Google Workspace (tiene que ser un usuario, no un alias).</li>
-          <li>Con ese usuario, activa la verificación en dos pasos y crea una <b>contraseña de aplicación</b> en myaccount.google.com/apppasswords.</li>
-          <li>En Render, añade <code>MAIL_USER</code> = holded@interactivos.net y <code>MAIL_PASS</code> = la contraseña de aplicación. Los servidores de Gmail se detectan solos.</li>
-          <li>Comprueba que <code>PUBLIC_URL</code> está puesta: sirve para los enlaces de los correos y para que el servicio no se duerma.</li>
-        </ol>`}
-    </section>
-    <section class="tarjeta">
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px"><h2 style="margin:0;font-size:18px">Google Meet y Calendar</h2>
-        ${r.google.activo ? pill(r.google.ok, 'Conectado', 'Falla') : r.google.errorClave ? '<span class="pastilla critico">✕ Clave no válida</span>' : r.google.modo === 'oauth' ? '<span class="pastilla atencion">! Sin conectar</span>' : '<span class="pastilla atencion">! Sin configurar</span>'}</div>
-      ${r.google.activo ? `
-        <div class="estado-linea"><span class="k">Calendario</span><span>Las reuniones se crean en el calendario de <b>${esc(r.google.organizador)}</b>${r.google.modo === 'oauth' ? ` · conectado ${esc(fechaHora(r.google.conectado))}` : ` · cuenta de servicio ${esc(r.google.cuentaServicio)}`}</span></div>
-        <div class="estado-linea"><span class="k">Reservas</span><span>El cliente puede reservar huecos de ${r.google.minutosCita} min en horario laboral desde su incidencia.</span></div>
-        <div class="estado-linea"><span class="k">Duración real</span><span>${r.google.permisoMeet === false ? 'Sin permiso de Meet: vuelve a conectar y marca también el permiso de las reuniones de Meet para que la duración se apunte sola.' : r.google.meet ? '✓ Meet devuelve la duración de las reuniones: se apuntan solas.' : 'Se comprueba cuando acabe la primera reunión.'}</span></div>
-        ${r.google.error ? `<div class="estado-linea"><span class="k">Último error</span><span style="color:var(--cr-t)">${esc(r.google.error)}</span></div>` : ''}
-        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="boton sec" id="probarGoogle">Probar la conexión</button>${r.google.modo === 'oauth' ? '<a class="boton sec" style="text-decoration:none" href="/admin/google/conectar">Cambiar de cuenta</a><button class="boton sec" id="desconectarGoogle">Desconectar</button>' : ''}</div>
-        ${r.google.modo === 'cuenta' && r.google.ok === false ? `<p style="margin:14px 0 0;font-size:13px;color:var(--bruma)">La cuenta de servicio solo funciona con la delegación de dominio de Workspace. Sin ella, usa <b>Continuar con Google</b>: crea el cliente (pasos de abajo) y quita <code>GOOGLE_SA_JSON</code> de Render.</p>${pasosGoogle(r)}` : ''}`
-      : `<p style="margin:6px 0 0;color:var(--bruma)">Conecta la cuenta de Google cuyo calendario se usará para las videollamadas: se crean las reuniones de Meet solas, el cliente reserva huecos libres y la duración real se apunta sola. No hace falta ningún administrador. Sin Google, el botón de videollamada pide pegar un enlace de Meet.</p>
-        ${r.google.error ? `<div class="estado-linea" style="margin-top:8px"><span class="k">Último error</span><span style="color:var(--cr-t)">${esc(r.google.error)}</span></div>` : ''}
-        ${botonGoogle('/admin/google/conectar')}
-        ${r.google.modo === 'oauth' ? '' : `<p style="margin:10px 0 0;font-size:13px;color:var(--cr-t)">Antes hay que crear el cliente de Google y ponerlo en Render:</p>${pasosGoogle(r)}`}`}
-    </section>
-    <section class="tarjeta">
-      <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px"><h2 style="margin:0;font-size:18px">WhatsApp</h2>${r.whatsapp ? '<span class="pastilla ok">✓ Activo</span>' : '<span class="pastilla">Sin configurar</span>'}</div>
-      <p style="margin:0;color:var(--bruma);font-size:13px">${r.whatsapp ? `Los mensajes al número de soporte entran como tickets. Webhook en Meta: <code>${esc((r.publica || 'https://…') + '/whatsapp/webhook')}</code>` : 'Necesita un número dado de alta en la API de WhatsApp Cloud de Meta (WA_TOKEN, WA_PHONE_ID, WA_VERIFY_TOKEN y WA_APP_SECRET en Render).'}</p>
-      ${(r.plantillasWa || []).length ? `<details style="margin-top:12px"><summary style="cursor:pointer;font-size:13px;font-weight:600">Plantillas para escribir pasadas 24 h (${r.plantillasWa.length})</summary>
-        <p style="margin:8px 0;color:var(--bruma);font-size:13px">Meta solo deja mandar texto libre en las 24 h siguientes al último mensaje del cliente. Pasado ese plazo se usan estas plantillas: créalas en WhatsApp Manager → Plantillas con este nombre, categoría <b>Utilidad</b>, idioma <code>${esc(r.idiomaWa)}</code> y este cuerpo. Hasta que Meta las apruebe, ese aviso no llega y queda una nota en el ticket.</p>
-        ${r.plantillasWa.map(p => `<div style="border:1px solid var(--linea);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:13px"><code>${esc(p.nombre)}</code><div style="white-space:pre-wrap;color:var(--bruma);margin-top:4px">${esc(p.cuerpo)}</div></div>`).join('')}
-      </details>` : ''}
-    </section>
-    <section class="tarjeta">
-      <h2 style="margin:0 0 6px;font-size:18px">Portal del cliente</h2>
-      <p style="margin:0;color:var(--bruma);font-size:13px">${r.publica ? `Los clientes abren incidencias en <a href="${esc(r.publica)}" target="_blank" rel="noopener">${esc(r.publica)}</a>, sin login.` : 'Falta PUBLIC_URL en Render para que los enlaces de los correos apunten al portal.'}</p>
-    </section>
-    <section class="tarjeta" id="ejemploCaja"></section>`;
-  pintarEjemplo();
+    <div class="can-resumen">
+      ${[[ICO_CAN.correo, 'Correo', correoOk, c.configurado && !correoOk], [ICO_CAN.whatsapp, 'WhatsApp', r.whatsapp, false], [ICO_CAN.meet, 'Google Meet', googleOk, g.activo && g.ok === false], [ICO_CAN.portal, 'Portal del cliente', !!r.publica, false]]
+        .map(([i, n, ok, mal]) => `<div class="can-mini"><span class="can-ico">${i}</span><div><b>${n}</b>${est(ok, mal)}</div></div>`).join('')}
+    </div>
+    <div class="can-grid">
+      <section class="tarjeta can">
+        ${cab(ICO_CAN.correo, 'Buzón de soporte', 'Cada correo a soporte se convierte en ticket; el cliente recibe el acuse, las respuestas y la valoración por correo.', est(correoOk, c.configurado && !correoOk))}
+        ${c.configurado ? `
+          ${fila('Cuenta', `<b>${esc(c.usuario)}</b>`)}
+          ${fila('Correo entrante', `${c.lectura.ok === false ? '<span class="can-mal">No se puede leer</span>' : `Revisado ${cuando(c.lectura.ultimo)} · cada ${Math.round(c.intervalo / 60) || 1} min`}${c.lectura.procesados ? ` · ${c.lectura.procesados} tickets desde el arranque` : ''}${c.lectura.error ? `<small class="can-mal">${esc(c.lectura.error)}</small>` : ''}`)}
+          ${fila('Correo saliente', `${c.envio.ok === false ? '<span class="can-mal">No se puede enviar</span>' : c.envio.ultimo ? `Último envío ${cuando(c.envio.ultimo)}` : 'Listo para enviar'}${c.envio.enviados ? ` · ${c.envio.enviados} enviados` : ''}${c.envio.error ? `<small class="can-mal">${esc(c.envio.error)}</small>` : ''}`)}
+          ${fila('Disponibilidad', r.despierto ? 'Siempre activo' : 'Se duerme sin visitas (falta PUBLIC_URL)')}
+          <div class="can-acc">
+            <button class="boton sec" id="revisar">Revisar el buzón ahora</button>
+            <div class="can-prueba"><input class="campo" id="pruebaPara" type="email" placeholder="Correo para la prueba"><button class="boton" id="prueba">Enviar prueba</button></div>
+          </div>`
+        : `<p class="can-pend">Pendiente de conectar la cuenta de correo de soporte.</p>`}
+      </section>
+      <section class="tarjeta can">
+        ${cab(ICO_CAN.whatsapp, 'WhatsApp', 'Un número dedicado: todo lo que escriban entra como ticket y la conversación sigue en el mismo chat.', est(r.whatsapp, false))}
+        ${r.whatsapp
+          ? `${fila('Mensajes', 'Entran como tickets y las respuestas salen por el mismo chat')}${fila('Fuera de 24 h', 'Los avisos salen con plantillas aprobadas por Meta')}`
+          : `<p class="can-pend">Pendiente de dar de alta el número en WhatsApp Business de Meta.</p>`}
+      </section>
+      <section class="tarjeta can">
+        ${cab(ICO_CAN.meet, 'Google Meet y Calendar', 'Videollamadas con el cliente: se crean solas, el cliente reserva huecos libres y la duración se apunta sola.', g.errorClave ? '<span class="can-est mal">● Clave no válida</span>' : est(googleOk, g.activo && g.ok === false, 'Conectado'))}
+        ${g.activo ? `
+          ${fila('Calendario', `<b>${esc(g.organizador)}</b>`)}
+          ${fila('Reservas', `Huecos de ${g.minutosCita} min en horario laboral`)}
+          ${fila('Duración real', g.permisoMeet === false ? '<span class="can-mal">Falta el permiso de Meet: vuelve a conectar</span>' : g.meet ? 'Se apunta sola desde Meet' : 'Se comprobará en la primera reunión')}
+          ${g.error ? fila('Último error', `<span class="can-mal">${esc(g.error)}</span>`) : ''}
+          <div class="can-acc"><button class="boton sec" id="probarGoogle">Probar la conexión</button>${g.modo === 'oauth' ? '<a class="boton sec" style="text-decoration:none" href="/admin/google/conectar">Cambiar de cuenta</a><button class="boton sec" id="desconectarGoogle">Desconectar</button>' : ''}</div>`
+        : g.modo === 'oauth' ? `<p class="can-pend">Conecta la cuenta de Google cuyo calendario se usará.</p>${botonGoogle('/admin/google/conectar')}`
+        : `<p class="can-pend">Pendiente de conectar Google. Mientras tanto, la videollamada se hace pegando un enlace de Meet.</p>`}
+      </section>
+      <section class="tarjeta can">
+        ${cab(ICO_CAN.portal, 'Portal del cliente', 'Los clientes abren y siguen sus incidencias sin login, y valoran el servicio al cerrar.', est(!!r.publica, false, 'Publicado'))}
+        ${r.publica ? `${fila('Dirección', `<a href="${esc(r.publica)}" target="_blank" rel="noopener">${esc(r.publica.replace(/^https?:\/\//, ''))}</a>`)}
+          <div class="can-acc"><a class="boton sec" style="text-decoration:none" href="${esc(r.publica)}" target="_blank" rel="noopener">Abrir el portal ↗</a></div>`
+        : '<p class="can-pend">Pendiente de publicar la dirección del portal.</p>'}
+      </section>
+    </div>`;
   const b = $('revisar');
   if (b) b.onclick = async () => {
     b.disabled = true; b.textContent = 'Revisando…';
@@ -1721,34 +1753,26 @@ async function cargarCanales(r) {
     catch (e) { fallo(e); p.disabled = false; }
   };
 }
-// Datos de ejemplo (ejemplo.js): clientes y tickets inventados para ver el panel con números.
-// Se quitan de golpe sin tocar los reales.
+// Datos de ejemplo (ejemplo.js): fuera de Canales, en el menú de la cuenta. Quitarlos borra solo
+// los inventados y ya no vuelven solos.
 async function pintarEjemplo() {
-  const caja = $('ejemploCaja');
-  if (!caja) return;
+  const b = $('ejemploMenu');
+  if (!b) return;
   let n;
-  try { n = await api('/api/ejemplo'); } catch (e) { return fallo(e); }
+  try { n = await api('/api/ejemplo'); } catch { return; }
   const hay = n.tickets || n.clientes;
-  caja.innerHTML = `<div style="display:flex;gap:10px;align-items:center;margin-bottom:6px"><h2 style="margin:0;font-size:18px">Datos de ejemplo</h2>${hay ? `<span class="pastilla" style="background:var(--at-f);color:var(--at-t)">Puestos</span>` : '<span class="pastilla">Sin datos de ejemplo</span>'}</div>
-    <p style="margin:0 0 12px;color:var(--bruma);font-size:13px">${hay
-      ? `Hay ${n.tickets} tickets y ${n.clientes} clientes inventados (Premium e Implementación) para ver las métricas con colores. Se renuevan solos cada día con fechas de esa semana. Quitarlos borra solo esos, los reales no se tocan, y ya no vuelven hasta que los pongas otra vez.`
-      : 'Quitados. Son clientes y tickets inventados de Premium e Implementación para ver las métricas con colores y números; si los vuelves a poner, se renuevan solos cada día.'}</p>
-    <button class="boton${hay ? ' rojo' : ''}" id="ejemploBoton">${hay ? 'Quitar los datos de ejemplo' : 'Poner datos de ejemplo'}</button>`;
-  $('ejemploBoton').onclick = async e => {
-    if (hay && !confirm(`¿Quitar los ${n.tickets} tickets y ${n.clientes} clientes de ejemplo?`)) return;
-    e.target.disabled = true;
-    try { await api('/api/ejemplo', { accion: hay ? 'quitar' : 'poner' }); aviso(hay ? 'Datos de ejemplo quitados.' : 'Datos de ejemplo puestos: míralos en Métricas.'); pintarEjemplo(); }
-    catch (err) { fallo(err); e.target.disabled = false; }
+  b.classList.remove('oculto');
+  b.lastChild.textContent = hay ? `Quitar los datos de ejemplo (${n.tickets})` : 'Poner datos de ejemplo';
+  b.onclick = async () => {
+    if (hay && !confirm(`¿Quitar los ${n.tickets} tickets y ${n.clientes} clientes de ejemplo? Los reales no se tocan.`)) return;
+    try {
+      await api('/api/ejemplo', { accion: hay ? 'quitar' : 'poner' });
+      aviso(hay ? 'Datos de ejemplo quitados.' : 'Datos de ejemplo puestos.');
+      tickets = []; clientesCache = null; menuYo(false); pintarEjemplo(); ruta();
+    } catch (e) { fallo(e); }
   };
 }
 const botonGoogle = href => `<a class="boton-google" href="${href}"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Continuar con Google</span></a>`;
-// Cómo crear el cliente de Google (el mismo proyecto que el login de Google de Super Gemas).
-const pasosGoogle = r => `<ol class="pasos-ayuda">
-  <li>En console.cloud.google.com, proyecto <b>support-holded-interactivos</b>: activa <b>Google Calendar API</b> y <b>Google Meet REST API</b>.</li>
-  <li>Google Auth Platform → Clientes → <b>Crear cliente</b> → Aplicación web, con este URI de redireccionamiento autorizado:<br><code>${esc((r.publica || location.origin) + '/admin/google/vuelta')}</code></li>
-  <li>En Render: <code>GOOGLE_CLIENT_ID</code> y <code>GOOGLE_CLIENT_SECRET</code> de ese cliente, y guarda con «Save, rebuild and deploy».</li>
-  <li>Vuelve aquí (o al login) y pulsa <b>Continuar con Google</b> con la cuenta cuyo calendario quieras usar.</li>
-</ol>`;
 
 // Aviso rojo en el menú si el buzón está configurado pero falla.
 function marcarCanales(r) {
@@ -1773,6 +1797,7 @@ function marcarCanales(r) {
   document.addEventListener('keydown', e => { if (e.key === 'Escape') menuYo(false); });
   $('salir').onclick = async () => { await fetch('/api/logout', { method: 'POST' }); location.href = '/admin/login'; };
   cargarClientes().catch(() => {});
+  pintarEjemplo();
   api('/api/canales').then(marcarCanales).catch(() => {});
   // Vuelta de «Continuar con Google».
   const vueltaGoogle = new URLSearchParams(location.search).get('google');
