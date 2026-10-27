@@ -206,7 +206,8 @@
   .mk-pill.critico { background: var(--mk-cr-p); color: var(--mk-cr-t); }
   .mk-pill.nada { background: #ececee; color: var(--muted); }
   .mk-pill.resp { background: #e9eefb; color: #2a4fa8; }
-  .c-ok { color: var(--mk-ok); } .c-atencion { color: var(--mk-at); } .c-critico { color: var(--mk-cr); } .c-nada { color: var(--muted); }
+  .c-ok { color: var(--mk-ok); } .c-atencion { color: var(--mk-at); } .c-critico { color: var(--mk-cr); } .c-nada { color: var(--muted); } .c-azul { color: var(--mk-azul); }
+  .mk-pill.info { background: var(--mk-azul-f); color: #2a4fa8; }
   .mk-casos { margin-top: 20px; }
   .mk-casos .tit { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--muted); margin-bottom: 4px; }
   .mk-casos th { font-size: 11px; }
@@ -214,7 +215,6 @@
   .mk-tipos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 20px; }
   .mk-grupo + .mk-grupo { border-top: 1px solid var(--linea); margin-top: 16px; padding-top: 16px; }
   .mk-grupo .nom { font-weight: 700; font-size: 14px; display: flex; gap: 8px; align-items: center; }
-  .mk-precio { font-size: 11px; font-weight: 700; color: var(--mk-azul); background: var(--mk-azul-f); padding: 2px 8px; border-radius: 99px; }
   .mk-aros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 6px; }
   /* Aros del PDF: pista en el tono suave del estado y arco del color, de arriba en el sentido del reloj. */
   .mk-aro { text-align: center; min-width: 0; --c: #c9c8c3; --p: #eeeeec; --t: var(--muted); }
@@ -807,6 +807,8 @@ const ICO = {
   pulso: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></svg>',
   capas: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg>',
   boya: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="m5.6 5.6 3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6"/></svg>',
+  historial: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2"/></svg>',
+  personas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.6a3.5 3.5 0 0 1 0 6.8M21.5 20a6.5 6.5 0 0 0-4-6"/></svg>',
   alerta: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/></svg>',
   reloj: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
   estrella: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg>',
@@ -870,14 +872,18 @@ async function cargarMetricas() {
       <span><i class="mk-dot" style="background:var(--mk-at)"></i><b>Atención</b> — hay riesgo, requiere seguimiento</span>
       <span><i class="mk-dot" style="background:var(--mk-cr)"></i><b>Crítico</b> — servicio mal hecho o SLA superado</span></div>
     ${r.servicios.map(bloqueServicio).join('')}
+    ${r.antiguos.vacio ? '' : bloqueAntiguos(r.antiguos)}
     ${bloqueTipos(r)}`;
   $('met').querySelectorAll('tr[data-id]').forEach(tr => tr.onclick = () => { location.hash = `#/bandeja/${tr.dataset.id}`; });
 }
 
 // Tarjeta de número grande, como las del mockup: icono y semáforo arriba, valor y etiqueta.
-function tile(icono, nivel, valor, sufijo, etiqueta) {
+// Con «aviso», en vez del semáforo lleva esa palabra en azul (cifras sin umbral, como las del periodo).
+function tile(icono, nivel, valor, sufijo, etiqueta, aviso) {
   const n = nivel || 'nada';
-  return `<div class="mk-tile"><div class="top"><span class="c-${n}">${icono}</span><span class="mk-pill ${n}">${nivel ? PALABRA[nivel] : 'Sin datos'}</span></div>
+  const arriba = aviso ? `<span class="c-azul">${icono}</span><span class="mk-pill info">${aviso}</span>`
+    : `<span class="c-${n}">${icono}</span><span class="mk-pill ${n}">${nivel ? PALABRA[nivel] : 'Sin datos'}</span>`;
+  return `<div class="mk-tile"><div class="top">${arriba}</div>
     <div class="v">${valor}${sufijo ? `<small>${sufijo}</small>` : ''}</div><div class="l">${etiqueta}</div></div>`;
 }
 
@@ -894,8 +900,6 @@ function bloqueServicio(b) {
     : estado === 'ok' ? '<span class="mk-estado ok">✓ Todo OK</span>'
     : estado === 'atencion' ? '<span class="mk-estado atencion">! Atención</span>' : '<span class="mk-estado critico">⊗ Crítico</span>';
   const niveles = b.niveles || {};
-  const conCanal = b.nombre === 'Premium';
-  const casos = b.casos || [];
   return `<section class="mk-sec">
     <div class="mk-sec-cab"><span class="mk-ico">${ICONO_SERVICIO[b.nombre] || ICO.capas}</span><div><h2>${esc(TITULO[b.nombre] || b.nombre)}</h2><p>${esc(DESC[b.nombre] || '')}</p></div>${chip}</div>
     <div class="mk-tiles">
@@ -903,7 +907,26 @@ function bloqueServicio(b) {
       ${tile(ICO.reloj, niveles.excedido, exceso(b.excedidoMin || 0), '', 'Tiempo excedido sobre la 1h de SLA')}
       ${tile(ICO.estrella, niveles.valoracion, b.valoracion == null ? '—' : num(b.valoracion, 1), b.valoracion == null ? '' : '/5', `Valoración media (NPS / Google)${b.respuestasNps ? ` · ${b.respuestasNps} resp.` : ''}`)}
     </div>
-    <div class="mk-casos">
+    ${tablaCasos(b, b.nombre === 'Premium')}
+  </section>`;
+}
+
+// Clientes antiguos (Kit Digital), debajo de los dos bloques del mockup y con su mismo aspecto.
+function bloqueAntiguos(b) {
+  return `<section class="mk-sec">
+    <div class="mk-sec-cab"><span class="mk-ico">${ICO.historial}</span><div><h2>Cliente antiguo (Kit Digital)</h2><p>Clientes del Kit Digital y antiguos clientes, con el histórico del antiguo formulario. El formulario no medía la primera respuesta ni la valoración.</p></div><span class="mk-estado nada">Histórico</span></div>
+    <div class="mk-tiles">
+      ${tile(ICO.alerta, null, num(b.tickets || 0), '', 'Incidencias en el periodo', 'Periodo')}
+      ${tile(ICO.reloj, null, num(b.horas || 0, 1), ' h', 'Horas de soporte', 'Periodo')}
+      ${tile(ICO.personas, null, num(b.clientes || 0), '', 'Clientes atendidos', 'Periodo')}
+    </div>
+    ${tablaCasos(b, false)}
+  </section>`;
+}
+
+function tablaCasos(b, conCanal) {
+  const casos = b.casos || [];
+  return `<div class="mk-casos">
       <div class="tit">CASOS ABIERTOS AHORA</div>
       ${casos.length ? `<div class="tabla"><table><thead><tr><th>Cliente</th><th>${conCanal ? 'Canal' : 'Origen'}</th><th>Entrada</th><th>Tiempo</th><th>Estado</th></tr></thead><tbody>
         ${casos.map(c => {
@@ -911,8 +934,7 @@ function bloqueServicio(b) {
           return `<tr class="clic" data-id="${c.id}"><td><b>${esc(c.cliente)}</b></td><td>${esc(conCanal ? c.canal : c.origen)}</td><td>${horaEntrada(c.entrada)}</td><td>${c.esperaMin == null ? '—' : dur(c.esperaMin)}</td><td><span class="mk-pill ${cls}">${txt}</span></td></tr>`;
         }).join('')}</tbody></table></div>`
       : `<div style="font-size:13px;color:var(--muted);padding:8px 0">${b.vacio ? 'Aún no hay clientes con este servicio. Asígnalo en <a href="#/clientes">Clientes</a> o desde el propio ticket.' : 'Ningún caso abierto ahora.'}</div>`}
-    </div>
-  </section>`;
+    </div>`;
 }
 
 // Aro de la página 2 del mockup: pista suave y arco del color del estado que arranca arriba,
@@ -934,7 +956,7 @@ function bloqueTipos(r) {
     const impl = s.servicio === 'Implementación';
     return `<section class="mk-sec">
       <div class="mk-sec-cab" style="margin-bottom:6px"><span class="mk-ico">${impl ? ICO.capas : ICO.boya}</span><div><h2>${esc(TITULO[s.servicio])}</h2>${s.sinOrigen ? `<p>${s.sinOrigen} cliente${s.sinOrigen > 1 ? 's' : ''} sin origen asignado no entra${s.sinOrigen > 1 ? 'n' : ''} aquí.</p>` : ''}</div></div>
-      ${s.grupos.map(g => `<div class="mk-grupo"><div class="nom">${esc(g.nombre)}${g.precio ? `<span class="mk-precio">${esc(g.precio)}</span>` : ''}</div>
+      ${s.grupos.map(g => `<div class="mk-grupo"><div class="nom">${esc(g.nombre)}</div>
         <div class="mk-aros">
           ${aro(num(g.abiertas || 0), impl ? 10 : 20, impl ? 'Casos<br>activos' : 'Incidencias<br>abiertas', g.vacio ? null : g.niveles.abiertas, g.abiertas)}
           ${aro(num(g.fueraSla || 0), impl ? 5 : 10, 'Incidencias<br>fuera de SLA', g.vacio ? null : g.niveles.fueraSla, g.fueraSla)}

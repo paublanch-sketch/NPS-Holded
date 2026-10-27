@@ -99,11 +99,17 @@ function resumen(todos, { desde, hasta, tecnico }, ahora = new Date()) {
     actualizado: ahora.toISOString(),
     periodo: { desde, hasta },
     servicios: ['Implementación', 'Premium'].map(s => bloque(filtrados.filter(t => t.servicio === s), s)),
+    // Los clientes antiguos (Kit Digital) no están en el mockup, y el antiguo formulario no medía
+    // ni la primera respuesta ni la valoración: de ellos se enseña lo que pidieron en el periodo.
+    antiguos: (() => {
+      const l = filtrados.filter(t => t.servicio === 'Kit Digital'), periodo = l.filter(enPeriodo);
+      return { ...bloque(l, 'Kit Digital'), tickets: periodo.length, horas: horasDe(l), clientes: new Set(periodo.map(t => t.cliente)).size };
+    })(),
     // Los grupos de la página 2 del mockup. Los clientes sin origen no entran en ninguno.
     porTipo: [
       { servicio: 'Premium', grupos: [
         { nombre: 'Gestoría / Asesoría', origenes: ['Gestoría / asesoría'] },
-        { nombre: 'Cliente directo', precio: '499 €', origenes: ['Directo', 'Antiguo cliente AKIRA', 'Referido por gestoría'] },
+        { nombre: 'Cliente directo', origenes: ['Directo', 'Antiguo cliente AKIRA', 'Referido por gestoría'] },
       ] },
       { servicio: 'Implementación', grupos: [
         { nombre: 'Referenciado por gestoría', origenes: ['Referido por gestoría', 'Gestoría / asesoría'] },
@@ -114,7 +120,7 @@ function resumen(todos, { desde, hasta, tecnico }, ahora = new Date()) {
       return {
         servicio: s.servicio,
         sinOrigen: new Set(del.filter(t => t.tipo_cliente === 'Sin clasificar').map(t => t.cliente)).size,
-        grupos: s.grupos.map(g => ({ ...bloque(del.filter(t => g.origenes.includes(t.tipo_cliente)), g.nombre), precio: g.precio || null })),
+        grupos: s.grupos.map(g => bloque(del.filter(t => g.origenes.includes(t.tipo_cliente)), g.nombre)),
       };
     }),
     // Para el CSV: horas por cliente en el periodo, de todos los servicios.
