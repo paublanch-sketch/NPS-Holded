@@ -67,7 +67,7 @@ async function rutasGoogle(req, res, ruta, url, yo) {
     if (!google.modoOAuth()) return entrar ? alLogin('sin-configurar') : alPanel('sin-configurar');
     const estado = crypto.randomBytes(16).toString('hex');
     res.setHeader('Set-Cookie', cookie(`${estado}.${entrar ? 'e' : 'c'}`));
-    return redirigir(res, google.urlConectar(vuelta, estado, { soloEntrar: entrar && google.activo() }));
+    return redirigir(res, google.urlConectar(vuelta, estado, { soloEntrar: entrar && google.activo(), hd: entrar ? auth.dominioGoogle() : '' }));
   }
   res.setHeader('Set-Cookie', cookie(''));
   const [, esperado, modo] = (req.headers.cookie || '').match(/(?:^|;\s*)g_estado=([a-f0-9]{32})\.([ec])/) || [];
@@ -86,7 +86,7 @@ async function rutasGoogle(req, res, ruta, url, yo) {
   let r;
   try { r = await google.intercambiar(p('code'), vuelta); }
   catch (e) { return alLogin(e.message); }
-  if (!auth.permitidoGoogle(r.email)) return alLogin(`La cuenta ${r.email} no tiene acceso al panel`);
+  if (!auth.permitidoGoogle(r.email, r.hd)) return alLogin(`Con Google solo pueden entrar las cuentas de ${auth.textoGoogle()} (${r.email} no lo es). Si no tienes una, entra con el usuario y la contraseña.`);
   auth.abrirSesion(req, res);
   if (!google.conPermisoCalendario(r.d)) return alPanel('entrado', '');
   try { await google.guardarConexion(r.email, r.d); await google.probar(); return alPanel('entrado-calendario', ''); }

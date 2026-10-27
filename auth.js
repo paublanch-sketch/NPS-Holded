@@ -46,9 +46,14 @@ function abrirSesion(req, res) {
   ponerCookie(req, res, `${datos}.${firmar(datos)}`, DURACION_DIAS * 86400);
 }
 
-// Cuentas de Google que pueden entrar: correos exactos o dominios enteros.
+// Cuentas de Google que pueden entrar: correos exactos o dominios enteros. Para un dominio,
+// la cuenta tiene que ser de su Google Workspace (Google lo dice en «hd»): una cuenta personal
+// de Google creada con un correo @interactivos.net no vale.
 const GOOGLE = (process.env.ADMIN_GOOGLE || 'interactivos.net').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-const permitidoGoogle = email => GOOGLE.some(p => p.includes('@') ? email === p : email.endsWith('@' + p));
+const permitidoGoogle = (email, hd = '') => GOOGLE.some(p => p.includes('@') ? email === p : email.endsWith('@' + p) && hd.toLowerCase() === p);
+// Si solo se admite un dominio, se le pide a Google que enseñe solo cuentas de ese dominio.
+const dominioGoogle = () => { const d = GOOGLE.filter(p => !p.includes('@')); return d.length === 1 && d.length === GOOGLE.length ? d[0] : ''; };
+const textoGoogle = () => GOOGLE.map(p => p.includes('@') ? p : '@' + p).join(', ');
 
 // El panel no distingue personas: devuelve el admin si la sesión es buena.
 async function usuarioDe(req) {
@@ -84,4 +89,4 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
   return false;
 }
 
-module.exports = { usuarioDe, rutas, abrirSesion, permitidoGoogle, TECNICOS };
+module.exports = { usuarioDe, rutas, abrirSesion, permitidoGoogle, dominioGoogle, textoGoogle, TECNICOS };

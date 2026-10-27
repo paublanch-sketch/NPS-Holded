@@ -119,8 +119,8 @@ async function tokenConexion() {
 
 // Dirección de Google donde la persona elige su cuenta. Para entrar al panel basta la identidad;
 // para el calendario se piden además los permisos de Calendar y Meet, con permiso permanente.
-function urlConectar(vuelta, estadoOAuth, { soloEntrar = false } = {}) {
-  const p = { client_id: clienteId(), redirect_uri: vuelta, response_type: 'code', state: estadoOAuth };
+function urlConectar(vuelta, estadoOAuth, { soloEntrar = false, hd = '' } = {}) {
+  const p = { client_id: clienteId(), redirect_uri: vuelta, response_type: 'code', state: estadoOAuth, ...(hd ? { hd } : {}) };
   Object.assign(p, soloEntrar
     ? { scope: 'openid email', prompt: 'select_account' }
     : { scope: `openid email ${ALCANCES}`, access_type: 'offline', prompt: 'consent', include_granted_scopes: 'true' });
@@ -137,7 +137,7 @@ async function intercambiar(codigo, vuelta) {
   let id = {};
   try { id = JSON.parse(Buffer.from(d.id_token.split('.')[1], 'base64url')); } catch {}
   if (!id.email || id.email_verified === false) throw new Error('Google no ha dicho qué cuenta se ha conectado');
-  return { email: id.email.toLowerCase(), d };
+  return { email: id.email.toLowerCase(), hd: id.hd || '', d };
 }
 
 const conPermisoCalendario = d => (d.scope || '').split(' ').includes('https://www.googleapis.com/auth/calendar.events');
