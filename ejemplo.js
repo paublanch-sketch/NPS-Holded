@@ -56,8 +56,9 @@ const TECNICOS = ['Blanch', 'David', 'Pablo', 'Pako'];
 const GRUPOS = [
   { origenes: ['Gestoría / asesoría'], servicio: 'Premium', abiertos: 6, abiertosTarde: 0, sinResponder: 0, cerrados: 26, cerradosTarde: 1, notas: [10, 10, 9, 10, 10, 9, 10, 8, 10, 10] },
   { origenes: ['Directo', 'Antiguo cliente AKIRA'], servicio: 'Premium', abiertos: 4, abiertosTarde: 0, sinResponder: 0, cerrados: 15, cerradosTarde: 0, notas: [9, 8, 10, 7, 9, 8, 9, 10] },
-  { origenes: ['Referido por gestoría'], servicio: 'Implementación', abiertos: 8, abiertosTarde: 2, sinResponder: 2, cerrados: 18, cerradosTarde: 3, notas: [8, 7, 9, 6, 8, 9, 7, 8] },
-  { origenes: ['Directo'], servicio: 'Implementación', abiertos: 6, abiertosTarde: 1, sinResponder: 0, cerrados: 13, cerradosTarde: 2, notas: [9, 10, 8, 9, 10, 9, 8] },
+  // El único indicador en rojo: los casos fuera de SLA de los referidos por gestoría.
+  { origenes: ['Referido por gestoría'], servicio: 'Implementación', abiertos: 5, abiertosTarde: 1, sinResponder: 0, cerrados: 18, cerradosTarde: 1, notas: [9, 8, 9, 7, 9, 8, 9, 8] },
+  { origenes: ['Directo'], servicio: 'Implementación', abiertos: 4, abiertosTarde: 0, sinResponder: 0, cerrados: 13, cerradosTarde: 1, notas: [9, 10, 8, 9, 10, 9, 8] },
 ];
 
 // Aleatorio con semilla: los mismos datos cada vez que se generan.

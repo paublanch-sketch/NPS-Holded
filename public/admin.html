@@ -428,6 +428,102 @@
   @media (max-width: 760px) {
     .filtros input#cq { min-width: 0 !important; width: 100%; }
   }
+  /* ===== Bandeja con el diseño nuevo ===== */
+  .bj .lista { background: var(--blanco); }
+  .bj .lista .top { padding: 18px 16px 12px; border-bottom: 0; }
+  .bj .lista .top .fila { gap: 10px; }
+  .bj .lista .top h1 { font-size: 22px; letter-spacing: -.02em; }
+  .bj-logo { width: 36px; height: 36px; border-radius: 10px; background: var(--azul); color: #fff; display: grid; place-items: center; flex: none; box-shadow: 0 6px 14px rgba(37, 99, 235, .3); }
+  .bj-logo svg { width: 20px; height: 20px; }
+  .bj-nuevo { width: 100%; margin-top: 14px; padding: 11px 16px; font-size: 14px; }
+  .bj-buscar { position: relative; margin-top: 12px; }
+  .bj-buscar svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--muted); pointer-events: none; }
+  .bj-buscar .buscar { margin-top: 0; padding-left: 36px; }
+  .bj .pestanas { gap: 6px; margin-top: 12px; flex-wrap: wrap; overflow: visible; }
+  .bj .pestanas button { background: var(--suave); border-radius: 99px; padding: 6px 12px; font-weight: 600; font-size: 12.5px; }
+  .bj .pestanas button b { opacity: 1; margin-left: 6px; font-weight: 700; color: var(--muted); }
+  .bj .pestanas button.on { background: var(--azul); color: #fff; }
+  .bj .pestanas button.on b { color: #fff; opacity: .85; }
+  .bj .items { border-top: 1px solid var(--linea); }
+  .bj .item { padding: 14px 16px; border-left: 3px solid transparent; }
+  .bj .item:hover { background: #f8faff; }
+  .bj .item.sel { background: #eef3fe; border-left-color: var(--azul); }
+  .bj .item .l1 { align-items: center; }
+  .bj .item .l1 b { font-size: 14px; }
+  .bj .item .l2 { margin-top: 4px; }
+  .bj .item .l3 { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-top: 6px; }
+  .bj-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--azul); }
+  .bj-dot.espera { background: var(--at); } .bj-dot.cerrado { background: #b7bdc8; } .bj-dot.nuevo { background: var(--azul); } .bj-dot.urg { background: var(--cr); }
+  .bj-est { font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 99px; white-space: nowrap; flex: none; }
+  .bj-est.curso, .bj-est.nuevo { background: var(--azul-f); color: var(--azul-h); }
+  .bj-est.espera { background: var(--at-f); color: var(--at-t); }
+  .bj-est.cerrado { background: var(--suave); color: var(--bruma); }
+  .bj-est.urg { background: var(--cr-f); color: var(--cr-t); }
+  .bj-est.grande { font-size: 13px; padding: 4px 12px; }
+  .bj-est.grande.curso, .bj-est.grande.nuevo { background: var(--azul); color: #fff; }
+  .bj-sla { display: flex; gap: 6px; align-items: center; font-size: 12px; font-weight: 600; margin-top: 6px; }
+  .bj-sla svg { width: 14px; height: 14px; flex: none; }
+  .bj-sla.atencion { color: var(--at-t); } .bj-sla.critico { color: var(--cr-t); }
+  .bj .detalle { background: var(--cal); }
+  .bj .conv .cab { padding: 18px 24px 14px; }
+  .bj-cab1 { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .bj .conv .cab h2 { font-size: 21px; }
+  .bj-meta { display: flex; gap: 8px 20px; flex-wrap: wrap; margin-top: 10px; font-size: 13px; color: var(--bruma); }
+  .bj-meta span { display: inline-flex; gap: 6px; align-items: center; min-width: 0; overflow-wrap: anywhere; }
+  .bj-meta svg { width: 15px; height: 15px; color: var(--muted); flex: none; }
+  .bj-mas { position: relative; }
+  .bj-mas > summary { list-style: none; cursor: pointer; }
+  .bj-mas > summary::-webkit-details-marker { display: none; }
+  .bj-mas-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; background: var(--blanco); border: 1px solid var(--linea); border-radius: 10px; box-shadow: 0 10px 30px rgba(16, 24, 40, .12); padding: 6px; min-width: 220px; display: flex; flex-direction: column; }
+  .bj-mas-menu a, .bj-mas-menu button { text-align: left; border: 0; background: none; padding: 8px 10px; border-radius: 7px; font: inherit; font-size: 13px; color: var(--pizarra); text-decoration: none; cursor: pointer; }
+  .bj-mas-menu a:hover, .bj-mas-menu button:hover { background: var(--suave); }
+  .bj .hilo { padding: 20px 24px; gap: 14px; }
+  .bj-resumen { display: flex; gap: 12px; align-items: flex-start; background: var(--blanco); border: 1px solid var(--linea); border-radius: 12px; padding: 14px 16px; margin-bottom: 6px; }
+  .bj-resumen > svg { width: 20px; height: 20px; color: var(--bruma); flex: none; margin-top: 1px; }
+  .bj-resumen b { font-size: 14px; display: block; }
+  .bj-resumen small { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .bj-msg { display: flex; gap: 10px; align-items: flex-start; max-width: 78%; }
+  .bj-msg .av { width: 36px; height: 36px; font-size: 12px; }
+  .bj-msg .cuerpo { min-width: 0; display: flex; flex-direction: column; }
+  .bj-msg .quien { font-size: 12px; color: var(--muted); margin: 2px 2px 5px; }
+  .bj-msg .quien b { color: var(--pizarra); font-weight: 600; }
+  .bj-msg .burbuja { padding: 11px 14px; border-radius: 14px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.5; }
+  .bj-msg.cli { align-self: flex-start; }
+  .bj-msg.cli .burbuja { background: var(--blanco); border: 1px solid var(--linea); border-top-left-radius: 4px; }
+  .bj-msg.eq { align-self: flex-end; }
+  .bj-msg.eq .quien { text-align: right; }
+  .bj-msg.eq .burbuja { background: var(--marino); color: #fff; border-top-right-radius: 4px; }
+  .bj-msg.eq .burbuja a { color: #bcd0ff; }
+  .bj-msg.nota .burbuja { background: var(--nota); color: var(--pizarra); border: 1px dashed var(--nota-l); }
+  .bj-sis { align-self: center; color: var(--muted); font-size: 12px; text-align: center; padding: 2px 8px; max-width: 80%; }
+  .bj-redactar { margin: 0 24px 18px; border: 1px solid var(--linea); border-radius: 14px; padding: 0; background: var(--blanco); box-shadow: var(--sombra-b); }
+  .bj-redactar .modos { padding: 8px 12px 0; margin: 0; border-bottom: 1px solid var(--linea); gap: 8px; }
+  .bj-redactar .modos button { display: inline-flex; gap: 6px; align-items: center; border-radius: 0; padding: 8px 4px 10px; background: none !important; border-bottom: 2px solid transparent; }
+  .bj-redactar .modos button svg { width: 16px; height: 16px; }
+  .bj-redactar .modos button.on { color: var(--azul); border-bottom-color: var(--azul); }
+  .bj-redactar .modos button.on.nota { color: var(--at-t); border-bottom-color: var(--at); }
+  .bj-redactar .modos select { margin-bottom: 6px; }
+  .bj-redactar textarea { width: 100%; border: 0; box-shadow: none !important; min-height: 70px; padding: 12px 14px; font-size: 14px; resize: none; }
+  .bj-redactar.es-nota textarea { background: var(--nota); }
+  .bj-redactar .pie-red { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px 12px; gap: 10px; }
+  .bj-redactar .pie-red .ayuda { margin: 0; }
+  .bj-redactar .pie-red .boton svg { width: 16px; height: 16px; }
+  .bj .lado { background: var(--cal); gap: 14px; }
+  .bj .lado .tarjeta { padding: 16px 18px; border-radius: 14px; }
+  .bj .lado h3 { display: flex; gap: 8px; align-items: center; font-size: 15px; margin: 0 0 12px; text-transform: none; letter-spacing: -.01em; color: var(--pizarra); }
+  .bj .lado h3 svg { width: 18px; height: 18px; color: var(--pizarra); }
+  .bj .reloj { font-size: 38px; }
+  .bj .lado .boton svg { width: 16px; height: 16px; }
+  .bj .botones.tiempo .boton.verde { padding: 11px; font-size: 15px; }
+  .bj-otro { border: 0; background: none; color: var(--bruma); font: inherit; font-size: 12px; margin-top: 8px; cursor: pointer; padding: 0; text-decoration: underline; }
+  .bj-esperar { background: var(--azul-f); color: var(--azul-h); border-color: var(--azul-f); box-shadow: none; }
+  .bj-esperar:hover { background: #e0e9fd; border-color: #e0e9fd; }
+  .bj-esperar:disabled { opacity: 1; cursor: default; }
+  .bj .prop { grid-template-columns: 112px 1fr; gap: 9px 10px; }
+  .bj .prop a { color: var(--azul); text-decoration: none; }
+  .bj-sla-txt { display: inline-flex; gap: 5px; align-items: center; font-weight: 600; }
+  .bj-sla-txt svg { width: 14px; height: 14px; }
+  .bj-sla-txt.atencion { color: var(--at-t); } .bj-sla-txt.critico { color: var(--cr-t); }
   .volver-movil { display: none; font-size: 13px; color: var(--bruma); text-decoration: none; margin-bottom: 6px; }
   /* Visor de imágenes del chat: se cierra con la cruz, con Esc o pulsando fuera */
   .visor { position: fixed; inset: 0; z-index: 1000; background: rgba(15, 18, 25, .86); display: grid; place-items: center; padding: 60px 16px 24px; }
@@ -442,7 +538,7 @@
 <nav class="nav">
   <div class="marca"><img src="/img/logo-interactivos-holded-claro.png" alt="Interactivos · Holded" width="701" height="71"></div>
   <div class="enlaces">
-    <a class="ir" href="#/bandeja" data-v="bandeja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h5l2 3h4l2-3h5"/><path d="M5 5h14l2 8v6H3v-6z"/></svg>Bandeja<span class="cuenta oculto" id="cuentaBandeja"></span></a>
+    <a class="ir" href="#/bandeja" data-v="bandeja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>Bandeja<span class="cuenta oculto" id="cuentaBandeja"></span></a>
     <a class="ir" href="#/metricas" data-v="metricas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20V12M9.7 20V7M14.3 20v-9M19 20V4"/></svg>Métricas</a>
     <a class="ir" href="#/clientes" data-v="clientes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.6 2.6 3 5.2"/></svg>Clientes</a>
     <a class="ir" href="#/canales" data-v="canales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg>Canales<span class="cuenta oculto" id="alertaCanales">!</span></a>
@@ -557,6 +653,7 @@ addEventListener('hashchange', ruta);
 // ================= Bandeja =================
 const PESTANAS = [
   ['abiertos', 'Abiertos', t => t.estado !== 'Cerrado'],
+  ['vencen', 'Vencen', t => t.estado !== 'Cerrado' && !t.primera_respuesta && t.origen !== 'Sheet'],
   ['sin', 'Sin asignar', t => t.estado !== 'Cerrado' && !t.tecnico],
   ['mios', 'Míos', t => t.estado !== 'Cerrado' && t.tecnico && t.tecnico === yo()],
   ['espera', 'Espera cliente', t => t.estado === 'Pendiente cliente'],
@@ -592,15 +689,48 @@ function ordenar(l) {
   return l.sort((a, b) => peso(a) - peso(b) || a.entrada.localeCompare(b.entrada));
 }
 
+// Iconos de la bandeja (trazo, como el resto del panel).
+const ICO_BJ = {
+  sobre: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>',
+  buscar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  aviso: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4M12 17h.01"/></svg>',
+  persona: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.5 3.6-5.5 7-5.5s6.2 2 7 5.5"/></svg>',
+  canal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8.5 8.5 0 0 1-12.6 7.4L3 21l1.6-5.2A8.5 8.5 0 1 1 21 12z"/></svg>',
+  mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg>',
+  tel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>',
+  reloj: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  acciones: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5 1.4 0 2.6.4 3.6 1M18 13v6M15 16h6"/></svg>',
+  detalles: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+  video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg>',
+  espera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.5 3.6-5.5 7-5.5s6.2 2 7 5.5"/></svg>',
+  cerrar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg>',
+  pausa: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6.5" y="5" width="4" height="14" rx="1"/><rect x="13.5" y="5" width="4" height="14" rx="1"/></svg>',
+  enviar: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z"/></svg>',
+  responder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.5 3.6-5.5 7-5.5s6.2 2 7 5.5"/></svg>',
+  nota: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>',
+};
+
+// Estado del ticket para la lista y la cabecera: texto y color.
+const ESTADO_BJ = t => t.estado === 'Cerrado' ? ['cerrado', 'Cerrado'] : t.estado === 'Pendiente cliente' ? ['espera', 'En espera'] : t.estado === 'Nuevo' ? ['nuevo', 'Nuevo'] : ['curso', 'En curso'];
+// SLA de la primera respuesta (1 h laborable), solo mientras nadie ha respondido.
+function slaBj(t) {
+  if (t.estado === 'Cerrado' || t.primera_respuesta || t.origen === 'Sheet') return null;
+  const m = laborables(t.entrada);
+  return m > 60 ? ['critico', `Fuera de SLA · hace ${dur(m - 60)}`] : ['atencion', `SLA en riesgo · vence en ${dur(60 - m)}`];
+}
+
 function vistaBandeja(idSel) {
   selActual = Number(idSel) || null;
   const sel = selActual;
   $('vista').innerHTML = `
-    <div class="bandeja ${sel ? 'con-sel' : ''}">
+    <div class="bandeja bj ${sel ? 'con-sel' : ''}">
       <section class="lista">
         <div class="top">
-          <div class="fila"><h1>Bandeja</h1><button class="boton peq" id="nuevo">+ Nuevo ticket</button></div>
-          <input class="campo buscar" id="buscar" placeholder="Buscar cliente, correo o texto…" value="${esc(busca)}">
+          <div class="fila"><span class="bj-logo">${ICO_BJ.sobre}</span><h1>Bandeja</h1></div>
+          <button class="boton bj-nuevo" id="nuevo">+ Nuevo ticket</button>
+          <div class="bj-buscar">${ICO_BJ.buscar}<input class="campo buscar" id="buscar" placeholder="Buscar cliente, ticket o contenido…" value="${esc(busca)}"></div>
           <div class="pestanas" id="pestanas"></div>
         </div>
         <div class="items" id="items"></div>
@@ -639,17 +769,18 @@ function pintarLista(sel) {
   $('cuentaBandeja').textContent = abiertos.length;
   $('cuentaBandeja').classList.toggle('oculto', !abiertos.length);
   if (!$('items')) return;
-  $('pestanas').innerHTML = PESTANAS.map(([k, n, f]) => `<button data-p="${k}" class="${k === pestana ? 'on' : ''}">${n}${k === 'cerrados' ? '' : `<b>${tickets.filter(f).length}</b>`}</button>`).join('');
+  $('pestanas').innerHTML = PESTANAS.map(([k, n, f]) => `<button data-p="${k}" class="${k === pestana ? 'on' : ''}">${n}<b>${num(tickets.filter(f).length)}</b></button>`).join('');
   const filtro = PESTANAS.find(p => p[0] === pestana)?.[2] || PESTANAS[0][2];
   const q = busca.trim().toLowerCase();
-  const l = ordenar(tickets.filter(t => filtro(t) && (!q || `${t.id} ${t.cliente} ${t.contacto} ${t.email} ${t.descripcion}`.toLowerCase().includes(q))));
+  const l = ordenar(tickets.filter(t => filtro(t) && (!q || `${t.id} ${t.cliente} ${t.contacto} ${t.email} ${t.descripcion} ${t.mensajes.map(m => m.texto).join(' ')}`.toLowerCase().includes(q))));
   const vista = pestana === 'cerrados' ? l.slice(0, 150) : l;
   $('items').innerHTML = vista.map(t => {
-    const [n, txt] = slaDe(t);
+    const [ec, et] = ESTADO_BJ(t), sla = slaBj(t);
     const ultimoCliente = [...t.mensajes].reverse().find(m => m.de === 'cliente')?.texto || t.descripcion;
     return `<a class="item ${t.id === sel ? 'sel' : ''}" href="#/bandeja/${t.id}">
-      <div class="l1">${t.urgente && t.estado !== 'Cerrado' ? '<span class="punto" title="Urgente"></span>' : ''}<b>#${t.id} ${esc(t.cliente)}</b><time>${hace(t.estado === 'Cerrado' ? t.cierre || t.entrada : t.entrada)}</time></div>
-      <div class="l2"><span class="pastilla ${n}">${esc(txt)}</span>${esc(t.canal)} · ${esc(t.tipo_incidencia)}${t.tecnico ? ' · ' + esc(t.tecnico) : ''}${t.activa ? ' · <b style="color:var(--ok-t)">⏱ en marcha</b>' : ''}</div>
+      <div class="l1"><span class="bj-dot ${t.urgente && t.estado !== 'Cerrado' ? 'urg' : ec}" title="${t.urgente && t.estado !== 'Cerrado' ? 'Urgente' : esc(et)}"></span><b>#${t.id} · ${esc(t.cliente)}</b><span class="bj-est ${ec}">${et}</span><time>${hace(t.estado === 'Cerrado' ? t.cierre || t.entrada : t.entrada)}</time></div>
+      <div class="l2">Cliente: ${esc(t.contacto || t.cliente)} · ${esc(t.canal)} · ${esc(t.tipo_incidencia)}${t.tecnico ? ' · ' + esc(t.tecnico) : ''}${t.activa ? ' · <b style="color:var(--ok-t)">⏱ en marcha</b>' : ''}</div>
+      ${sla ? `<div class="bj-sla ${sla[0]}">${ICO_BJ.aviso}${esc(sla[1])}</div>` : ''}
       <div class="l3">${esc(ultimoCliente)}</div></a>`;
   }).join('') + (l.length > vista.length ? `<div class="vacio">Se muestran los 150 más recientes. Usa el buscador para el resto.</div>` : '')
     || `<div class="vacio">${q ? 'Nada coincide con la búsqueda.' : pestana === 'sin' ? 'Todo asignado. 👌' : 'No hay tickets aquí.'}</div>`;
@@ -670,70 +801,104 @@ function pintarDetalle(t) {
   if (!t) { det.innerHTML = '<div class="vacio" style="grid-column:1/-1">Este ticket no existe.</div>'; return; }
   const tel = (t.telefono || '').replace(/[^\d+]/g, '');
   const wa = tel.replace(/^\+/, '').replace(/^(?=[6-9]\d{8}$)/, '34');
-  const [n, txt] = slaDe(t);
+  const [ec, et] = ESTADO_BJ(t), sla = slaBj(t);
   const cerrado = t.estado === 'Cerrado';
   const borrador = $('resp')?.value || '';
   const ficha = clientesCache?.clientes.find(c => c.nombre === t.cliente);
   const otros = tickets.filter(x => x.cliente === t.cliente && x.id !== t.id).sort((a, b) => b.entrada.localeCompare(a.entrada));
   const horasCliente = tickets.filter(x => x.cliente === t.cliente).reduce((s, x) => s + segundos(x), 0) / 3600;
   const tiposOpc = [...new Set([...TIPOS, t.tipo_incidencia])].map(x => `<option ${x === t.tipo_incidencia ? 'selected' : ''}>${esc(x)}</option>`).join('');
+  const ultimo = t.mensajes.filter(m => m.de !== 'sistema').map(m => m.fecha).sort().pop() || t.entrada;
+  const resumen = t.asunto || t.descripcion || t.mensajes.find(m => m.de === 'cliente')?.texto || '';
+  const nombreCli = t.contacto || t.cliente;
+  // Conversación como un chat: el cliente a la izquierda con su avatar; el equipo a la derecha.
+  const mensaje = m => {
+    if (m.de === 'sistema') return `<div class="bj-sis">${esc(m.texto)}</div>`;
+    const cuerpo = `${m.adjunto ? adjuntoHtml(m.adjunto) : esc(m.texto)}${m.enlace ? `<br><a href="${esc(m.enlace)}" target="_blank" rel="noopener">${esc(m.enlace)}</a>` : ''}`;
+    if (m.de === 'cliente') return `<div class="bj-msg cli">${avatar(nombreCli)}<div class="cuerpo"><div class="quien"><b>${esc(nombreCli)}</b> · Cliente · <span title="${esc(fechaHora(m.fecha))}">${hace(m.fecha)}</span></div><div class="burbuja">${cuerpo}</div></div></div>`;
+    const autor = m.autor || 'Soporte';
+    return `<div class="bj-msg eq ${m.de === 'nota' ? 'nota' : ''}"><div class="cuerpo"><div class="quien">${m.de === 'nota' ? '<b>Nota interna</b> · ' : ''}${esc(autor)} · <span title="${esc(fechaHora(m.fecha))}">${hace(m.fecha)}</span></div><div class="burbuja">${cuerpo}</div></div>${avatar(autor)}</div>`;
+  };
+  const fila = (k, v) => `<span>${k}</span><div>${v}</div>`;
   det.innerHTML = `
     <div class="conv">
       <div class="cab">
         <a class="volver-movil" href="#/bandeja">← Bandeja</a>
-        <h2>#${t.id} · ${esc(t.cliente)} <span class="pastilla ${n}">${esc(txt)}</span>${t.urgente && !cerrado ? '<span class="pastilla urg">Urgente</span>' : ''}</h2>
-        <div class="meta">${esc(t.contacto || 'Sin contacto')} · ${esc(t.canal)} · entró ${fechaHora(t.entrada)}${t.primera_respuesta ? ` · 1.ª respuesta en ${dur(laborables(t.entrada, t.primera_respuesta))} laborables` : ''}</div>
-        <div class="acciones-contacto">
-          ${tel ? `<a href="tel:${esc(tel)}">📞 ${esc(t.telefono)}</a>` : ''}
-          ${wa.length >= 9 ? `<a href="https://wa.me/${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
-          ${t.email ? `<a href="mailto:${esc(t.email)}?subject=${encodeURIComponent('Incidencia #' + t.id)}">✉ ${esc(t.email)}</a>` : ''}
-          <a href="/t/${esc(t.token)}" target="_blank" rel="noopener">Ver como cliente ↗</a>
-          <button id="copiar">Copiar enlace del cliente</button>
+        <div class="bj-cab1">
+          <h2>#${t.id} · ${esc(t.cliente)} <span class="bj-est grande ${ec}">${et}</span>${t.urgente && !cerrado ? '<span class="bj-est grande urg">Urgente</span>' : ''}</h2>
+          <details class="bj-mas"><summary class="boton sec peq">Más acciones ▾</summary><div class="bj-mas-menu">
+            <a href="/t/${esc(t.token)}" target="_blank" rel="noopener">Ver como cliente ↗</a>
+            <button type="button" id="copiar">Copiar enlace del cliente</button>
+            ${wa.length >= 9 ? `<a href="https://wa.me/${esc(wa)}" target="_blank" rel="noopener">Abrir en WhatsApp</a>` : ''}
+            ${tel ? `<a href="tel:${esc(tel)}">Llamar</a>` : ''}
+            ${t.email ? `<a href="mailto:${esc(t.email)}?subject=${encodeURIComponent('Incidencia #' + t.id)}">Escribir un correo</a>` : ''}
+            <a href="#/clientes/${encodeURIComponent(t.cliente)}">Ficha del cliente</a>
+          </div></details>
+        </div>
+        <div class="bj-meta">
+          <span>${ICO_BJ.persona}Cliente: ${esc(nombreCli)}</span>
+          <span>${ICO_BJ.canal}${esc(t.canal)}</span>
+          ${t.email ? `<span>${ICO_BJ.mail}${esc(t.email)}</span>` : ''}
+          ${t.telefono ? `<span>${ICO_BJ.tel}${esc(t.telefono)}</span>` : ''}
         </div>
       </div>
-      <div class="hilo" id="hilo">${t.mensajes.map(m => `<div class="m ${m.de}">${m.adjunto ? adjuntoHtml(m.adjunto) : esc(m.texto)}${m.enlace ? `<br><a href="${esc(m.enlace)}" target="_blank" rel="noopener">${esc(m.enlace)}</a>` : ''}${m.de === 'sistema' ? '' : `<small>${m.de === 'nota' ? 'Nota interna · ' : ''}${m.autor ? esc(m.autor) + ' · ' : m.de === 'cliente' ? esc(t.contacto || t.cliente) + ' · ' : ''}${fechaHora(m.fecha)}</small>`}</div>`).join('')}</div>
-      <form class="redactar ${modoNota ? 'es-nota' : ''}" id="redactar">
+      <div class="hilo" id="hilo">
+        <div class="bj-resumen">${ICO_BJ.doc}<div><b>${esc(resumen.length > 160 ? resumen.slice(0, 157) + '…' : resumen)}</b>
+          <small>Creado ${hace(t.entrada)} · Actualizado ${hace(ultimo)}${t.primera_respuesta ? ` · 1.ª respuesta en ${dur(laborables(t.entrada, t.primera_respuesta))} laborables` : ''}</small></div></div>
+        ${t.mensajes.map(mensaje).join('')}
+      </div>
+      <form class="redactar bj-redactar ${modoNota ? 'es-nota' : ''}" id="redactar">
         <div class="modos">
-          <button type="button" data-m="cliente" class="${modoNota ? '' : 'on'}">Responder al cliente</button>
-          <button type="button" data-m="nota" class="nota ${modoNota ? 'on' : ''}">Nota interna</button>
-          <select class="campo" id="plantilla"><option value="">Respuestas rápidas…</option>${PLANTILLAS.map((p, i) => `<option value="${i}">${esc(p[0])}</option>`).join('')}</select>
+          <button type="button" data-m="cliente" class="${modoNota ? '' : 'on'}">${ICO_BJ.responder}Responder al cliente</button>
+          <button type="button" data-m="nota" class="nota ${modoNota ? 'on' : ''}">${ICO_BJ.nota}Nota interna</button>
+          <select class="campo" id="plantilla"><option value="">Respuestas rápidas</option>${PLANTILLAS.map((p, i) => `<option value="${i}">${esc(p[0])}</option>`).join('')}</select>
         </div>
-        <div class="caja"><textarea class="campo" id="resp" placeholder="${modoNota ? 'Nota solo para el equipo…' : `Escribe al cliente${t.canal === 'WhatsApp' ? ' (le llega por WhatsApp)' : t.email ? ' (le llega también por correo si está activo)' : ''}…`}">${esc(borrador)}</textarea><button class="boton">Enviar</button></div>
-        <div class="ayuda">Enter envía · Mayús+Enter salto de línea</div>
+        <textarea class="campo" id="resp" placeholder="${modoNota ? 'Nota solo para el equipo…' : `Escribe tu respuesta al cliente${t.canal === 'WhatsApp' ? ' (le llega por WhatsApp)' : t.email ? ' (le llega también por correo si está activo)' : ''}…`}">${esc(borrador)}</textarea>
+        <div class="pie-red"><span class="ayuda">Enter envía · Mayús+Enter salto de línea</span><button class="boton">${ICO_BJ.enviar}Enviar</button></div>
       </form>
     </div>
     <aside class="lado">
       <div class="tarjeta">
-        <h3>Tiempo</h3>
+        <h3>${ICO_BJ.reloj}Tiempo</h3>
         <div class="reloj ${t.activa ? 'on' : ''}" id="reloj">${hms(segundos(t))}</div>
-        <div class="reloj-sub">${t.activa ? `${t.activa.tipo === 'video' ? 'Videollamada' : 'Cronómetro'} en marcha · ${esc(t.activa.tecnico || '')}` : `${horasTxt(horasCliente)} con este cliente en total`}</div>
+        <div class="reloj-sub">${t.activa ? `${t.activa.tipo === 'video' ? 'Videollamada' : 'Cronómetro'} en marcha · ${esc(t.activa.tecnico || '')}` : `Tiempo de atención del ticket · ${horasTxt(horasCliente)} con el cliente`}</div>
         ${cerrado ? '' : `<div class="botones tiempo">
-          ${t.activa ? `<button class="boton rojo" data-a="parar">Pausar</button>` : `<button class="boton verde" data-a="iniciar">Iniciar</button>`}
-          <button class="boton sec" data-t="15">+15′</button><button class="boton sec" data-t="30">+30′</button><button class="boton sec" data-t="otro">+…</button>
-        </div>`}
+          ${t.activa ? `<button class="boton rojo" data-a="parar">${ICO_BJ.pausa}Pausar</button>` : `<button class="boton verde" data-a="iniciar">${ICO_BJ.play}Iniciar</button>`}
+          <button class="boton sec" data-t="15">+15m</button><button class="boton sec" data-t="30">+30m</button><button class="boton sec" data-t="60">+1h</button>
+        </div>
+        <button type="button" class="bj-otro" data-t="otro">Apuntar otro tiempo…</button>`}
       </div>
       <div class="tarjeta">
-        <h3>Acciones</h3>
+        <h3>${ICO_BJ.acciones}Acciones</h3>
         <div class="botones" style="flex-direction:column">
           ${cerrado
             ? `<div style="font-size:13px;color:var(--bruma);margin-bottom:6px">Cerrado el ${fechaHora(t.cierre)}${t.nps != null ? ` · <b style="color:var(--pizarra)">NPS ${t.nps}</b>` : ' · valoración pendiente'}${t.mejora ? `<br>«${esc(t.mejora)}»` : ''}</div><button class="boton sec" data-a="reabrir">Reabrir</button>`
-            : `${t.activa?.tipo === 'video' ? `<a class="boton sec" style="text-align:center;text-decoration:none" href="${esc(t.video)}" target="_blank" rel="noopener">Volver a la sala ↗</a>` : `<button class="boton sec" data-a="video">Videollamada</button>`}
-               <button class="boton sec" data-a="pendiente" ${t.estado === 'Pendiente cliente' ? 'disabled' : ''}>Esperando al cliente</button>
-               <button class="boton" data-a="cerrar">Cerrar y pedir valoración</button>`}
+            : `${t.activa?.tipo === 'video' ? `<a class="boton sec" style="text-align:center;text-decoration:none" href="${esc(t.video)}" target="_blank" rel="noopener">${ICO_BJ.video}Volver a la sala ↗</a>` : `<button class="boton sec" data-a="video">${ICO_BJ.video}Videollamada</button>`}
+               <button class="boton bj-esperar" data-a="pendiente" ${t.estado === 'Pendiente cliente' ? 'disabled' : ''}>${ICO_BJ.espera}${t.estado === 'Pendiente cliente' ? 'Esperando al cliente' : 'Esperar al cliente'}</button>
+               <button class="boton" data-a="cerrar">${ICO_BJ.cerrar}Cerrar ticket</button>`}
         </div>
       </div>
       ${tarjetaCitas(t)}
       <div class="tarjeta">
-        <h3>Detalles</h3>
+        <h3>${ICO_BJ.detalles}Detalles</h3>
         <div class="prop">
+          ${fila('Ticket', `#${t.id}`)}
           <span>Técnico</span><select class="campo" id="pTec"><option value="">Sin asignar</option>${[...new Set([...equipo, t.tecnico].filter(Boolean))].map(x => `<option ${x === t.tecnico ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>
           <span>Tipo</span><select class="campo" id="pTipo">${tiposOpc}</select>
-          <span>Urgente</span><label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" id="pUrg" ${t.urgente ? 'checked' : ''}> Me impide trabajar</label>
+          <span>Urgencia</span><label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" id="pUrg" ${t.urgente ? 'checked' : ''}> ${t.urgente ? 'Urgente' : 'Normal'}</label>
+          ${fila('Canal', esc(t.canal))}
+          ${fila('Creado', `<span title="${esc(fechaHora(t.entrada))}">${hace(t.entrada)}</span>`)}
+          ${fila('Última actualización', hace(ultimo))}
+          ${fila('SLA', sla ? `<b class="bj-sla-txt ${sla[0]}">${ICO_BJ.reloj}${esc(sla[1])}</b>` : t.primera_respuesta ? `<span style="color:var(--ok-t)">Respondido en ${dur(laborables(t.entrada, t.primera_respuesta))}</span>` : '—')}
         </div>
       </div>
       <div class="tarjeta">
-        <h3>Cliente</h3>
+        <h3>${ICO_BJ.persona}Cliente</h3>
         <div class="prop">
+          ${fila('Nombre', `<a href="#/clientes/${encodeURIComponent(t.cliente)}">${esc(nombreCli)}</a>`)}
+          ${t.email ? fila('Email', `<span style="overflow-wrap:anywhere">${esc(t.email)}</span>`) : ''}
+          ${t.telefono ? fila('Teléfono', esc(t.telefono)) : ''}
+          ${fila('Empresa', esc(t.cliente))}
           <span>Servicio</span><select class="campo" id="pServ">${(clientesCache?.servicios || []).map(x => `<option ${x === (ficha?.servicio || 'Sin clasificar') ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>
           <span>Origen</span><select class="campo" id="pOrig">${(clientesCache?.origenes || []).map(x => `<option ${x === (ficha?.tipo_cliente || 'Sin clasificar') ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>
         </div>
@@ -743,7 +908,7 @@ function pintarDetalle(t) {
   const hilo = $('hilo');
   hilo.scrollTop = hilo.scrollHeight;
   const resp = $('resp');
-  const crecer = () => { resp.style.height = 'auto'; resp.style.height = Math.min(200, resp.scrollHeight) + 'px'; };
+  const crecer = () => { resp.style.height = 'auto'; resp.style.height = Math.min(200, Math.max(70, resp.scrollHeight)) + 'px'; };
   resp.oninput = crecer;
   resp.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('redactar').requestSubmit(); } };
   $('redactar').querySelector('.modos').onclick = e => {
@@ -772,6 +937,7 @@ function pintarDetalle(t) {
   $('copiar').onclick = async () => {
     try { await navigator.clipboard.writeText(`${location.origin}/t/${t.token}`); aviso('Enlace copiado: el cliente lo abre sin login.'); }
     catch { aviso('No se ha podido copiar.', true); }
+    det.querySelector('.bj-mas').open = false;
   };
   det.querySelector('.lado').onclick = async e => {
     const b = e.target.closest('button');
