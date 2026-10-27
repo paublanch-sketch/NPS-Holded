@@ -105,7 +105,9 @@ function resumen(todos, { desde, hasta, tecnico }, ahora = new Date()) {
     // ni la primera respuesta ni la valoración: de ellos se enseña lo que pidieron en el periodo.
     antiguos: (() => {
       const l = filtrados.filter(t => t.servicio === 'Kit Digital'), periodo = l.filter(enPeriodo);
-      return { ...bloque(l, 'Kit Digital'), tickets: periodo.length, horas: horasDe(l), clientes: new Set(periodo.map(t => t.cliente)).size };
+      // Horas de todo el histórico, además de las del periodo: casi todo es del antiguo formulario.
+      const horasTotales = r1(l.reduce((s, t) => s + t.trabajo.filter(w => !tecnico || w.tecnico === tecnico).reduce((a, w) => a + w.horas, 0), 0));
+      return { ...bloque(l, 'Kit Digital'), tickets: periodo.length, horas: horasDe(l), horasTotales, ticketsTotales: l.length, clientes: new Set(periodo.map(t => t.cliente)).size };
     })(),
     // Los grupos de la página 2 del mockup. Los clientes sin origen no entran en ninguno.
     porTipo: [

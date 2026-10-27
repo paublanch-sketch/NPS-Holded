@@ -109,7 +109,8 @@ http.createServer(async (req, res) => {
   res.setHeader('X-Frame-Options', 'DENY');
   try {
     // ---- Público ----
-    if (ruta === '/salud') { res.writeHead(200); return res.end('ok'); }
+    // Con la versión desplegada (Render pone RENDER_GIT_COMMIT), para saber si ya está lo último.
+    if (ruta === '/salud') { res.writeHead(200); return res.end(`ok ${(process.env.RENDER_GIT_COMMIT || '').slice(0, 7)}`.trim()); }
     if (/^\/img\/[a-z0-9-]+\.(png|svg|webp)$/.test(ruta)) return imagen(res, ruta.slice(5));
     if (ruta === '/' || /^\/t\/[a-f0-9]{32}$/.test(ruta)) return pagina(res, 'portal.html');
     if (ruta === '/soporte') return redirigir(res, /^[a-f0-9]{32}$/.test(url.searchParams.get('t') || '') ? `/t/${url.searchParams.get('t')}` : '/');
@@ -142,8 +143,15 @@ http.createServer(async (req, res) => {
 
     if (ruta === '/api/resumen' || ruta === '/api/horas.csv') {
       const f = filtros(url);
-      const r = metricas.resumen(await ticketsClasificados(), f);
-      if (ruta === '/api/resumen') return json(res, r);
+      const todos = await ticketsClasificados();
+      const r = metricas.resumen(todos, f);
+      if (ruta === '/api/resumen') {
+        // Clientes del Kit Digital activos (la lista importada) y cuántos no han abierto nunca incidencia.
+        const conTickets = new Set(todos.filter(t => !t.interno).map(t => t.cliente));
+        const kit = [...(await clientes.fichas()).values()].filter(c => c.kitDigital && !c.ejemplo);
+        r.kitDigital = { activos: kit.length, sinTickets: kit.filter(c => !conTickets.has(c.nombre)).length };
+        return json(res, r);
+      }
       res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="horas-${f.desde}-${f.hasta}.csv"` });
       return res.end(metricas.csvHoras(r));
     }
