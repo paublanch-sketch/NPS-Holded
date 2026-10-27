@@ -249,6 +249,13 @@
     .caras { gap: 4px; } .cara .circulo { width: 46px; height: 46px; } .cara .circulo svg { width: 22px; height: 22px; } .cara .et { font-size: 10.5px; } .msg { max-width: 92%; }
   }
   @media (max-width: 370px) { .insignia { display: none; } }
+  /* Visor de imágenes del chat: se cierra con la cruz, con Esc o pulsando fuera */
+  .visor { position: fixed; inset: 0; z-index: 1000; background: rgba(15, 18, 25, .86); display: grid; place-items: center; padding: 60px 16px 24px; }
+  .visor[hidden] { display: none; }
+  .visor img { max-width: min(1200px, 100%); max-height: calc(100vh - 90px); border-radius: 8px; background: #fff; box-shadow: 0 20px 60px rgba(0, 0, 0, .4); }
+  .visor .nombre { position: absolute; top: 22px; left: 18px; right: 70px; color: #fff; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .visor .cerrar { position: absolute; top: 12px; right: 14px; width: 42px; height: 42px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .16); color: #fff; font-size: 28px; line-height: 1; cursor: pointer; display: grid; place-items: center; }
+  .visor .cerrar:hover, .visor .cerrar:focus-visible { background: rgba(255, 255, 255, .3); outline: none; }
 </style>
 </head>
 <body>
@@ -512,6 +519,9 @@ if (!token) {
     [...$('tipos').children].forEach(x => x.setAttribute('aria-pressed', 'false'));
     $('desc').value = ''; $('contador').textContent = '0/2000'; $('urgente').checked = false;
     pintarArchivos(); $('errAlta').textContent = '';
+    // También los datos de contacto, y los que este navegador recordaba de la última vez.
+    for (const k of ['empresa', 'contacto', 'email', 'tel']) $(k).value = '';
+    try { localStorage.removeItem('soporte-datos'); } catch {}
     $('desc').focus();
   };
 
@@ -659,7 +669,7 @@ if (token) {
   const adjunto = a => {
     const url = `/api/soporte/${token}/adjunto/${a.id}`;
     return /^image\/(png|jpeg|gif|webp)$/.test(a.tipo)
-      ? `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="${esc(a.nombre)}" loading="lazy"></a>📎 ${esc(a.nombre)}`
+      ? `<a class="ver-img" href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="${esc(a.nombre)}" loading="lazy"></a>📎 ${esc(a.nombre)}`
       : `📎 <a href="${url}" target="_blank" rel="noopener">${esc(a.nombre)}</a> · ${peso(a.tamano)}`;
   };
 
@@ -756,6 +766,33 @@ if (token) {
   setInterval(cargar, 6000);
   document.addEventListener('visibilitychange', cargar);
 }
+// Visor de imágenes del chat: se cierra con la cruz, con Esc o pulsando fuera de la imagen.
+// Ctrl/Cmd + clic sigue abriéndola en otra pestaña.
+(() => {
+  const visor = document.createElement('div');
+  visor.className = 'visor'; visor.hidden = true;
+  visor.setAttribute('role', 'dialog'); visor.setAttribute('aria-modal', 'true'); visor.setAttribute('aria-label', 'Imagen adjunta');
+  visor.innerHTML = '<span class="nombre"></span><button type="button" class="cerrar" aria-label="Cerrar (Esc)" title="Cerrar (Esc)">×</button><img alt="">';
+  document.body.append(visor);
+  const img = visor.querySelector('img');
+  let origen = null;
+  const cerrar = () => {
+    if (visor.hidden) return;
+    visor.hidden = true; img.removeAttribute('src'); document.body.style.overflow = '';
+    if (origen?.isConnected) origen.focus();
+  };
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a.ver-img');
+    if (!a || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    e.preventDefault();
+    origen = a; img.src = a.href; img.alt = a.querySelector('img')?.alt || '';
+    visor.querySelector('.nombre').textContent = img.alt;
+    visor.hidden = false; document.body.style.overflow = 'hidden';
+    visor.querySelector('.cerrar').focus();
+  });
+  visor.addEventListener('click', e => { if (e.target !== img) cerrar(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !visor.hidden) { e.preventDefault(); cerrar(); } });
+})();
 </script>
 </body>
 </html>
