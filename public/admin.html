@@ -367,6 +367,8 @@
   .mk-vacio { display: flex; align-items: center; gap: 14px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--linea); font-size: 13px; color: var(--bruma); }
   .mk-vacio-ico { width: 44px; height: 44px; border-radius: 50%; background: var(--suave); color: var(--bruma); display: grid; place-items: center; flex: none; }
   .mk-vacio a { color: var(--azul); font-weight: 600; }
+  .mk-vermas { display: block; width: 100%; margin-top: 8px; padding: 9px; border: 1px dashed var(--linea2); border-radius: 10px; background: none; font: inherit; font-size: 13px; font-weight: 600; color: var(--azul); cursor: pointer; }
+  .mk-vermas:hover { background: var(--azul-f); border-color: var(--azul-l); }
   .mk-casos .tit { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--muted); margin-bottom: 4px; }
   .mk-casos th { font-size: 11px; }
   .mk-casos td { padding: 10px; }
@@ -1307,6 +1309,12 @@ async function cargarMetricas() {
     ${r.antiguos.vacio && !r.kitDigital?.activos ? '' : bloqueAntiguos(r.antiguos, r.kitDigital)}
     ${bloqueTipos(r)}`;
   $('met').querySelectorAll('tr[data-id]').forEach(tr => tr.onclick = () => { location.hash = `#/bandeja/${tr.dataset.id}`; });
+  $('met').querySelectorAll('[data-vermas]').forEach(b => b.onclick = () => {
+    const filas = b.closest('.mk-casos').querySelectorAll('tr.mas');
+    const abrir = filas[0]?.classList.contains('oculto');
+    filas.forEach(tr => tr.classList.toggle('oculto', !abrir));
+    b.textContent = abrir ? 'Ver menos' : `Ver ${filas.length} más`;
+  });
 }
 
 // Tarjeta de número grande, como las del mockup: icono y semáforo arriba, valor y etiqueta.
@@ -1359,6 +1367,8 @@ function bloqueAntiguos(b, kit) {
   </section>`;
 }
 
+// Las listas de casos enseñan los 4 primeros; el resto, con «Ver más».
+const CASOS_VISIBLES = 4;
 function tablaCasos(b, conCanal) {
   const casos = b.casos || [];
   // Sin casos: una línea con icono, como en el diseño, en vez de la tabla vacía.
@@ -1366,10 +1376,11 @@ function tablaCasos(b, conCanal) {
   return `<div class="mk-casos">
       <div class="tit">CASOS ABIERTOS AHORA</div>
       <div class="tabla"><table><thead><tr><th>Cliente</th><th>${conCanal ? 'Canal' : 'Origen'}</th><th>Entrada</th><th>Tiempo</th><th>Estado</th></tr></thead><tbody>
-        ${casos.map(c => {
+        ${casos.map((c, i) => {
           const [cls, txt] = c.respondido ? ['resp', 'Respondido'] : c.esperaMin == null ? ['nada', c.estado] : c.esperaMin > 60 ? ['critico', 'Fuera de SLA'] : c.esperaMin > 45 ? ['atencion', 'Cerca del límite'] : ['ok', 'En plazo'];
-          return `<tr class="clic" data-id="${c.id}"><td><b>${esc(c.cliente)}</b></td><td>${esc(conCanal ? c.canal : c.origen)}</td><td>${horaEntrada(c.entrada)}</td><td>${c.esperaMin == null ? '—' : dur(c.esperaMin)}</td><td><span class="mk-pill ${cls}">${txt}</span></td></tr>`;
+          return `<tr class="clic${i >= CASOS_VISIBLES ? ' mas oculto' : ''}" data-id="${c.id}"><td><b>${esc(c.cliente)}</b></td><td>${esc(conCanal ? c.canal : c.origen)}</td><td>${horaEntrada(c.entrada)}</td><td>${c.esperaMin == null ? '—' : dur(c.esperaMin)}</td><td><span class="mk-pill ${cls}">${txt}</span></td></tr>`;
         }).join('')}</tbody></table></div>
+      ${casos.length > CASOS_VISIBLES ? `<button type="button" class="mk-vermas" data-vermas>Ver ${casos.length - CASOS_VISIBLES} más</button>` : ''}
     </div>`;
 }
 
