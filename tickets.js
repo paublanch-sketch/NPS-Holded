@@ -23,7 +23,7 @@ function pararSesion(t) {
 
 // Lo que ve el cliente: nada de horas, notas internas ni datos de otros.
 const vistaCliente = t => ({
-  id: t.id, empresa: t.cliente, estado: t.estado, tecnico: t.tecnico, entrada: t.entrada,
+  id: t.id, empresa: t.cliente, contacto: t.contacto || '', estado: t.estado, tecnico: t.tecnico, entrada: t.entrada,
   mensajes: t.mensajes.filter(m => m.de !== 'nota'),
   pideValoracion: t.estado === 'Cerrado' && t.nps == null,
   nps: t.nps,

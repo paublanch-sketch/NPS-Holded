@@ -196,16 +196,39 @@
   .escribir textarea:focus { box-shadow: none; }
   .clip { border: 0; background: none; color: var(--bruma); padding: 10px; cursor: pointer; border-radius: 10px; }
   .clip:hover { background: var(--cal); color: var(--pizarra); }
-  .valorar h2 { font-size: 18px; margin: 0 0 4px; }
-  .valorar p { margin: 0 0 14px; color: var(--bruma); }
-  .escala { display: grid; grid-template-columns: repeat(11, 1fr); gap: 6px; }
-  .escala button { font-weight: 700; padding: 11px 0; border-radius: 10px; border: 1px solid var(--linea2); background: var(--blanco); cursor: pointer; }
-  .escala button:hover { border-color: var(--pizarra); }
-  .escala button[aria-pressed="true"] { background: var(--rojo); color: #fff; border-color: var(--rojo); }
-  .extremos { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin: 6px 0 14px; }
-  .gracias { text-align: center; }
-  .gracias h2 { margin: 0 0 6px; font-size: 20px; }
-  .gracias p { color: var(--bruma); margin: 0 0 14px; }
+  /* Valoración al cerrar: el diseño de «Valoración Interactivos» (cabecera oscura, tres caras y reseña). */
+  .tarjeta.valorar, .tarjeta.gracias { padding: 0; overflow: hidden; }
+  .val-cab { background: var(--pizarra); color: #fff; padding: 28px 32px 30px; }
+  .val-cab img { display: block; height: 20px; width: auto; margin-bottom: 24px; }
+  .val-cab h2 { font-size: 24px; margin: 0 0 8px; line-height: 1.3; }
+  .val-cab p { margin: 0; color: rgba(255, 255, 255, .82); font-size: 14px; }
+  .val-cuerpo { padding: 28px 32px 30px; }
+  .val-pregunta { text-align: center; font-size: 16px; font-weight: 600; margin: 0 0 24px; line-height: 1.5; }
+  .caras { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 24px; }
+  .cara { flex: 1; background: none; border: 0; padding: 6px 0; border-radius: 12px; cursor: pointer; font: inherit; color: var(--c); }
+  .cara.f1 { --c: var(--rojo); } .cara.f3 { --c: var(--bruma); } .cara.f4 { --c: #6E9B5E; }
+  .cara .circulo { width: 56px; height: 56px; border-radius: 50%; border: 2px solid currentColor; display: grid; place-items: center; margin: 0 auto 10px; transition: background .15s, color .15s, transform .15s; }
+  .cara:hover .circulo { transform: scale(1.06); }
+  .cara[aria-checked="true"] .circulo { background: var(--c); border-color: var(--c); color: #fff; }
+  .cara .et { display: block; font-size: 12px; font-weight: 600; }
+  .cara:focus-visible { outline: 2px solid var(--c); outline-offset: 2px; }
+  .val-cuerpo hr { border: 0; border-top: 1px solid #E7E7E5; margin: 4px 0 24px; }
+  .val-et { font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block; }
+  .val-et span { font-weight: 400; color: var(--bruma); }
+  #mejora { min-height: 76px; }
+  .val-contador { text-align: right; font-size: 12px; color: var(--bruma); margin: 6px 0 22px; }
+  .cta { display: block; width: 100%; border: 0; border-radius: 10px; padding: 15px; background: var(--pizarra); color: #fff; font-weight: 600; font-size: 15px; cursor: pointer; transition: filter .15s; }
+  .cta:hover { filter: brightness(1.25); }
+  .cta:disabled { opacity: .4; cursor: default; filter: none; }
+  .resena { background: var(--cal); border-radius: 12px; padding: 24px; text-align: center; margin-top: 24px; }
+  .resena .google { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .resena .google svg { width: 26px; height: 26px; }
+  .estrellas { color: #C9A227; font-size: 20px; letter-spacing: 4px; }
+  .resena p { color: var(--bruma); font-size: 13.5px; line-height: 1.6; margin: 0 0 18px; }
+  .boton-resena { display: inline-flex; align-items: center; gap: 8px; background: var(--blanco); border: 1.5px solid var(--pizarra); color: var(--pizarra); font-weight: 600; font-size: 14px; padding: 11px 22px; border-radius: 10px; text-decoration: none; }
+  .boton-resena svg { width: 18px; height: 18px; }
+  .gracias .val-cuerpo { text-align: center; }
+  .gracias .val-cuerpo > p { color: var(--bruma); margin: 0; }
 
   @media (max-width: 1100px) { .heroe .ilustracion { display: none; } .rejilla { grid-template-columns: minmax(0, 1fr) 380px; } .categorias { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   @media (max-width: 900px) { .rejilla { grid-template-columns: 1fr; } .heroe { grid-template-columns: auto minmax(0, 1fr); } .tiempo { grid-column: 1 / -1; justify-self: start; } }
@@ -216,7 +239,7 @@
     .categorias { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cat { padding: 12px; gap: 10px; font-size: 13px; } .cat[aria-pressed="true"] { padding: 11px; }
     .dos { grid-template-columns: 1fr; } .seguro { margin-left: 0; } .adjuntar { flex-wrap: wrap; }
     .lista a { grid-template-columns: 44px minmax(0, 1fr) auto 16px; } .lista time { display: none; }
-    .escala { grid-template-columns: repeat(6, 1fr); } .msg { max-width: 92%; }
+    .val-cab, .val-cuerpo { padding-left: 20px; padding-right: 20px; } .val-cab h2 { font-size: 21px; } .msg { max-width: 92%; }
   }
   @media (max-width: 370px) { .insignia { display: none; } }
 </style>
@@ -364,18 +387,32 @@
     <div class="chat" id="chat" aria-live="polite"></div>
 
     <div class="tarjeta valorar oculto" id="valorar">
-      <h2>¿Qué tal te hemos atendido?</h2>
-      <p>Del 0 al 10, ¿qué probabilidad hay de que nos recomiendes a otra empresa?</p>
-      <div class="escala" id="escala" role="group" aria-label="Puntuación de 0 a 10"></div>
-      <div class="extremos"><span>Nada probable</span><span>Muy probable</span></div>
-      <label class="et" for="mejora">¿Qué mejorarías? <small>(opcional)</small></label>
-      <textarea id="mejora" style="min-height:80px;padding-bottom:14px"></textarea>
-      <div class="pie" style="margin-top:14px"><button class="boton" id="btnNps" disabled>Enviar valoración</button></div>
+      <div class="val-cab">
+        <img src="/img/interactivos-blanco-linea.png" alt="Interactivos" width="1025" height="134">
+        <h2>¿Cómo ha sido tu experiencia?</h2>
+        <p>Tu opinión nos ayuda a mejorar el servicio para ti y para todos nuestros clientes.</p>
+      </div>
+      <div class="val-cuerpo">
+        <p class="val-pregunta"><span id="saludo">Hola.</span><br>¿Cómo valoras el último servicio que te hemos ofrecido?</p>
+        <div class="caras" id="caras" role="radiogroup" aria-label="Tu valoración"></div>
+        <hr>
+        <label class="val-et" for="mejora">¿Quieres añadir algo? <span>Opcional</span></label>
+        <textarea id="mejora" maxlength="100" placeholder="Cuéntanos tu experiencia en pocas palabras..."></textarea>
+        <div class="val-contador" id="valContador">0/100</div>
+        <button type="button" class="cta" id="btnNps" disabled>Enviar valoración</button>
+        <div class="resena oculto" data-resena></div>
+      </div>
     </div>
     <div class="tarjeta gracias oculto" id="gracias">
-      <h2>¡Gracias por tu valoración!</h2>
-      <p id="graciasTexto">Nos ayuda a mejorar el servicio.</p>
-      <a class="boton oculto" id="google" target="_blank" rel="noopener">Dejar una reseña en Google</a>
+      <div class="val-cab">
+        <img src="/img/interactivos-blanco-linea.png" alt="Interactivos" width="1025" height="134">
+        <h2>¡Gracias por tu valoración!</h2>
+        <p>Nos ayuda a mejorar el servicio para ti y para todos nuestros clientes.</p>
+      </div>
+      <div class="val-cuerpo">
+        <p id="graciasTexto">Si necesitas algo más, escríbenos por este mismo chat.</p>
+        <div class="resena oculto" data-resena></div>
+      </div>
     </div>
 
     <div class="escribir" id="escribir">
@@ -540,20 +577,33 @@ if (!token) {
   };
 }
 
+const G_LOGO = '<svg viewBox="0 0 48 48" aria-label="Google" role="img"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+
 // ---------- Seguir incidencia ----------
 if (token) {
   $('vistaTicket').classList.remove('oculto');
   const q = new URLSearchParams(location.search);
-  let nota = /^(10|[0-9])$/.test(q.get('nps') || '') ? Number(q.get('nps')) : null, ultimo = '', enviado = false, desdeCorreo = nota != null;
+  // Tres caras que se guardan en la escala del NPS: 3 (detractor), 7 (pasivo) y 10 (promotor).
+  // Los enlaces del correo de cierre traen ?nps=0..10 y preseleccionan la cara que toca.
+  const CARAS = [
+    [3, 'f1', 'Insatisfecho', '<path d="M8 15s1.5-2 4-2 4 2 4 2"/><path d="M9 9l-1.5-1"/><path d="M15 9l1.5-1"/>'],
+    [7, 'f3', 'Neutral', '<line x1="8" y1="14" x2="16" y2="14"/><circle cx="9" cy="9.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="15" cy="9.5" r="0.8" fill="currentColor" stroke="none"/>'],
+    [10, 'f4', 'Satisfecho', '<path d="M8 13c1 1.2 2.5 1.8 4 1.8s3-.6 4-1.8"/><circle cx="9" cy="9.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="15" cy="9.5" r="0.8" fill="currentColor" stroke="none"/>'],
+  ];
+  const deEscala = n => n <= 6 ? 3 : n <= 8 ? 7 : 10;
+  let nota = /^(10|[0-9])$/.test(q.get('nps') || '') ? deEscala(Number(q.get('nps'))) : null, ultimo = '', enviado = false, desdeCorreo = nota != null;
   const recordar = t => guardar('soporte-mias', [{ token, id: t.id }, ...leer('soporte-mias', []).filter(m => m.token !== token)].slice(0, 40));
-  $('escala').innerHTML = Array.from({ length: 11 }, (_, i) => `<button type="button" aria-pressed="${i === nota}">${i}</button>`).join('');
+  $('caras').innerHTML = CARAS.map(([n, cls, et, cara]) => `<button type="button" class="cara ${cls}" role="radio" aria-checked="${n === nota}" data-n="${n}">
+    <span class="circulo"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/>${cara}</svg></span><span class="et">${et}</span></button>`).join('');
   $('btnNps').disabled = nota == null;
-  $('escala').onclick = e => {
-    if (e.target.tagName !== 'BUTTON') return;
-    nota = Number(e.target.textContent);
-    [...$('escala').children].forEach(b => b.setAttribute('aria-pressed', b === e.target));
+  $('caras').onclick = e => {
+    const b = e.target.closest('.cara');
+    if (!b) return;
+    nota = Number(b.dataset.n);
+    [...$('caras').children].forEach(x => x.setAttribute('aria-checked', x === b));
     $('btnNps').disabled = false;
   };
+  $('mejora').oninput = () => { $('valContador').textContent = `${$('mejora').value.length}/100`; };
   $('btnNps').onclick = async () => {
     $('btnNps').disabled = true;
     try { enviado = true; pintar(await api(`/api/soporte/${token}/nps`, { nps: nota, mejora: $('mejora').value })); }
@@ -663,11 +713,14 @@ if (token) {
     if (t.video) $('videoLink').href = t.video;
     $('valorar').classList.toggle('oculto', !t.pideValoracion);
     $('gracias').classList.toggle('oculto', t.nps == null);
-    if (t.nps != null) {
-      const fan = t.nps >= 9 && config.google;
-      $('google').classList.toggle('oculto', !fan);
-      if (fan) { $('google').href = config.google; $('graciasTexto').textContent = '¿Nos ayudas con una reseña en Google? Son 30 segundos.'; }
-    }
+    $('saludo').textContent = t.contacto ? `Hola, ${t.contacto.split(/\s+/)[0]}.` : 'Hola.';
+    // La reseña de Google se ofrece a todos por igual (Google no permite pedirla solo a los contentos).
+    document.querySelectorAll('[data-resena]').forEach(r => {
+      r.classList.toggle('oculto', !config.google);
+      if (config.google && !r.innerHTML) r.innerHTML = `<div class="google">${G_LOGO}<span class="estrellas" aria-hidden="true">★★★★★</span></div>
+        <p>Nos ayudaría mucho que pudieses dejar una pequeña reseña en Google.<br>Solo te lleva un minuto y es muy importante para nosotros.</p>
+        <a class="boton-resena" href="${esc(config.google)}" target="_blank" rel="noopener">${G_LOGO}Dejar reseña</a>`;
+    });
     const html = t.mensajes.map(m => `<div class="msg ${m.de}">${m.adjunto ? adjunto(m.adjunto) : esc(m.texto)}${m.enlace ? `<br><a href="${esc(m.enlace)}" target="_blank" rel="noopener">Unirme a la videollamada</a>` : ''}${m.de === 'sistema' ? '' : `<small>${m.de === 'tecnico' ? esc(m.autor || 'Soporte') + ' · ' : ''}${hora(m.fecha)}</small>`}</div>`).join('');
     if (html !== ultimo) {
       const abajo = innerHeight + scrollY >= document.body.scrollHeight - 120 || !ultimo;
