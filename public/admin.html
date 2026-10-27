@@ -559,6 +559,81 @@
   .visor .nombre { position: absolute; top: 22px; left: 18px; right: 70px; color: #fff; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .visor .cerrar { position: absolute; top: 12px; right: 14px; width: 42px; height: 42px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .16); color: #fff; font-size: 28px; line-height: 1; cursor: pointer; display: grid; place-items: center; }
   .visor .cerrar:hover, .visor .cerrar:focus-visible { background: rgba(255, 255, 255, .3); outline: none; }
+  /* ===== Móvil y tableta: va al final para mandar sobre todo lo anterior ===== */
+  @media (max-width: 1199px) { .cl-vista { display: none; } }
+  @media (max-width: 900px) {
+    .bj .conv .cab { padding: 14px 16px 12px; }
+    .bj .conv .cab h2 { font-size: 18px; line-height: 1.3; }
+    .bj-cab1 { align-items: flex-start; }
+    .bj-mas-menu { left: 0; right: auto; }
+    .bj .hilo { padding: 14px 16px; max-height: none; }
+    .bj-msg { max-width: 94%; }
+    .bj-msg .av { width: 30px; height: 30px; font-size: 11px; }
+    .bj-redactar { margin: 0 12px 14px; }
+    .bj-redactar .modos { flex-wrap: wrap; }
+    .bj-redactar .modos select { margin-left: 0; flex: 1 1 100%; }
+    .bj .lado { padding: 12px; grid-template-columns: 1fr; }
+    .bj .lista { height: auto; min-height: calc(100vh - 110px); }
+    .mk-cab { padding: 16px 16px 4px; }
+    .mk-chips { margin-left: 0; width: 100%; }
+    .mk .filtros { gap: 8px; position: static; }
+    .mk .filtros .seg { width: 100%; overflow-x: auto; }
+    .mk .filtros .desplegable { flex: 1 1 140px; justify-content: space-between; }
+    .mk .filtros .fechas { width: 100%; display: flex; gap: 6px; align-items: center; }
+    .mk .filtros .fechas.oculto { display: none; }
+    .mk .filtros .fechas input { flex: 1; min-width: 0; }
+    .mk-cab > div:not(.mk-logo):not(.mk-chips) { flex: 1 1 0; min-width: 0; }
+    .filtros { position: static; }
+    .cl-cab { padding: 16px 16px 0; }
+    .cl-cab h1 { font-size: 22px; }
+    .cl-cab .boton { padding: 9px 14px; }
+  }
+  @media (max-width: 760px) {
+    /* Métricas: aros de dos en dos */
+    .mk-aros { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 8px; }
+    .mk-aro svg { width: 92px; height: 92px; }
+    .mk-tipos { grid-template-columns: 1fr; }
+    .mk-leyenda { gap: 8px 16px; }
+    /* Clientes: pestañas a lo ancho, la vista siempre en tarjetas */
+    .cl-barra { gap: 10px; }
+    .cl-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px; padding: 12px; }
+    .cl-buscar, #cliMas { grid-column: 1 / -1; }
+    .cl-buscar kbd { display: none; }
+    .cl-buscar input { padding-right: 12px; }
+    .cl-mas { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    .cl-mas > .cl-f:last-child { grid-column: 1 / -1; }
+    .cl-tabs { width: 100%; }
+    .cl-tabs button { flex: 1; padding: 8px 6px; font-size: 13px; white-space: normal; line-height: 1.25; }
+    .cl-barra .orden { width: 100%; justify-content: space-between; }
+    .cl-grid { padding: 12px; grid-template-columns: 1fr; }
+    .cl-pie { justify-content: center; }
+    /* Ficha de cliente */
+    .ficha-dato b { font-size: 19px; }
+    .inc > summary .t { min-width: 0; flex-basis: 100%; }
+    /* Canales */
+    .can-resumen { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .can-mini { padding: 10px 12px; gap: 10px; }
+    .can-mini .can-ico { width: 34px; height: 34px; }
+    .tarjeta.can { padding: 16px; }
+    .can-cab { flex-wrap: wrap; gap: 6px 12px; }
+    .can-cab > div { flex: 1 1 calc(100% - 56px); }
+    .can-cab > .can-est { margin-left: 52px; }
+    .can-prueba { min-width: 0; flex: 1 1 100%; }
+    /* Diálogos y avisos */
+    dialog form { padding: 18px 16px; }
+    dialog .dos { grid-template-columns: 1fr; }
+    #avisos { left: 12px; right: 12px; bottom: 12px; }
+    .toast { max-width: none; }
+  }
+  @media (max-width: 520px) {
+    /* Menú de arriba: los cuatro enlaces caben sin deslizar (icono y texto pequeño debajo) */
+    .nav .enlaces { overflow: visible; gap: 4px; }
+    .nav a.ir { flex: 1 1 0; flex-direction: column; justify-content: center; gap: 3px; padding: 7px 2px; font-size: 11.5px; position: relative; min-width: 0; }
+    .nav a.ir .cuenta { position: absolute; top: 2px; right: 6px; min-width: 18px; height: 18px; font-size: 10.5px; padding: 0 5px; margin: 0; }
+    .bj .pestanas button { padding: 5px 10px; font-size: 12px; }
+    .can-resumen { grid-template-columns: 1fr 1fr; }
+    .can-mini b { font-size: 13px; }
+  }
 </style>
 </head>
 <body>
@@ -1344,6 +1419,8 @@ async function cargarClientes() {
 // Filtros de la lista. «tick» sustituye a las pestañas: por defecto, los que tienen incidencias.
 let filtroCli = { q: '', serv: '', orig: '', tick: 'con', estado: '', contacto: '', horas: '', orden: 'cliente:1', vista: 'lista', mas: false, pag: 1 };
 const POR_PAGINA = 25;
+// Por debajo de 1200 px la tabla no cabe: siempre tarjetas.
+const TARJETAS_SOLO = () => innerWidth < 1200;
 // Orden «columna:sentido». Al tocar una cabecera se ordena por ella y, si se vuelve a tocar, al revés.
 // Primero: textos de la A a la Z, números de más a menos y último contacto de los más recientes.
 // Sin fecha o sin correo siempre van al final.
@@ -1435,7 +1512,11 @@ function vistaClientes(arg) {
   // Ctrl/⌘ + K: al buscador.
   const tecla = e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('cq')?.focus(); } };
   document.addEventListener('keydown', tecla);
-  pararVista = () => document.removeEventListener('keydown', tecla);
+  // Al girar o redimensionar la pantalla, de tabla a tarjetas y al revés.
+  let ancho = TARJETAS_SOLO();
+  const alCambiar = () => { if (TARJETAS_SOLO() !== ancho) { ancho = TARJETAS_SOLO(); pintarClientes(); } };
+  addEventListener('resize', alCambiar);
+  pararVista = () => { document.removeEventListener('keydown', tecla); removeEventListener('resize', alCambiar); };
   clientesCache = null;
   cargarClientes().then(pintarClientes).catch(fallo);
 }
@@ -1481,7 +1562,7 @@ function pintarClientes() {
   const acciones = () => `<div class="cl-acc"><button class="cl-menu-b" data-menu aria-label="Más acciones" title="Más acciones">⋯</button></div>`;
   const sub = x => `<small>${esc(x.codigo || '')}${x.kitDigital ? `${x.codigo ? ' · ' : ''}Kit Digital activo${x.kitDigital !== x.nombre ? ` · ${esc(x.kitDigital)}` : ''}` : ''}</small>`;
   $('cltabla').innerHTML = !l.length ? '<div class="vacio">Ningún cliente coincide con los filtros.</div>'
-    : f.vista === 'grid' ? `<div class="cl-grid">${pag.map(x => `<div class="cl-card" data-nombre="${esc(x.nombre)}">
+    : (f.vista === 'grid' || TARJETAS_SOLO()) ? `<div class="cl-grid">${pag.map(x => `<div class="cl-card" data-nombre="${esc(x.nombre)}">
         <div class="cl-nom">${avatar(x.nombre)}<div style="min-width:0"><a href="${ficha(x)}">${esc(x.nombre)}</a>${sub(x)}</div></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">${pildoraServ(x.servicio)}${pildoraOrig(x.tipo_cliente)}</div>
         <div class="num3"><div><b>${x.tickets}</b><span>Tickets</span></div><div><b>${x.abiertos}</b><span>Abiertos</span></div><div><b>${num(x.horas, 1)}</b><span>Horas</span></div></div>
