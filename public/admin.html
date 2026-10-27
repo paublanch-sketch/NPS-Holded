@@ -135,6 +135,27 @@
   .m.tecnico { align-self: flex-end; background: var(--pizarra); color: #fff; border-bottom-right-radius: 4px; }
   .m.nota { align-self: flex-end; background: var(--nota); border: 1px dashed var(--nota-l); }
   .m.sistema { align-self: center; background: none; color: var(--muted); font-size: 12px; text-align: center; padding: 2px 8px; }
+  /* Ficha de cliente: sus incidencias con la conversación y, aparte, las notas internas */
+  .ficha { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 20px; align-items: start; }
+  .ficha-datos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .ficha-dato { background: var(--blanco); border: 1px solid var(--linea); border-radius: 12px; padding: 12px 14px; }
+  .ficha-dato b { display: block; font-size: 22px; letter-spacing: -.01em; }
+  .ficha-dato span { font-size: 12px; color: var(--bruma); }
+  .inc { border: 1px solid var(--linea); border-radius: 12px; background: var(--blanco); }
+  .inc + .inc { margin-top: 10px; }
+  .inc > summary { list-style: none; cursor: pointer; padding: 12px 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .inc > summary::-webkit-details-marker { display: none; }
+  .inc > summary .t { font-weight: 600; flex: 1; min-width: 180px; }
+  .inc > summary small { color: var(--bruma); font-size: 12px; }
+  .inc .hilo-f { border-top: 1px solid var(--linea); padding: 14px; display: flex; flex-direction: column; gap: 8px; background: var(--cal); border-radius: 0 0 12px 12px; }
+  .inc .hilo-f .ir-t { align-self: flex-start; font-size: 12px; color: var(--azul); font-weight: 600; text-decoration: none; }
+  .nota-f { background: var(--nota); border: 1px dashed var(--nota-l); border-radius: 10px; padding: 9px 11px; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .nota-f + .nota-f { margin-top: 8px; }
+  .nota-f small { display: block; color: var(--bruma); font-size: 11px; margin-top: 4px; }
+  .nota-f small a { color: inherit; }
+  #ctabla td a.cli { color: var(--pizarra); text-decoration: none; }
+  #ctabla td a.cli:hover { color: var(--azul); text-decoration: underline; }
+  @media (max-width: 1000px) { .ficha { grid-template-columns: 1fr; } .ficha-datos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .redactar { background: var(--blanco); border-top: 1px solid var(--linea); padding: 10px 24px 14px; }
   .redactar .modos { display: flex; gap: 4px; margin-bottom: 8px; align-items: center; }
   .redactar .modos button { border: 0; background: none; font-size: 13px; font-weight: 600; color: var(--muted); padding: 5px 9px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
@@ -1057,7 +1078,8 @@ async function cargarClientes() {
 let filtroCli = { q: '', sin: false };
 // Falta clasificar: sin servicio, o Implementación/Premium sin origen (en Kit Digital el origen no aplica).
 const pendiente = x => x.servicio === 'Sin clasificar' || (['Implementación', 'Premium'].includes(x.servicio) && x.tipo_cliente === 'Sin clasificar');
-function vistaClientes() {
+function vistaClientes(arg) {
+  if (arg) return vistaFicha(decodeURIComponent(arg));
   $('vista').innerHTML = `
     <div class="cabeza"><h1>Clientes</h1><span style="color:var(--muted);font-size:13px">El servicio y el origen se guardan por cliente y cuentan en todas sus incidencias.</span></div>
     <div class="filtros">
@@ -1080,7 +1102,7 @@ function pintarClientes() {
   $('ccuenta').textContent = `${l.length} de ${c.clientes.length} clientes · ${c.clientes.filter(pendiente).length} por clasificar`;
   const sel = (campo, lista, v) => `<select class="campo" data-campo="${campo}" style="padding:5px 7px;font-size:13px">${lista.map(o => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
   $('ctabla').innerHTML = l.length ? `<table><thead><tr><th>Cliente</th><th>Servicio</th><th>Origen</th><th class="num">Tickets</th><th class="num">Abiertos</th><th>Último</th><th>Contacto</th><th></th></tr></thead><tbody>
-    ${l.slice(0, 300).map(x => `<tr data-nombre="${esc(x.nombre)}"><td><b>${esc(x.nombre)}</b></td><td>${sel('servicio', c.servicios, x.servicio)}</td><td>${sel('tipo_cliente', c.origenes, x.tipo_cliente)}</td><td class="num">${x.tickets}</td><td class="num">${x.abiertos || ''}</td><td>${x.ultimo ? fecha(x.ultimo) : ''}</td><td style="font-size:12px;color:var(--bruma);overflow-wrap:anywhere">${esc(x.emails[0] || x.telefonos[0] || '')}${x.emails.length > 1 ? ` +${x.emails.length - 1}` : ''}</td><td><button class="boton sec peq" data-fusion>Fusionar…</button></td></tr>`).join('')}
+    ${l.slice(0, 300).map(x => `<tr data-nombre="${esc(x.nombre)}"><td><a class="cli" href="#/clientes/${encodeURIComponent(x.nombre)}"><b>${esc(x.nombre)}</b></a></td><td>${sel('servicio', c.servicios, x.servicio)}</td><td>${sel('tipo_cliente', c.origenes, x.tipo_cliente)}</td><td class="num">${x.tickets}</td><td class="num">${x.abiertos || ''}</td><td>${x.ultimo ? fecha(x.ultimo) : ''}</td><td style="font-size:12px;color:var(--bruma);overflow-wrap:anywhere">${esc(x.emails[0] || x.telefonos[0] || '')}${x.emails.length > 1 ? ` +${x.emails.length - 1}` : ''}</td><td><button class="boton sec peq" data-fusion>Fusionar…</button></td></tr>`).join('')}
   </tbody></table>` : '<div class="vacio">Ningún cliente coincide.</div>';
   $('ctabla').onchange = async e => {
     const s = e.target.closest('select[data-campo]');
@@ -1109,6 +1131,72 @@ function pintarClientes() {
         await cargarClientes();
         pintarClientes();
       });
+  };
+}
+
+// ---- Ficha de un cliente: sus incidencias (lo que pidió y cómo se le respondió) y, aparte,
+// las notas internas del equipo. El servicio y el origen se cambian aquí igual que en la tabla.
+async function vistaFicha(nombre) {
+  const volver = '<div class="cabeza"><a href="#/clientes" style="font-size:13px;color:var(--bruma);text-decoration:none">← Clientes</a></div>';
+  $('vista').innerHTML = `${volver}<div class="contenido"><div class="vacio">Cargando…</div></div>`;
+  scrollTo(0, 0);
+  let c, todos;
+  try { [c, todos] = await Promise.all([cargarClientes(), api('/api/tickets')]); } catch (e) { return fallo(e); }
+  if (location.hash !== `#/clientes/${encodeURIComponent(nombre)}`) return;
+  const x = c.clientes.find(y => y.nombre === nombre);
+  if (!x) { $('vista').innerHTML = `${volver}<div class="contenido"><div class="vacio">Este cliente no existe.</div></div>`; return; }
+  const l = todos.filter(t => t.cliente === nombre && !t.interno).sort((a, b) => b.entrada.localeCompare(a.entrada));
+  const horas = l.reduce((s, t) => s + segundos(t), 0) / 3600;
+  const nps = l.map(t => t.nps).filter(v => v != null);
+  const notas = l.flatMap(t => t.mensajes.filter(m => m.de === 'nota').map(m => ({ ...m, t }))).sort((a, b) => b.fecha.localeCompare(a.fecha));
+  const sel = (campo, lista, v) => `<select class="campo" data-campo="${campo}">${lista.map(o => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+  const mensaje = (t, m) => `<div class="m ${m.de}">${m.adjunto ? adjuntoHtml(m.adjunto) : esc(m.texto)}${m.de === 'sistema' ? '' : `<small>${m.autor ? esc(m.autor) + ' · ' : m.de === 'cliente' ? esc(t.contacto || t.cliente) + ' · ' : ''}${fechaHora(m.fecha)}</small>`}</div>`;
+  const incidencia = (t, i) => {
+    const [n, txt] = slaDe(t);
+    const conv = t.mensajes.filter(m => m.de !== 'nota');
+    const resp = conv.filter(m => m.de === 'tecnico').length;
+    const h = segundos(t) / 3600;
+    return `<details class="inc"${i === 0 ? ' open' : ''}><summary>
+        <span class="t">#${t.id} · ${esc(t.tipo_incidencia || 'Incidencia')}</span>
+        <span class="pastilla ${n}">${esc(txt)}</span>
+        <small>${fechaHora(t.entrada)} · ${esc(t.canal || '')} · ${esc(t.tecnico || 'Sin asignar')} · ${resp ? `${resp} respuesta${resp > 1 ? 's' : ''}` : 'sin respuesta'}${h ? ` · ${num(h, 1)} h` : ''}${t.nps != null ? ` · NPS ${t.nps}` : ''}</small>
+      </summary>
+      <div class="hilo-f">${conv.map(m => mensaje(t, m)).join('') || '<div class="m sistema">Sin mensajes.</div>'}
+        ${t.mejora ? `<div class="m sistema">Qué mejoraría: «${esc(t.mejora)}»</div>` : ''}
+        <a class="ir-t" href="#/bandeja/${t.id}">Abrir en la bandeja →</a></div></details>`;
+  };
+  $('vista').innerHTML = `${volver}
+    <div class="contenido">
+      <section class="tarjeta" style="padding:18px 20px">
+        <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+          <div style="flex:1;min-width:220px"><h1 style="margin:0 0 4px;font-size:22px">${esc(x.nombre)}</h1>
+            <div style="font-size:13px;color:var(--bruma);overflow-wrap:anywhere">${[...x.emails, ...x.telefonos].map(esc).join(' · ') || 'Sin datos de contacto'}</div></div>
+          <div id="fsel" style="display:flex;gap:10px;flex-wrap:wrap">
+            <label style="font-size:12px;color:var(--bruma)">Servicio<br>${sel('servicio', c.servicios, x.servicio)}</label>
+            <label style="font-size:12px;color:var(--bruma)">Origen<br>${sel('tipo_cliente', c.origenes, x.tipo_cliente)}</label>
+          </div>
+        </div>
+        <div class="ficha-datos" style="margin-top:16px">
+          <div class="ficha-dato"><b>${l.length}</b><span>Incidencias</span></div>
+          <div class="ficha-dato"><b>${l.filter(t => t.estado !== 'Cerrado').length}</b><span>Abiertas ahora</span></div>
+          <div class="ficha-dato"><b>${num(horas, 1)} h</b><span>Horas de soporte</span></div>
+          <div class="ficha-dato"><b>${nps.length ? num(nps.reduce((a, b) => a + b, 0) / nps.length / 2, 1) + '/5' : '—'}</b><span>Valoración media${nps.length ? ` · ${nps.length} resp.` : ''}</span></div>
+        </div>
+        ${x.notas ? `<p style="margin:12px 0 0;font-size:13px;color:var(--bruma);white-space:pre-wrap">${esc(x.notas)}</p>` : ''}
+      </section>
+      <div class="ficha">
+        <section><h2 style="font-size:16px;margin:0 0 10px">Incidencias</h2>${l.map(incidencia).join('') || '<div class="vacio">Sin incidencias.</div>'}</section>
+        <section class="tarjeta" style="padding:16px 18px"><h2 style="font-size:16px;margin:0 0 4px">Notas internas (${notas.length})</h2>
+          <p style="margin:0 0 12px;font-size:12px;color:var(--bruma)">Solo las ve el equipo, nunca el cliente.</p>
+          ${notas.map(m => `<div class="nota-f">${esc(m.texto)}<small>${m.autor ? esc(m.autor) + ' · ' : ''}${fechaHora(m.fecha)} · <a href="#/bandeja/${m.t.id}">#${m.t.id}</a></small></div>`).join('') || '<div style="font-size:13px;color:var(--muted)">Ninguna nota interna.</div>'}
+        </section>
+      </div>
+    </div>`;
+  $('fsel').onchange = async e => {
+    const s = e.target.closest('select[data-campo]');
+    if (!s) return;
+    try { await api('/api/clientes', { nombre, [s.dataset.campo]: s.value }); x[s.dataset.campo] = s.value; aviso(`${nombre}: ${s.value}`); }
+    catch (err) { fallo(err); }
   };
 }
 

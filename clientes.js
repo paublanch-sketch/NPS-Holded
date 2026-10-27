@@ -31,7 +31,16 @@ async function guardarFicha(nombre, cambios) {
 // Cambios de ficha pedidos una sola vez: se aplican al arrancar y se apuntan en «ajustes»,
 // para no pisar lo que se cambie después desde Clientes.
 // 27/10/2026: SHEILOR SLU es Premium, la única Premium real.
-const UNA_VEZ = [['sheilor-premium', () => guardarFicha('SHEILOR SLU', { servicio: 'Premium' })]];
+// 27/10/2026: todos los demás clientes reales son Kit Digital y antiguos clientes de AKIRA.
+const UNA_VEZ = [
+  ['sheilor-premium', () => guardarFicha('SHEILOR SLU', { servicio: 'Premium' })],
+  ['todos-kit-digital-akira', async () => {
+    const nombres = new Set((await tickets.todos()).filter(t => !t.interno && !t.ejemplo).map(t => t.cliente));
+    for (const f of await clientes.todos()) if (!f.ejemplo) nombres.add(f.nombre);
+    nombres.delete('SHEILOR SLU');
+    for (const n of nombres) if (n) await guardarFicha(n, { servicio: 'Kit Digital', tipo_cliente: 'Antiguo cliente AKIRA' });
+  }],
+];
 async function aplicarUnaVez() {
   for (const [clave, f] of UNA_VEZ) {
     if ((await ajustes.donde('clave', clave)).length) continue;
