@@ -42,6 +42,18 @@ const UNA_VEZ = [
     nombres.delete('SHEILOR SLU');
     for (const n of nombres) if (n) await guardarFicha(n, { servicio: 'Kit Digital', tipo_cliente: 'Antiguo cliente AKIRA' });
   }],
+  // 27/10/2026: lista de clientes del Kit Digital activos (kit-digital-activos.txt, una razón
+  // social por línea) y las uniones que no salían solas, comprobadas por correo y en internet.
+  ['kit-digital-activos-1', async () => {
+    const lista = require('fs').readFileSync(require('path').join(__dirname, 'kit-digital-activos.txt'), 'utf8')
+      .split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    const r = await importarKitDigital(lista);
+    console.log(`Kit Digital: ${r.unidos.length} unidos, ${r.nuevos} nuevos, ${r.yaEstaban} ya estaban.`);
+    const conTickets = new Set((await tickets.todos()).map(t => t.cliente));
+    for (const [de, a] of [['Casa Alfaro', 'ALPARGATAS ALFARO S.L.'], ['AINHOA MARTÍN QUIROGA', 'AQ MODEL AGENCY SL']]) {
+      if (conTickets.has(a) && (await clientes.todos()).some(f => f.nombre === de)) await fusionar(de, a);
+    }
+  }],
 ];
 async function aplicarUnaVez() {
   for (const [clave, f] of UNA_VEZ) {
@@ -127,6 +139,26 @@ async function importarKitDigital(lista) {
   return r;
 }
 
+// Fusionar: todos los tickets de «de» pasan a «a»; el nombre viejo queda como contacto.
+async function fusionar(de, a) {
+  let n = 0;
+  for (const t of await tickets.todos()) {
+    if (t.cliente !== de) continue;
+    if (!t.contacto) t.contacto = de;
+    t.cliente = a;
+    await tickets.guardar(t);
+    n++;
+  }
+  const l = await clientes.todos();
+  const fa = l.find(x => x.nombre === a), fd = l.find(x => x.nombre === de);
+  if (fd) {
+    if (!fa) await guardarFicha(a, fd);
+    else await guardarFicha(a, { servicio: fa.servicio === 'Sin clasificar' ? fd.servicio : undefined, tipo_cliente: fa.tipo_cliente === 'Sin clasificar' ? fd.tipo_cliente : undefined, kitDigital: fa.kitDigital ? undefined : fd.kitDigital });
+    await clientes.borrar(fd.id);
+  }
+  return n;
+}
+
 async function rutas(req, res, ruta, { json, leerCuerpo }) {
   if (!ruta.startsWith('/api/clientes')) return false;
 
@@ -161,29 +193,13 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
     if (!lista.length) return json(res, { error: 'Pega la lista, un cliente por línea' }, 400), true;
     return json(res, await importarKitDigital(lista)), true;
   }
-  // Fusionar: todos los tickets de «de» pasan a «a»; el nombre viejo queda como contacto.
   if (req.method === 'POST' && ruta === '/api/clientes/fusionar') {
     const b = await leerCuerpo(req);
     const de = String(b.de || '').trim(), a = String(b.a || '').trim();
     if (!de || !a || de === a) return json(res, { error: 'Elige dos clientes distintos' }, 400), true;
-    let n = 0;
-    for (const t of await tickets.todos()) {
-      if (t.cliente !== de) continue;
-      if (!t.contacto) t.contacto = de;
-      t.cliente = a;
-      await tickets.guardar(t);
-      n++;
-    }
-    const l = await clientes.todos();
-    const fa = l.find(x => x.nombre === a), fd = l.find(x => x.nombre === de);
-    if (fd) {
-      if (!fa) await guardarFicha(a, fd);
-      else await guardarFicha(a, { servicio: fa.servicio === 'Sin clasificar' ? fd.servicio : undefined, tipo_cliente: fa.tipo_cliente === 'Sin clasificar' ? fd.tipo_cliente : undefined, kitDigital: fa.kitDigital ? undefined : fd.kitDigital });
-      await clientes.borrar(fd.id);
-    }
-    return json(res, { movidos: n }), true;
+    return json(res, { movidos: await fusionar(de, a) }), true;
   }
   return false;
 }
 
-module.exports = { rutas, fichas, clasificar, guardarFicha, aplicarUnaVez, importarKitDigital, parecido, SERVICIOS, ORIGENES };
+module.exports = { rutas, fichas, clasificar, guardarFicha, fusionar, aplicarUnaVez, importarKitDigital, parecido, SERVICIOS, ORIGENES };
