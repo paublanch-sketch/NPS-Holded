@@ -23,14 +23,16 @@
     --nota: #fff8e1; --nota-l: #f0d58a;
   }
   * { box-sizing: border-box; }
-  html, body { height: 100%; }
+  /* El body crece con el contenido: así la barra lateral (sticky) se queda quieta al bajar. */
+  html { height: 100%; }
+  body { min-height: 100%; }
   body { margin: 0; font: 14px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--cal); color: var(--pizarra); display: grid; grid-template-columns: 228px minmax(0, 1fr); }
   button, input, select, textarea { font: inherit; color: inherit; }
   a { color: inherit; }
   .oculto { display: none !important; }
 
   /* Navegación */
-  .nav { background: var(--marino); color: #fff; display: flex; flex-direction: column; gap: 4px; padding: 22px 14px 16px; position: sticky; top: 0; height: 100vh; }
+  .nav { background: var(--marino); color: #fff; display: flex; flex-direction: column; gap: 4px; padding: 22px 14px 16px; position: sticky; top: 0; height: 100vh; align-self: start; }
   .nav .marca { padding: 4px 10px 24px; line-height: 0; }
   .nav .marca img { display: block; width: 100%; max-width: 180px; height: auto; }
   .nav .enlaces { display: flex; flex-direction: column; gap: 4px; }
