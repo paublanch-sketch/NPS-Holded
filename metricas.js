@@ -3,6 +3,7 @@
 // Aparte, las horas por cliente del periodo para el CSV.
 
 const SLA_MIN = 60;           // primera respuesta en menos de 1 h laborable
+const KIT_DIGITAL_2 = process.env.KIT_DIGITAL_2 === '1';  // su línea, oculta hasta que abra
 const [H_INI, H_FIN] = (process.env.HORARIO_LABORAL || '09:00-18:00').split('-').map(h => {
   const [hh, mm] = h.split(':').map(Number);
   return hh * 60 + (mm || 0);
@@ -130,7 +131,7 @@ function resumen(todos, { desde, hasta, tecnico }, ahora = new Date()) {
     actualizado: ahora.toISOString(),
     periodo: { desde, hasta },
     // Soporte Premium primero e Implementación después (28/10/2026): cada uno con todo sumado.
-    servicios: ['Premium', 'Implementación'].map(s => bloque(filtrados.filter(t => t.servicio === s), s)),
+    servicios: ['Premium', 'Implementación', ...(KIT_DIGITAL_2 ? ['Kit Digital 2'] : [])].map(s => bloque(filtrados.filter(t => t.servicio === s), s)),
     // Los clientes antiguos (Kit Digital) no están en el mockup, y el antiguo formulario no medía
     // ni la primera respuesta ni la valoración: de ellos se enseña lo que pidieron en el periodo.
     antiguos: (() => {
@@ -150,11 +151,15 @@ function resumen(todos, { desde, hasta, tecnico }, ahora = new Date()) {
         { nombre: 'Referenciado por asesoría', origenes: ['Referenciado por asesoría', 'Asesoría'] },
         { nombre: 'Cliente directo', origenes: ['Directo', 'Antiguo cliente AKIRA'] },
       ] },
+      // Kit Digital 2: casi seguro que todos serán directos; si no, se añade aquí su grupo.
+      ...(KIT_DIGITAL_2 ? [{ servicio: 'Kit Digital 2', grupos: [
+        { nombre: 'Cliente directo', origenes: ['Directo', 'Antiguo cliente AKIRA', 'Sin clasificar'] },
+      ] }] : []),
     ].map(s => {
       const del = filtrados.filter(t => t.servicio === s.servicio);
       return {
         servicio: s.servicio,
-        sinOrigen: new Set(del.filter(t => t.tipo_cliente === 'Sin clasificar').map(t => t.cliente)).size,
+        sinOrigen: new Set(del.filter(t => !s.grupos.some(g => g.origenes.includes(t.tipo_cliente))).map(t => t.cliente)).size,
         grupos: s.grupos.map(g => bloque(del.filter(t => g.origenes.includes(t.tipo_cliente)), g.nombre)),
       };
     }),

@@ -93,6 +93,11 @@
   .fila-t.tuya { background: var(--acento-f); }
   .fila-t.tuya:hover { background: #e3ebfd; }
   .vacio { padding: 22px 20px; color: var(--bruma); font-size: 14px; }
+  /* Otras formas de contactar: una fila por canal */
+  .canal-ico { width: 42px; height: 42px; border-radius: 12px; background: var(--acento-f); color: var(--acento); display: grid; place-items: center; flex: none; }
+  .canal-ico svg { width: 20px; height: 20px; }
+  .horario { margin: 14px 2px 0; color: var(--bruma); font-size: 14px; }
+  .submenu .corto { display: none; }
 
   /* Abrir ticket */
   #vistaNueva { max-width: 860px; margin: 0 auto; }
@@ -253,6 +258,8 @@
     .cat { font-size: 13px; padding: 8px 12px; } .cat[aria-pressed="true"] { padding: 7px 11px; }
     .seguro { margin-left: 0; } .adjuntar { flex-wrap: wrap; }
     .submenu .dentro { padding: 0 8px; } .submenu a { padding: 13px 10px 11px; } .quien > span { display: none; }
+    .submenu .largo { display: none; } .submenu .corto { display: inline; }
+    .submenu a { padding: 13px 8px 11px; } .submenu a svg { display: none; } .quien { padding-left: 6px; }
     .entrar .tarjeta { padding: 24px 20px 18px; }
     .fila-t { flex-wrap: wrap; gap: 6px 12px; padding: 14px 16px; } .fila-t .t { flex: 1 1 100%; } .fila-t > svg { display: none; } .fila-t .t b { white-space: normal; }
     .val-cab, .val-cuerpo, .val-pie { padding-left: 24px; padding-right: 24px; } .val-cab h2 { font-size: 23px; }
@@ -303,6 +310,7 @@
 <nav class="submenu oculto" id="submenu" aria-label="Tu soporte"><div class="dentro">
   <a href="/#nuevo" id="mNuevo"><svg class="i"><use href="#i-form"/></svg>Abrir ticket</a>
   <a href="/#mis" id="mMis"><svg class="i"><use href="#i-doc"/></svg>Mis tickets<span class="burbuja oculto" id="mAbiertas"></span></a>
+  <a href="/#contacto" id="mOtros" class="oculto"><svg class="i"><use href="#i-tel"/></svg><span class="largo">Otras formas de contactar</span><span class="corto">Contacto</span></a>
   <span class="quien"><span id="quien"></span><button type="button" id="salir">Salir</button></span>
 </div></nav>
 
@@ -379,7 +387,13 @@
         <div class="error" id="errAlta" role="alert"></div>
       </form>
     </div>
-    <div class="otros" id="otrosNueva"></div>
+  </section>
+
+  <!-- Otras formas de contactar -->
+  <section id="vistaContacto" class="mis oculto">
+    <div class="mis-cab"><div><h1>Otras formas de contactar</h1><p>Si lo prefieres, también nos tienes aquí.</p></div></div>
+    <div class="tarjeta lista-t" id="canales"></div>
+    <p class="horario" id="horario"></p>
   </section>
 
   <!-- Seguir una incidencia -->
@@ -479,28 +493,40 @@ const cargaConfig = fetch('/api/portal').then(r => r.json()).then(c => { config 
 
 // ---------- Vistas ----------
 // El portal va con cuenta: quien entra ve «Abrir ticket» y «Mis tickets» (los de su empresa).
-const VISTAS = ['vistaEntrar', 'vistaMis', 'vistaNueva', 'vistaTicket'];
+const VISTAS = ['vistaEntrar', 'vistaMis', 'vistaNueva', 'vistaTicket', 'vistaContacto'];
 let yo = null;
 function mostrar(v) {
   VISTAS.forEach(x => $(x).classList.toggle('oculto', x !== v));
   $('submenu').classList.toggle('oculto', !yo || v === 'vistaEntrar');
   $('mNuevo').classList.toggle('on', v === 'vistaNueva');
   $('mMis').classList.toggle('on', v === 'vistaMis' || v === 'vistaTicket');
+  $('mOtros').classList.toggle('on', v === 'vistaContacto');
   scrollTo(0, 0);
 }
 
-// Otras formas de contactar, en una línea: al pie del formulario y para quien aún no tiene cuenta.
+// Otras formas de contactar: pestaña propia en el menú de arriba (reunión del 28/10/2026) y, en
+// una línea, para quien aún no tiene cuenta. Sin ningún canal configurado, la pestaña no sale.
+const canalesDe = c => [
+  c.whatsapp && ['whatsapp', 'WhatsApp', 'Escríbenos y te contestamos por ahí', `https://wa.me/${c.whatsapp}`],
+  c.email && ['correo', 'Correo', c.email, `mailto:${c.email}`],
+  c.telefono && ['tel', 'Teléfono', c.telefono, `tel:${c.telefono.replace(/[^\d+]/g, '')}`],
+].filter(Boolean);
+const horarioDe = c => { const [ini, fin] = (c.horario || '09:00-18:00').split('-'); return `Lunes a viernes de ${ini} a ${fin}`; };
 function pintarOtros(id, titulo) {
   cargaConfig.then(c => {
-    const [ini, fin] = (c.horario || '09:00-18:00').split('-');
-    const l = [
-      c.whatsapp && `<a href="https://wa.me/${esc(c.whatsapp)}" target="_blank" rel="noopener">${icono('whatsapp')}WhatsApp</a>`,
-      c.email && `<a href="mailto:${esc(c.email)}">${icono('correo')}${esc(c.email)}</a>`,
-      c.telefono && `<a href="tel:${esc(c.telefono.replace(/[^\d+]/g, ''))}">${icono('tel')}${esc(c.telefono)}</a>`,
-    ].filter(Boolean);
-    $(id).innerHTML = l.length ? `${titulo ? `<span>${titulo}</span>` : ''}${l.join('')}<small>Lunes a viernes de ${esc(ini)} a ${esc(fin)}</small>` : '';
+    const l = canalesDe(c).map(([ico, nombre, valor, href]) => `<a href="${esc(href)}"${ico === 'whatsapp' ? ' target="_blank" rel="noopener"' : ''}>${icono(ico)}${esc(ico === 'whatsapp' ? nombre : valor)}</a>`);
+    $(id).innerHTML = l.length ? `${titulo ? `<span>${titulo}</span>` : ''}${l.join('')}<small>${esc(horarioDe(c))}</small>` : '';
   });
 }
+function pintarContacto() {
+  cargaConfig.then(c => {
+    $('canales').innerHTML = canalesDe(c).map(([ico, nombre, valor, href]) => `<a class="fila-t" href="${esc(href)}"${ico === 'whatsapp' ? ' target="_blank" rel="noopener"' : ''}>
+      <span class="canal-ico">${icono(ico)}</span><span class="t"><b>${esc(nombre)}</b><small>${esc(valor)}</small></span>${icono('flecha')}</a>`).join('')
+      || '<div class="vacio">Escríbenos desde «Abrir ticket» y te contestamos aquí mismo.</div>';
+    $('horario').textContent = horarioDe(c) + '.';
+  });
+}
+cargaConfig.then(c => $('mOtros').classList.toggle('oculto', !canalesDe(c).length));
 
 // ---------- Entrar ----------
 const claveToken = new URLSearchParams(location.search).get('clave');
@@ -658,7 +684,6 @@ function iniciarNueva() {
       txt.textContent = 'Enviar incidencia';
     }
   };
-  pintarOtros('otrosNueva', '¿Prefieres otro canal?');
 }
 
 const G_LOGO = '<svg viewBox="0 0 48 48" aria-label="Google" role="img"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
@@ -845,6 +870,7 @@ function iniciarTicket() {
 async function irA() {
   if (location.hash === '#nuevo') { iniciarNueva(); return mostrar('vistaNueva'); }
   if (location.hash === '#mis') { mostrar('vistaMis'); return cargarMis().catch(e => e.login && entrar()); }
+  if (location.hash === '#contacto') { pintarContacto(); return mostrar('vistaContacto'); }
   const l = await cargarMis().catch(() => []);
   if (l.some(t => t.abierta)) mostrar('vistaMis');
   else { iniciarNueva(); mostrar('vistaNueva'); }

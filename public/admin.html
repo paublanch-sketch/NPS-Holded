@@ -120,7 +120,7 @@
   .item .l2 { font-size: 12px; color: var(--bruma); margin-top: 2px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
   .item .l3 { font-size: 13px; color: var(--bruma); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .punto { width: 8px; height: 8px; border-radius: 50%; background: var(--azul); flex: none; display: inline-block; }
-  .detalle { display: grid; grid-template-columns: minmax(0, 1fr) clamp(250px, 20vw, 300px); min-height: 0; height: 100vh; }
+  .detalle { display: grid; grid-template-columns: minmax(0, 1fr) clamp(290px, 22vw, 360px); min-height: 0; height: 100vh; }
   .conv { display: flex; flex-direction: column; min-height: 0; }
   .conv .cab { padding: 18px 24px 14px; background: var(--blanco); border-bottom: 1px solid var(--linea); }
   .conv .cab h2 { font-size: 19px; margin: 0; letter-spacing: -.01em; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -178,6 +178,7 @@
   .cl-nom small { display: block; color: var(--muted); font-size: 11px; margin-top: 1px; }
   .pl { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 99px; white-space: nowrap; border: 1px solid transparent; }
   .pl.kit { background: #f1ecfd; color: #6d3fd1; }
+  .pl.kit2 { background: #fdeef7; color: #a3266f; }
   .pl.premium { background: #e7f6ec; color: #17803d; }
   .pl.impl { background: var(--azul-f); color: var(--azul-h); }
   .pl.sin { background: var(--suave); color: var(--bruma); }
@@ -605,6 +606,7 @@
   .bj-serv.asesoria { background: #fdf0e6; color: #b45309; }
   .bj-serv.impl { background: var(--azul-f); color: var(--azul-h); }
   .bj-serv.kit { background: #f1ecfd; color: #6d3fd1; }
+  .bj-serv.kit2 { background: #fdeef7; color: #a3266f; }
   .bj .item:has(.bj-serv.premium) { border-left-color: #22a34a; }
   .bj .item.sel:has(.bj-serv.premium) { border-left-color: var(--azul); }
   .bj-sub { display: flex; gap: 8px 12px; align-items: center; flex-wrap: wrap; margin-top: 6px; font-size: 13px; color: var(--bruma); }
@@ -673,7 +675,7 @@
   .bj-redactar .pie-red .ayuda { margin: 0; }
   .bj-redactar .pie-red .boton svg { width: 16px; height: 16px; }
   .bj .lado { background: var(--cal); gap: 14px; }
-  .bj .lado .tarjeta { padding: 16px 18px; border-radius: 14px; }
+  .bj .lado .tarjeta { padding: 14px 16px; border-radius: 14px; }
   .bj .lado h3 { display: flex; gap: 8px; align-items: center; font-size: 15px; margin: 0 0 12px; text-transform: none; letter-spacing: -.01em; color: var(--pizarra); }
   .bj .lado h3 svg { width: 18px; height: 18px; color: var(--pizarra); }
   .bj .reloj { font-size: 38px; }
@@ -682,7 +684,10 @@
   .bj-otro { border: 0; background: none; color: var(--bruma); font: inherit; font-size: 12px; margin-top: 8px; cursor: pointer; padding: 0; text-decoration: underline; }
   .bj-esperar { background: var(--azul-f); color: var(--azul-h); border-color: var(--azul-f); box-shadow: none; }
   .bj-esperar:hover { background: #e0e9fd; border-color: #e0e9fd; }
-  .bj .prop { grid-template-columns: 112px 1fr; gap: 9px 10px; }
+  .bj .prop { grid-template-columns: 100px 1fr; gap: 9px 10px; }
+  /* Lo que no cabe al lado de su nombre (el tipo de incidencia) va debajo y a todo el ancho */
+  .prop .ancho { grid-column: 1 / -1; }
+  .prop span.ancho { margin-bottom: -5px; }
   .bj .prop a { color: var(--azul); text-decoration: none; }
   .bj-sla-txt { display: inline-flex; gap: 5px; align-items: center; font-weight: 600; }
   .bj-sla-txt svg { width: 14px; height: 14px; }
@@ -925,10 +930,10 @@ function slaDe(t) {
 }
 const segundos = t => (t.horas_previas || 0) * 3600 + (t.sesiones || []).reduce((s, x) => s + ((x.fin ? new Date(x.fin) : new Date()) - new Date(x.inicio)) / 1000, 0);
 
-// Prioridad (28/10/2026): 1) Servicio Premium, 2) asesorías partner, 3) Implementación, 4) Kit Digital 1.
-// Las asesorías partner tienen Premium gratis: van detrás de los que pagan. Ya no hay urgencia.
-const GRUPO_BJ = t => t.servicio === 'Premium' ? (t.tipo_cliente === 'Asesoría' ? 1 : 0) : t.servicio === 'Implementación' ? 2 : 3;
-const ETIQ_BJ = t => [['premium', 'Servicio Premium'], ['asesoria', 'Asesoría partner'], ['impl', 'Implementación'], ['kit', 'Kit Digital 1']][GRUPO_BJ(t)];
+// Prioridad (28/10/2026): 1) Servicio Premium, 2) asesorías partner, 3) Implementación, 4) Kit Digital 1
+// y, cuando abra, 5) Kit Digital 2. Las asesorías partner tienen Premium gratis: van detrás de los que pagan.
+const GRUPO_BJ = t => t.servicio === 'Premium' ? (t.tipo_cliente === 'Asesoría' ? 1 : 0) : t.servicio === 'Implementación' ? 2 : t.servicio === 'Kit Digital 2' ? 4 : 3;
+const ETIQ_BJ = t => [['premium', 'Servicio Premium'], ['asesoria', 'Asesoría partner'], ['impl', 'Implementación'], ['kit', 'Kit Digital 1'], ['kit2', 'Kit Digital 2']][GRUPO_BJ(t)];
 function ordenar(l) {
   if (pestana === 'cerrados') return l.sort((a, b) => (b.cierre || '').localeCompare(a.cierre || ''));
   const peso = t => t.primera_respuesta ? 1 : 0;
@@ -1140,7 +1145,7 @@ function pintarDetalle(t) {
         <h3>${ICO_BJ.detalles}Detalles</h3>
         <div class="prop">
           ${fila('Ticket', `Nº ${numDelCliente(t)} del cliente`)}
-          <span>Tipo</span><select class="campo" id="pTipo">${tiposOpc}</select>
+          <span class="ancho">Tipo de incidencia</span><select class="campo ancho" id="pTipo">${tiposOpc}</select>
           ${fila('Canal', esc(t.canal))}
           ${fila('Creado', `<span title="${esc(fechaHora(t.entrada))}">${hace(t.entrada)}</span>`)}
           ${fila('Última actualización', hace(ultimo))}
@@ -1161,7 +1166,8 @@ function pintarDetalle(t) {
       <div class="tarjeta">
         <h3>${ICO_BJ.detalles}Historial del cliente</h3>
         <div class="bj-hist-num"><div><b>${otros.length + 1}</b><span>tickets</span></div><div><b>${otros.filter(x => x.estado === 'Cerrado').length + (cerrado ? 1 : 0)}</b><span>cerrados</span></div><div><b>${num(horasCliente, 1)}</b><span>horas</span></div></div>
-        ${otros.length ? `<p class="bj-hist-aviso">Es la ${numDelCliente(t)}.ª vez que nos escribe${otros.some(x => x.tipo_incidencia === t.tipo_incidencia) ? ` y ya hubo ${otros.filter(x => x.tipo_incidencia === t.tipo_incidencia).length} de «${esc(t.tipo_incidencia)}»` : ''}.</p>` : ''}
+        ${otros.length ? (() => { const n = numDelCliente(t), mismo = otros.filter(x => x.tipo_incidencia === t.tipo_incidencia).length;
+          return `<p class="bj-hist-aviso">Nos ha escrito ${n} veces${mismo ? ` · ${mismo} ${mismo === 1 ? 'vez' : 'veces'} antes sobre «${esc(t.tipo_incidencia)}»` : ''}.</p>`; })() : ''}
         <div class="historial">${otros.slice(0, 6).map(x => `<a href="#/bandeja/${x.id}">${esc(tituloBj(x))}<span>${fecha(x.entrada)} · ${esc(ESTADO_BJ(x)[1])}</span></a>`).join('') || '<div style="font-size:13px;color:var(--muted)">Es su primera incidencia.</div>'}</div>
         ${(() => { const notas = otros.flatMap(x => x.mensajes.filter(m => m.de === 'nota').map(m => ({ ...m, x }))).sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 3);
           return notas.length ? `<div class="bj-hist-notas"><b>Últimas notas internas</b>${notas.map(m => `<div class="nota-f">${esc(m.texto)}<small>${esc(m.autor || '')} · ${fecha(m.fecha)} · ${esc(tituloBj(m.x))}</small></div>`).join('')}</div>` : ''; })()}
@@ -1403,8 +1409,9 @@ if (!PERIODOS[fm.periodo] && fm.periodo !== 'custom') fm.periodo = 'mes';
 const DESC = {
   'Implementación': 'Clientes fuera de Kit Digital 1: referenciados por una asesoría, o antiguos clientes de AKIRA sin Holded que lo solicitan.',
   'Premium': 'Asesorías partner, los clientes que nos traen y cualquier cliente que lo contrate directamente.',
+  'Kit Digital 2': 'Clientes del Kit Digital 2. Solo sale cuando el servidor lo tiene abierto (KIT_DIGITAL_2=1).',
 };
-const TITULO = { 'Implementación': 'Implementación Holded', 'Premium': 'Servicio Soporte Premium Holded' };
+const TITULO = { 'Implementación': 'Implementación Holded', 'Premium': 'Servicio Soporte Premium Holded', 'Kit Digital 2': 'Kit Digital 2' };
 const PALABRA = { ok: 'OK', atencion: 'Atención', critico: 'Crítico' };
 // Lo que quiere decir cada color en cada indicador (28/10/2026): frases cortas y que se entiendan.
 const MOTIVO = {
@@ -1462,7 +1469,7 @@ const ICO = {
   reloj: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
   estrella: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg>',
 };
-const ICONO_SERVICIO = { 'Implementación': ICO.engranaje, 'Premium': ICO.estrella };
+const ICONO_SERVICIO = { 'Implementación': ICO.engranaje, 'Premium': ICO.estrella, 'Kit Digital 2': ICO.personas };
 
 function rango() {
   if (fm.periodo === 'custom' && fm.desde && fm.hasta) return [fm.desde, fm.hasta];
@@ -1634,10 +1641,10 @@ function bloqueAntiguos(b, kit) {
   return `<section class="mk-sec">
     <div class="mk-sec-cab"><span class="mk-ico">${ICO.historial}</span><div><h2>Cliente antiguo (Kit Digital 1)</h2><p>Clientes del Kit Digital 1 y antiguos clientes, con el histórico del antiguo formulario. El formulario no medía la primera respuesta ni la valoración.</p></div><span class="mk-estado nada">Histórico</span></div>
     <div class="mk-tiles">
-      ${tile(ICO.alerta, null, num(b.tickets || 0), '', 'Incidencias en el periodo', 'Periodo', undefined, 'Kit Digital 1||tickets')}
-      ${tile(ICO.reloj, null, num(b.horas || 0, 1), ' h', 'Horas de soporte en el periodo', 'Periodo', undefined, 'Kit Digital 1||horas')}
+      ${tile(ICO.alerta, null, num(b.tickets || 0), '', 'Incidencias en el periodo', 'Incidencias', undefined, 'Kit Digital 1||tickets')}
+      ${tile(ICO.reloj, null, num(b.horas || 0, 1), ' h', 'Tiempo dedicado', 'Tiempo', undefined, 'Kit Digital 1||horas')}
       ${tile(ICO.historial, null, num(b.horasTotales || 0, 1), ' h', `Horas sumadas de todo el histórico · ${num(b.ticketsTotales || 0)} incidencias`, 'Total')}
-      ${tile(ICO.personas, null, num(b.clientes || 0), '', 'Clientes atendidos', 'Periodo')}
+      ${tile(ICO.personas, null, num(b.clientes || 0), '', 'Clientes atendidos', 'Clientes')}
       ${kit && kit.activos ? `<a class="mk-tile-enlace" href="#/clientes" data-kit>${tile(ICO.personas, null, num(kit.sinTickets), '', `Kit Digital 1 activos sin incidencias · de ${num(kit.activos)} activos`, 'Ahora')}</a>` : ''}
     </div>
     ${tablaCasos(b, false)}
@@ -1679,7 +1686,7 @@ function aro(valor, max, etiqueta, nivel, numero, pie, clave, det) {
 const maxHoras = h => [10, 20, 30, 50, 80, 100, 150, 200, 300, 500, 1000].find(m => m >= h) || Math.ceil(h / 500) * 500;
 // Los tipos de cliente de un servicio (Premium: 3; Implementación: 2), con sus 4 KPI en aros.
 function gruposServicio(s) {
-  const impl = s.servicio === 'Implementación';
+  const impl = s.servicio !== 'Premium';
   return `${s.sinOrigen ? `<p style="margin:0 0 10px;font-size:12px;color:var(--bruma)">${s.sinOrigen} cliente${s.sinOrigen > 1 ? 's' : ''} sin origen asignado no entra${s.sinOrigen > 1 ? 'n' : ''} en ningún tipo (sí en la suma de arriba).</p>` : ''}
     ${s.grupos.map(g => {
       const det = clave => `${s.servicio}|${g.nombre}|${clave}`;
@@ -1702,7 +1709,7 @@ const KPI_DET = {
   abiertas: { titulo: 'Incidencias abiertas', ahora: true, total: b => num(b.abiertas || 0), valor: c => c.abiertas.length, fmt: v => num(v), items: c => c.abiertas.map(t => [t.id, t.titulo]) },
   excedido: { titulo: 'Tiempo excedido sobre la 1 h de SLA', ahora: true, total: b => exceso(b.excedidoMin || 0), valor: c => c.excedidoMin, fmt: exceso, items: c => c.excedidos.map(t => [t.id, t.titulo, exceso(t.excesoMin) + ' sin responder']) },
   fueraSla: { titulo: 'Incidencias respondidas fuera de SLA', total: b => num(b.fueraSla || 0), valor: c => c.fueraSla.length, fmt: v => num(v), items: c => c.fueraSla.map(t => [t.id, t.titulo, 'respondida en ' + dur(t.esperaMin)]) },
-  valoracion: { titulo: 'Valoración media (NPS / Google)', total: b => b.valoracion == null ? '—' : num(b.valoracion, 1) + '/5', valor: c => mediaNps(c.valoraciones), fmt: v => num(v, 1) + '/5', max: 5, asc: true,
+  valoracion: { titulo: 'Valoración media (NPS / Google)', total: b => b.valoracion == null ? '—' : num(b.valoracion, 1) + '/5', valor: c => mediaNps(c.valoraciones), fmt: v => num(v, 1) + '/5', max: 5,
     items: c => c.valoraciones.map(v => [v.id, `${v.contacto || 'Sin nombre'}: ${v.nps}/10 · ${v.titulo}`, v.mejora ? `«${v.mejora}»` : '']) },
   horas: { titulo: 'Tiempo dedicado', total: b => num(b.horas || 0, 1) + ' h', valor: c => c.horas, fmt: v => num(v, 1) + ' h', items: c => c.tickets ? [[null, `${c.tickets} ${c.tickets === 1 ? 'incidencia' : 'incidencias'} en el periodo`]] : [] },
   tickets: { titulo: 'Incidencias en el periodo', total: b => num(b.tickets || 0), valor: c => c.tickets, fmt: v => num(v), items: () => [] },
@@ -1787,7 +1794,7 @@ function avatar(nombre) {
   const [bg, fg] = COLORES_AV[h % COLORES_AV.length];
   return `<span class="av" style="background:${bg};color:${fg}">${esc(ini)}</span>`;
 }
-const pildoraServ = s => `<span class="pl ${{ 'Kit Digital 1': 'kit', Premium: 'premium', 'Implementación': 'impl' }[s] || 'sin'}">${esc(s)}</span>`;
+const pildoraServ = s => `<span class="pl ${{ 'Kit Digital 1': 'kit', 'Kit Digital 2': 'kit2', Premium: 'premium', 'Implementación': 'impl' }[s] || 'sin'}">${esc(s)}</span>`;
 const pildoraOrig = o => `<span class="pl ${{ 'Antiguo cliente AKIRA': 'o-akira', 'Asesoría': 'o-gest', 'Referenciado por asesoría': 'o-ref', Directo: 'o-dir' }[o] || 'sin'}">${esc(o)}</span>`;
 const fechaLarga = iso => iso ? new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 

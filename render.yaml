@@ -27,6 +27,8 @@ services:
         sync: false
       - key: HORARIO_LABORAL  # para el SLA de 1 h; por defecto 09:00-18:00, lunes a viernes
         sync: false
+      - key: KIT_DIGITAL_2    # 1 cuando abra el Kit Digital 2: sale como servicio y con su línea en Métricas
+        sync: false
       # Lo que muestra el portal público
       - key: WA_NUMERO_PUBLICO  # número de WhatsApp de soporte, con prefijo (34600...)
         sync: false

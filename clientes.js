@@ -2,8 +2,10 @@
 // lo heredan. También permite fusionar dos nombres que son el mismo cliente.
 const { tickets, clientes, ajustes } = require('./store');
 
-// 28/10/2026: «Kit Digital» se llama «Kit Digital 1» (vendrá el Kit Digital 2).
-const SERVICIOS = ['Implementación', 'Premium', 'Kit Digital 1', 'Sin clasificar'];
+// 28/10/2026: «Kit Digital» se llama «Kit Digital 1». El Kit Digital 2 está preparado pero oculto
+// hasta que abra: con KIT_DIGITAL_2=1 sale como servicio en fichas, bandeja y Métricas.
+const KIT_DIGITAL_2 = process.env.KIT_DIGITAL_2 === '1';
+const SERVICIOS = ['Implementación', 'Premium', 'Kit Digital 1', ...(KIT_DIGITAL_2 ? ['Kit Digital 2'] : []), 'Sin clasificar'];
 const SERVICIO_ANTIGUO = { 'Kit Digital': 'Kit Digital 1' };
 const servicioNuevo = s => SERVICIO_ANTIGUO[s] || s;
 // «Asesoría» es la propia asesoría partner como cliente (con Premium gratis); «Referenciado por
