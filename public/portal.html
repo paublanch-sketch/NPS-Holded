@@ -203,6 +203,10 @@
   .msg.cliente { align-self: flex-end; background: var(--pizarra); color: #fff; border-bottom-right-radius: 4px; }
   .msg.cliente a { color: #fff; }
   .msg.tecnico { align-self: flex-start; background: var(--blanco); border: 1px solid var(--linea); border-bottom-left-radius: 4px; }
+  /* El técnico con su cara al lado (como el soporte de Holded): foto si la hay, si no sus iniciales */
+  .fila-tec { align-self: flex-start; display: flex; align-items: flex-end; gap: 8px; max-width: 88%; }
+  .fila-tec .msg { max-width: none; }
+  .av-tec { width: 34px; height: 34px; border-radius: 50%; flex: none; object-fit: cover; background: var(--acento); color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 700; }
   .msg.sistema { align-self: center; max-width: 92%; color: var(--bruma); font-size: 13px; text-align: center; padding: 4px 8px; }
   .msg.sistema a { font-weight: 600; }
   .msg img { max-width: 240px; max-height: 180px; border-radius: 10px; display: block; margin-bottom: 4px; }
@@ -772,7 +776,7 @@ function iniciarTicket() {
   };
 
   // Videollamada: la prevista con su enlace, o reservar un hueco libre del calendario de soporte.
-  let reservando = false, huecos = null, sinAgenda = false, diaSel = null, horaSel = null, firmaCita = '';
+  let reservando = false, huecos = null, diaSel = null, horaSel = null, firmaCita = '';
   const diaLargo = iso => new Date(iso).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
   function pintarCita(t) {
     const firma = JSON.stringify([t.citas, t.reservar, reservando, huecos && huecos.length, diaSel, horaSel]);
@@ -780,6 +784,10 @@ function iniciarTicket() {
     firmaCita = firma;
     const box = $('citaBox'), c = t.citas?.[0];
     box.classList.toggle('oculto', !c && !t.reservar);
+    if (c?.pedida) {
+      $('cita').innerHTML = `<div class="fila-cita"><div><h2>${icono('video')}Videollamada pedida</h2><div class="cuando">${esc(diaLargo(c.inicio))} · ${esc(c.inicio.slice(11, 16))}–${esc(c.fin.slice(11, 16))}</div><p>Te enviaremos el enlace de Google Meet en cuanto la confirmemos.</p></div></div>`;
+      return;
+    }
     if (c) {
       $('cita').innerHTML = `<div class="fila-cita"><div><h2>${icono('video')}Tu videollamada</h2><div class="cuando">${esc(diaLargo(c.inicio))} · ${esc(c.inicio.slice(11, 16))}–${esc(c.fin.slice(11, 16))}</div><p>Con Google Meet: se abre en el navegador o en la app.</p></div><a class="boton" href="${esc(c.enlace)}" target="_blank" rel="noopener">Unirme</a></div>`;
       return;
@@ -790,14 +798,14 @@ function iniciarTicket() {
       $('abrirReserva').onclick = async () => {
         reservando = true; firmaCita = '';
         $('cita').innerHTML = '<p>Buscando huecos libres…</p>';
-        try { huecos = (await api(`/api/soporte/${token}/huecos`)).huecos; sinAgenda = false; } catch (e) { huecos = []; sinAgenda = true; }
+        try { huecos = (await api(`/api/soporte/${token}/huecos`)).huecos; } catch { huecos = []; }
         diaSel = huecos[0]?.inicio.slice(0, 10) || null;
         pintarCita(t);
       };
       return;
     }
     if (!huecos?.length) {
-      $('cita').innerHTML = `<h2>${icono('video')}Reservar videollamada</h2><p>${sinAgenda ? 'Ahora no podemos mostrar la agenda.' : 'Ahora no hay huecos libres en los próximos días.'} Escríbenos por el chat y te proponemos una hora.</p>`;
+      $('cita').innerHTML = `<h2>${icono('video')}Reservar videollamada</h2><p>No quedan horas libres en los próximos días. Escríbenos por el chat y te proponemos una.</p>`;
       return;
     }
     const dias = [...new Set(huecos.map(h => h.inicio.slice(0, 10)))];
@@ -851,7 +859,14 @@ function iniciarTicket() {
         <p class="contacto">${esc(config.email || 'holded@interactivos.net')} &nbsp;·&nbsp; ${esc(config.telefono || '665 405 148')} &nbsp;·&nbsp; www.interactivos.net</p>
         <p class="copy">© ${new Date().getFullYear()} Interactivos. Todos los derechos reservados.</p>`;
     });
-    const html = t.mensajes.map(m => `<div class="msg ${m.de}">${m.adjunto ? adjunto(m.adjunto) : esc(m.texto)}${m.enlace ? `<br><a href="${esc(m.enlace)}" target="_blank" rel="noopener">Unirme a la videollamada</a>` : ''}${m.de === 'sistema' ? '' : `<small>${m.de === 'tecnico' ? esc(m.autor || 'Soporte') + ' · ' : ''}${hora(m.fecha)}</small>`}</div>`).join('');
+    const burbuja = m => `<div class="msg ${m.de}">${m.adjunto ? adjunto(m.adjunto) : esc(m.texto)}${m.enlace ? `<br><a href="${esc(m.enlace)}" target="_blank" rel="noopener">Unirme a la videollamada</a>` : ''}${m.de === 'sistema' ? '' : `<small>${m.de === 'tecnico' ? esc(m.autor || 'Soporte') + ' · ' : ''}${hora(m.fecha)}</small>`}</div>`;
+    // El técnico con su cara: la foto si la hay (y el mensaje es suyo); si no, sus iniciales.
+    const cara = m => {
+      const n = m.autor || config.tecnico || 'Soporte';
+      return config.foto && (!m.autor || m.autor === config.tecnico) ? `<img class="av-tec" src="${esc(config.foto)}" alt="${esc(n)}">`
+        : `<span class="av-tec" aria-hidden="true">${esc(n.split(/\s+/).map(p => p[0]).join('').slice(0, 2).toUpperCase())}</span>`;
+    };
+    const html = t.mensajes.map(m => m.de === 'tecnico' ? `<div class="fila-tec">${cara(m)}${burbuja(m)}</div>` : burbuja(m)).join('');
     if (html !== ultimo) {
       const abajo = innerHeight + scrollY >= document.body.scrollHeight - 120 || !ultimo;
       $('chat').innerHTML = html;

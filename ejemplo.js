@@ -51,7 +51,7 @@ const TEXTOS = {
 };
 const TIPOS = Object.keys(TEXTOS);
 const CANALES = ['Portal', 'Correo', 'WhatsApp', 'Teléfono', 'Portal'];
-const TECNICOS = ['Blanch', 'David', 'Pablo', 'Pako'];
+const TECNICOS = [require('./auth').TECNICO];
 
 // Cuántos casos tiene cada grupo. «tarde» = respondidos pasada la hora (fuera de SLA);
 // «sinResponder» abren tiempo excedido. Las notas (NPS 0–10) dan la valoración media.
@@ -154,7 +154,7 @@ function ticket([cliente, tipo, canal, estado, dias, hora, resp, diasCierre, hor
 
 const hoy = (d = new Date()) => local(d).slice(0, 10);
 // Al cambiar los datos de ejemplo se sube: así se rehacen aunque sean del mismo día.
-const VERSION = 2;
+const VERSION = 3;  // 3: un solo técnico (28/10/2026)
 
 async function contar() {
   const [t, c] = await Promise.all([store.tickets.todos(), store.clientes.todos()]);

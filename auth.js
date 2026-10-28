@@ -8,7 +8,10 @@ const COOKIE = 'sh_sesion';
 const DURACION_DIAS = 30;
 const USUARIO = String(process.env.ADMIN_USUARIO || 'admin').trim().toLowerCase();
 const CLAVE = process.env.ADMIN_CLAVE || '';
-const TECNICOS = (process.env.TECNICOS || 'Blanch,David,Pablo,Pako').split(',').map(s => s.trim()).filter(Boolean);
+// 28/10/2026: hay un solo técnico; ya no se elige quién trabaja. Los tickets del antiguo formulario
+// (Kit Digital 1) conservan el técnico que tenían.
+const TECNICO = String(process.env.TECNICO || 'Pau Blanch').trim();
+const TECNICOS = [TECNICO];
 
 let SECRETO = process.env.SESSION_SECRET;
 if (!SECRETO) {
@@ -89,4 +92,4 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
   return false;
 }
 
-module.exports = { usuarioDe, rutas, abrirSesion, permitidoGoogle, dominioGoogle, textoGoogle, TECNICOS };
+module.exports = { usuarioDe, rutas, abrirSesion, permitidoGoogle, dominioGoogle, textoGoogle, TECNICO, TECNICOS };

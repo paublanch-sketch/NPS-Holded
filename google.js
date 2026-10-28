@@ -223,16 +223,19 @@ async function anularReunion(eventoId) {
   await api(`${URLS.calendar}/calendars/primary/events/${encodeURIComponent(eventoId)}?sendUpdates=all`, { method: 'DELETE' });
 }
 
-// Huecos libres del organizador en horario laboral, para que el cliente reserve.
-async function huecos({ dias = 7, minutos = Number(env.CITA_MIN || 30), antelacionH = 2 } = {}) {
+// Huecos libres en horario laboral, para que el cliente reserve. Con Google, los del calendario del
+// organizador; sin él (o si falla), los del horario laboral (28/10/2026: el cliente nunca ve un error).
+// «ocupadoExtra» son las citas que ya tenemos (inicio y fin en hora local), para no dar dos a la vez.
+async function huecos({ dias = 7, minutos = Number(env.CITA_MIN || 30), antelacionH = 2, sinCalendario = false, ocupadoExtra = [] } = {}) {
   const [hIni, hFin] = (env.HORARIO_LABORAL || '09:00-18:00').split('-').map(h => { const [a, b] = h.split(':').map(Number); return a * 60 + (b || 0); });
   const ahora = new Date();
   const desde = new Date(ahora.getTime() + antelacionH * 3600000);
   const hasta = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + dias + 3);
-  const fb = await api(`${URLS.calendar}/freeBusy`, {
+  const fb = sinCalendario ? {} : await api(`${URLS.calendar}/freeBusy`, {
     method: 'POST', body: JSON.stringify({ timeMin: desde.toISOString(), timeMax: hasta.toISOString(), timeZone: TZ, items: [{ id: 'primary' }] }),
   });
-  const ocupado = (Object.values(fb.calendars || {})[0]?.busy || []).map(b => [new Date(b.start), new Date(b.end)]);
+  const ocupado = (Object.values(fb.calendars || {})[0]?.busy || []).map(b => [new Date(b.start), new Date(b.end)])
+    .concat(ocupadoExtra.map(([a, b]) => [new Date(a), new Date(b)]));
   const lista = [];
   const d = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
   let laborables = 0;
@@ -251,7 +254,45 @@ async function huecos({ dias = 7, minutos = Number(env.CITA_MIN || 30), antelaci
   return lista;
 }
 
-// Duración real según Meet: suma de las conferencias terminadas con ese código desde el inicio previsto.
+// Todas las páginas de una lista de la API de Meet.
+async function todas(url, campo) {
+  const l = [];
+  let pagina = '';
+  do {
+    const d = await api(`${url}?pageSize=250${pagina ? '&pageToken=' + encodeURIComponent(pagina) : ''}`);
+    l.push(...(d[campo] || []));
+    pagina = d.nextPageToken;
+  } while (pagina);
+  return l;
+}
+
+// Los ratos en que cada persona estuvo en una conferencia: [[inicio, fin] en ms, …] por persona.
+async function sesionesDe(conferencia) {
+  const personas = await todas(`${URLS.meet}/${conferencia}/participants`, 'participants');
+  return Promise.all(personas.map(async p => (await todas(`${URLS.meet}/${p.name}/participantSessions`, 'participantSessions'))
+    .map(s => [new Date(s.startTime).getTime(), new Date(s.endTime || Date.now()).getTime()])));
+}
+
+// Tramos con dos personas o más dentro (28/10/2026): el técnico solo en la sala no cuenta.
+function tramosJuntos(personas) {
+  const marcas = [];
+  personas.forEach((ses, i) => ses.forEach(([a, b]) => { if (b > a) marcas.push([a, 1, i], [b, -1, i]); }));
+  marcas.sort((x, y) => x[0] - y[0] || x[1] - y[1]);
+  const dentro = new Map(), tramos = [];
+  let n = 0, desde = null;
+  for (const [ms, paso, i] of marcas) {
+    const antes = dentro.get(i) || 0, luego = antes + paso;
+    dentro.set(i, luego);
+    if (!antes && luego) n++;
+    if (antes && !luego) n--;
+    if (n >= 2 && desde === null) desde = ms;
+    if (n < 2 && desde !== null) { if (ms > desde) tramos.push([desde, ms]); desde = null; }
+  }
+  return tramos;
+}
+
+// Duración real según Meet: el rato en que técnico y cliente estuvieron juntos en las conferencias
+// terminadas con ese código desde el inicio previsto. 0 minutos si nadie más entró.
 async function duracionReal(codigo, desdeLocal) {
   const filtro = encodeURIComponent(`space.meeting_code = "${codigo}"`);
   const d = await api(`${URLS.meet}/conferenceRecords?filter=${filtro}`);
@@ -259,10 +300,22 @@ async function duracionReal(codigo, desdeLocal) {
   const desde = new Date(desdeLocal).getTime() - 6 * 3600000;
   const terminadas = (d.conferenceRecords || []).filter(c => c.endTime && new Date(c.startTime).getTime() >= desde);
   if (!terminadas.length) return null;
-  const ini = new Date(Math.min(...terminadas.map(c => new Date(c.startTime))));
-  const fin = new Date(Math.max(...terminadas.map(c => new Date(c.endTime))));
-  const minutos = Math.round(terminadas.reduce((s, c) => s + (new Date(c.endTime) - new Date(c.startTime)), 0) / 60000);
-  return { inicio: local(ini), fin: local(fin), minutos };
+  const tramos = [];
+  for (const c of terminadas) tramos.push(...tramosJuntos(await sesionesDe(c.name)));
+  const minutos = Math.round(tramos.reduce((s, [a, b]) => s + b - a, 0) / 60000);
+  const ini = new Date(tramos.length ? Math.min(...tramos.map(x => x[0])) : new Date(terminadas[0].startTime).getTime());
+  return { inicio: local(ini), fin: local(new Date(ini.getTime() + minutos * 60000)), minutos };
+}
+
+// Quién está ahora en la sala, para que el cronómetro no corra mientras el técnico espera solo.
+async function sala(codigo) {
+  const d = await api(`${URLS.meet}/conferenceRecords?filter=${encodeURIComponent(`space.meeting_code = "${codigo}"`)}`);
+  estado.meet = true;
+  const abierta = (d.conferenceRecords || []).find(c => !c.endTime);
+  if (!abierta) return { personas: 0, juntosDesde: null };
+  const dentro = (await todas(`${URLS.meet}/${abierta.name}/participants`, 'participants')).filter(p => !p.latestEndTime);
+  const entradas = dentro.map(p => new Date(p.earliestStartTime).getTime()).sort((a, b) => a - b);
+  return { personas: dentro.length, juntosDesde: dentro.length >= 2 ? local(new Date(entradas[1])) : null };
 }
 
 // Comprobación desde el panel: pide un token y mira el calendario de mañana.
@@ -298,6 +351,6 @@ const resumen = () => {
 };
 
 module.exports = {
-  activo, disponible, vigilar, crearReunion, anularReunion, huecos, duracionReal, probar, resumen, local, organizador,
+  activo, disponible, vigilar, crearReunion, anularReunion, huecos, duracionReal, sala, tramosJuntos, probar, resumen, local, organizador,
   modoOAuth, urlConectar, intercambiar, conPermisoCalendario, guardarConexion, completarConexion, desconectar, cargar,
 };

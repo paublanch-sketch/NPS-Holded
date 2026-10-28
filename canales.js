@@ -72,7 +72,7 @@ function mensajeWhatsApp(t, evento, b, ventana) {
     case 'video': return ventana
       ? libre(`${b.tecnico || 'El técnico'} te invita a una videollamada de Google Meet:\n${t.video}`)
       : plantilla('soporte_videollamada', tickets.tituloCliente(t), b.tecnico || 'el técnico', t.video);
-    case 'cita': return ventana
+    case 'cita': case 'confirmarCita': return ventana
       ? libre(`Videollamada de Google Meet agendada para el ${tickets.cuando(b.cita.inicio)}.\nEnlace: ${b.cita.enlace}`)
       : plantilla('soporte_cita', tickets.tituloCliente(t), tickets.cuando(b.cita.inicio), b.cita.enlace);
     case 'anularCita': return ventana

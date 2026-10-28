@@ -47,7 +47,9 @@ const pagina = (res, nombre) => {
 const redirigir = (res, a) => { res.writeHead(302, { Location: a }); res.end(); };
 
 // Logos del portal y del panel (public/img).
-const IMAGENES = { '.png': 'image/png', '.svg': 'image/svg+xml', '.webp': 'image/webp' };
+const IMAGENES = { '.png': 'image/png', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.jpg': 'image/jpeg' };
+// La foto del técnico para el chat del portal: public/img/tecnico.jpg (o .png / .webp) si está.
+const fotoTecnico = () => ['jpg', 'png', 'webp'].map(e => `tecnico.${e}`).find(n => fs.existsSync(path.join(__dirname, 'public', 'img', n)));
 function imagen(res, nombre) {
   const fichero = path.join(__dirname, 'public', 'img', nombre);
   if (!fs.existsSync(fichero)) { res.writeHead(404); return res.end(); }
@@ -121,7 +123,7 @@ http.createServer(async (req, res) => {
       return json(res, { fichas: fichas.length, kitDigital: kit.length, kitSinTickets: kit.filter(c => !conTickets.has(c.nombre)).length });
     }
     if (ruta === '/salud') { res.writeHead(200); return res.end(`ok ${(process.env.RENDER_GIT_COMMIT || '').slice(0, 7)}`.trim()); }
-    if (/^\/img\/[a-z0-9-]+\.(png|svg|webp)$/.test(ruta)) return imagen(res, ruta.slice(5));
+    if (/^\/img\/[a-z0-9-]+\.(png|svg|webp|jpg)$/.test(ruta)) return imagen(res, ruta.slice(5));
     if (ruta === '/' || /^\/t\/[a-f0-9]{32}$/.test(ruta)) return pagina(res, 'portal.html');
     if (ruta === '/soporte') return redirigir(res, /^[a-f0-9]{32}$/.test(url.searchParams.get('t') || '') ? `/t/${url.searchParams.get('t')}` : '/');
     if (ruta === '/api/portal') {
@@ -133,6 +135,7 @@ http.createServer(async (req, res) => {
         google: process.env.GOOGLE_RESENA_URL || '',
         horario: process.env.HORARIO_LABORAL || '09:00-18:00',
         avisosCorreo: !!(c.configurado && c.smtp),
+        tecnico: auth.TECNICO, foto: fotoTecnico() ? '/img/' + fotoTecnico() : '',
       });
     }
     if (await canales.rutasWhatsApp(req, res, ruta, url)) return;

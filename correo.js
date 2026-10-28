@@ -165,9 +165,9 @@ function correoPara(t, evento, b) {
       texto: `Hola${nombre}:\n\nDamos por resuelta tu incidencia. Si vuelve a pasar, responde a este correo y la retomamos.\n\n¿Nos ayudas con 10 segundos? Del 0 al 10, ¿qué probabilidad hay de que nos recomiendes?${URL_PUBLICA ? '' : ' Responde a este correo solo con el número.'}`,
       extra: escalaNps(t),
     };
-    case 'cita': return {
+    case 'cita': case 'confirmarCita': return {
       titulo: 'Videollamada agendada',
-      texto: `Hola${nombre}:\n\nTienes una videollamada de Google Meet el ${tickets.cuando(b.cita.inicio)} para tu incidencia ${tituloDe(t)}.${t.email ? ' También te llega la invitación de Google Calendar.' : ''}`,
+      texto: `Hola${nombre}:\n\nTienes una videollamada de Google Meet el ${tickets.cuando(b.cita.inicio)} para tu incidencia ${tituloDe(t)}.${t.email && b.cita.eventoId ? ' También te llega la invitación de Google Calendar.' : ''}`,
       boton: { texto: 'Unirme a la videollamada', url: b.cita.enlace },
     };
     case 'anularCita': return { titulo: 'Videollamada anulada', texto: `Hola${nombre}:\n\nHemos anulado la videollamada prevista para tu incidencia ${tituloDe(t)}. Si necesitas otra, responde a este correo.`, boton: ver };

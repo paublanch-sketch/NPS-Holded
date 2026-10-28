@@ -21,7 +21,7 @@ services:
         sync: false
       - key: SESSION_SECRET   # texto largo aleatorio; si cambia, se cierran las sesiones abiertas
         generateValue: true
-      - key: TECNICOS         # nombres del desplegable «Trabajando como», p. ej. Blanch,David,Pablo,Pako
+      - key: TECNICO          # el técnico que atiende (por defecto Pau Blanch)
         sync: false
       - key: PUBLIC_URL       # https://<servicio>.onrender.com, para los enlaces que reciben los clientes
         sync: false
