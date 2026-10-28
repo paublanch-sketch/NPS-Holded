@@ -86,8 +86,21 @@ function resumen(todos, { desde, hasta, tecnico }, ahora = new Date()) {
       respuestasNps: val.respuestas,
       // Horas dedicadas en el periodo (cronómetro y horas del Sheet).
       horas: horasDe(lista),
+      // Qué hay detrás de cada indicador, para el «Por qué» del panel: quién, qué y cuánto.
+      detalle: {
+        fueraSla: medibles.filter(t => espera(t) > SLA_MIN).sort((a, b) => espera(b) - espera(a)).map(t => ({
+          id: t.id, cliente: t.cliente, titulo: t.titulo, entrada: t.entrada, esperaMin: espera(t), respondido: !!t.primera_respuesta,
+        })),
+        excedido: abiertas.filter(t => conSla(t) && !t.primera_respuesta && espera(t) > SLA_MIN).sort((a, b) => espera(b) - espera(a)).map(t => ({
+          id: t.id, cliente: t.cliente, titulo: t.titulo, entrada: t.entrada, excesoMin: espera(t) - SLA_MIN,
+        })),
+        // Las valoraciones más bajas primero: son las que bajan la media.
+        valoracion: lista.filter(cerradoEnPeriodo).filter(t => t.nps != null).sort((a, b) => a.nps - b.nps || b.cierre.localeCompare(a.cierre)).map(t => ({
+          id: t.id, cliente: t.cliente, contacto: t.contacto || '', titulo: t.titulo, nps: t.nps, cierre: t.cierre, mejora: t.mejora || '',
+        })),
+      },
       casos: abiertas.sort((a, b) => a.entrada.localeCompare(b.entrada)).map(t => ({
-        id: t.id, cliente: t.cliente, origen: t.tipo_cliente, canal: t.canal, tipo: t.tipo_incidencia,
+        id: t.id, cliente: t.cliente, titulo: t.titulo, origen: t.tipo_cliente, canal: t.canal, tipo: t.tipo_incidencia,
         tecnico: t.tecnico, estado: t.estado, entrada: t.entrada, respondido: !!t.primera_respuesta,
         esperaMin: conSla(t) ? espera(t) : null,
       })),

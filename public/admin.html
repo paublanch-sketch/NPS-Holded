@@ -378,6 +378,19 @@
   .mk-porque-fila .mk-dot { margin-top: 5px; flex: none; }
   .mk-porque-fila.critico .mk-dot { background: var(--mk-cr); } .mk-porque-fila.atencion .mk-dot { background: var(--mk-at); }
   .mk-porque-fila small { display: block; color: var(--bruma); font-size: 12px; margin-top: 2px; }
+  .mk-porque-fila > div { flex: 1; min-width: 0; }
+  .mk-pq-casos { margin-top: 8px; display: flex; flex-direction: column; border: 1px solid var(--linea); border-radius: 10px; background: var(--blanco); overflow: hidden; }
+  .mk-pq-caso { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border: 0; border-bottom: 1px solid var(--linea); background: none; font: inherit; font-size: 13px; text-align: left; cursor: pointer; color: inherit; }
+  .mk-pq-caso:hover { background: var(--cal); }
+  .mk-pq-caso { flex-wrap: wrap; }
+  .mk-pq-caso > span { min-width: 0; flex: 1 1 200px; }
+  .mk-pq-caso small { margin-top: 1px; overflow-wrap: anywhere; }
+  .mk-pq-caso em { font-style: normal; font-size: 12px; font-weight: 600; color: var(--bruma); white-space: nowrap; flex: none; }
+  .mk-pq-nps { display: inline-block; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+  .mk-pq-nps.ok { background: var(--mk-ok-p); color: var(--mk-ok-t); }
+  .mk-pq-nps.atencion { background: var(--mk-at-p); color: var(--mk-at-t); }
+  .mk-pq-nps.critico { background: var(--mk-cr-p); color: var(--mk-cr-t); }
+  .mk-pq-mas { padding: 8px; border: 0; background: none; font: inherit; font-size: 12px; font-weight: 600; color: var(--azul); cursor: pointer; }
   .mk-tile-enlace { color: inherit; text-decoration: none; display: grid; }
   .mk-tile-enlace:hover .mk-tile { border-color: var(--azul-l); }
   .mk-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
@@ -1314,6 +1327,21 @@ function motivos(b, estado) {
   };
   return ORDEN_MOTIVO.filter(k => n[k] === estado).map(k => ({ clave: k, texto: valor[k](), regla: REGLA[k][estado] }));
 }
+// Dentro del porqué, quién está detrás de cada motivo: qué clientes, qué incidencias y quién
+// ha puesto cada valoración. Cada fila abre la incidencia en la bandeja.
+const PORQUE_VISIBLES = 4;
+function casosDelMotivo(b, clave) {
+  const d = b.detalle || {};
+  const fila = (c, dcha, sub) => `<button type="button" class="mk-pq-caso" data-ticket="${c.id}"><span><b>${esc(c.cliente)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span><em>${dcha}</em></button>`;
+  const l = clave === 'abiertas' ? (b.casos || []).map(c => fila(c, esc(c.estado), `${c.titulo || c.tipo || ''} · desde ${horaEntrada(c.entrada)}`))
+    : clave === 'fueraSla' ? (d.fueraSla || []).map(c => fila(c, c.respondido ? `respondida en ${dur(c.esperaMin)}` : `sin responder · ${dur(c.esperaMin)}`, `${c.titulo || ''} · ${horaEntrada(c.entrada)}`))
+    : clave === 'excedido' ? (d.excedido || []).map(c => fila(c, exceso(c.excesoMin), `${c.titulo || ''} · sin responder desde ${horaEntrada(c.entrada)}`))
+    : (d.valoracion || []).map(c => fila(c, `<span class="mk-pq-nps ${c.nps >= 9 ? 'ok' : c.nps >= 7 ? 'atencion' : 'critico'}">${c.nps}/10</span>`,
+        [c.contacto, c.titulo, fecha(c.cierre)].filter(Boolean).join(' · ') + (c.mejora ? ` — «${c.mejora}»` : '')));
+  if (!l.length) return '';
+  return `<div class="mk-pq-casos">${l.map((x, i) => i >= PORQUE_VISIBLES ? x.replace('class="mk-pq-caso"', 'class="mk-pq-caso mas oculto"') : x).join('')}
+    ${l.length > PORQUE_VISIBLES ? `<button type="button" class="mk-pq-mas" data-pqmas="${l.length - PORQUE_VISIBLES}">Ver ${l.length - PORQUE_VISIBLES} más</button>` : ''}</div>`;
+}
 const ICO = {
   tendencia: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>',
   engranaje: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
@@ -1420,6 +1448,13 @@ async function cargarMetricas() {
     caja.classList.toggle('oculto', !abrir);
     b.setAttribute('aria-expanded', abrir);
   });
+  $('met').querySelectorAll('[data-ticket]').forEach(b => b.onclick = () => { location.hash = `#/bandeja/${b.dataset.ticket}`; });
+  $('met').querySelectorAll('[data-pqmas]').forEach(b => b.onclick = () => {
+    const filas = b.parentElement.querySelectorAll('.mk-pq-caso.mas');
+    const abrir = filas[0]?.classList.contains('oculto');
+    filas.forEach(x => x.classList.toggle('oculto', !abrir));
+    b.textContent = abrir ? 'Ver menos' : `Ver ${b.dataset.pqmas} más`;
+  });
   $('met').querySelectorAll('[data-vermas]').forEach(b => b.onclick = () => {
     const filas = b.closest('.mk-casos').querySelectorAll('tr.mas');
     const abrir = filas[0]?.classList.contains('oculto');
@@ -1455,7 +1490,7 @@ function bloqueServicio(b) {
     : `<button type="button" class="mk-estado ${estado}" data-porque aria-expanded="false" title="Ver por qué">${estado === 'critico' ? '⊗ Crítico' : '! Atención'}${primero ? ` · ${esc(primero.texto)}` : ''}${todos.length > 1 ? ` <small>+${todos.length - 1}</small>` : ''} <span class="mk-flecha">▾</span></button>`;
   const porque = todos.length ? `<div class="mk-porque oculto">
       <b>Por qué está ${estado === 'critico' ? 'en Crítico' : 'en Atención'}</b>
-      ${todos.map(m => `<div class="mk-porque-fila ${crit.includes(m) ? 'critico' : 'atencion'}"><span class="mk-dot"></span><div><b>${esc(m.texto[0].toUpperCase() + m.texto.slice(1))}</b><small>${esc(m.regla)}</small></div></div>`).join('')}
+      ${todos.map(m => `<div class="mk-porque-fila ${crit.includes(m) ? 'critico' : 'atencion'}"><span class="mk-dot"></span><div><b>${esc(m.texto[0].toUpperCase() + m.texto.slice(1))}</b><small>${esc(m.regla)}</small>${casosDelMotivo(b, m.clave)}</div></div>`).join('')}
     </div>` : '';
   const niveles = b.niveles || {};
   return `<section class="mk-sec">
