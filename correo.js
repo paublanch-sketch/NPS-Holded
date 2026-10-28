@@ -191,9 +191,46 @@ tickets.avisos.push(async (t, evento, b) => {
   await enviar({
     to: t.email, subject: (evento === 'nuevo' ? '' : 'Re: ') + asuntoDe(t),
     text: texto, html: plantilla({ titulo: c.titulo, cuerpo: parrafos(c.texto), boton: c.boton, extra: c.extra }),
-    ...hilo(t),
+    headers: { 'X-Soporte-Aviso': 'cliente' }, ...hilo(t),
   }, buzon);
 });
+
+// ---------- El chat también por correo para el equipo (28/10/2026, «como Holded») ----------
+// Lo que el cliente escribe en el portal o por WhatsApp, y lo que se le responde desde el panel,
+// llega al correo del equipo (AVISOS_EQUIPO; si no está, al propio buzón de soporte), todo en el
+// mismo hilo por incidencia. Respondiendo a uno de esos correos, la respuesta entra en el chat y le
+// llega al cliente. El Message-ID lleva una firma por incidencia: sin ella no se acepta como
+// respuesta del equipo (no basta con poner un remitente @interactivos.net).
+const firmaHilo = id => crypto.createHmac('sha256', env.SESSION_SECRET || 'soporte-holded').update(`equipo:${id}`).digest('hex').slice(0, 12);
+const equipoDe = t => String(env.AVISOS_EQUIPO || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean).concat(env.AVISOS_EQUIPO ? [] : [buzonPara(t)?.usuario]).filter(Boolean);
+tickets.avisosEquipo.push(async (t, evento, b) => {
+  const buzon = buzonPara(t), para = equipoDe(t);
+  if (!buzon || !para.length || t.historico) return;
+  const quien = t.contacto || t.cliente;
+  const titulo = evento === 'nuevo' ? `Nueva incidencia de ${t.cliente}` : evento === 'respuesta' ? `${b.tecnico || 'Soporte'} ha respondido a ${t.cliente}` : `${quien} ha escrito`;
+  const origen = evento === 'respuesta' ? '' : `${quien}${t.contacto ? ` (${t.cliente})` : ''} · por ${t.canal === 'WhatsApp' ? 'WhatsApp' : 'el portal'}`;
+  const panel = URL_PUBLICA ? `${URL_PUBLICA}/admin#/bandeja/${t.id}` : '';
+  const pie = 'Responde a este correo y tu respuesta le llega al cliente en el chat (y por correo o WhatsApp). Escribe solo la respuesta: lo citado de debajo no se envía.';
+  const dom = dominioDe(buzon.usuario), firma = firmaHilo(t.id), raiz = `<soporte-${t.id}.eq${firma}.hilo@${dom}>`;
+  await enviar({
+    to: para.join(', '), replyTo: buzon.usuario, subject: `Re: [Soporte] ${t.cliente} · ${tickets.tituloCliente(t)}`,
+    text: `${titulo}${origen ? `\n${origen}` : ''}\n\n${b.texto || ''}${panel ? `\n\nAbrir en el panel: ${panel}` : ''}\n\n${pie}`,
+    html: plantilla({ titulo, cuerpo: (origen ? `<p style="margin:0 0 12px;color:#5B616A;font-size:13px">${h(origen)}</p>` : '') + parrafos(b.texto), boton: panel ? { texto: 'Abrir en el panel', url: panel } : null, pie }),
+    messageId: `<soporte-${t.id}.eq${firma}.${crypto.randomBytes(6).toString('hex')}@${dom}>`, inReplyTo: raiz, references: [raiz],
+    headers: { 'X-Soporte-Aviso': 'equipo' },
+  }, buzon);
+});
+
+// ¿Es la respuesta de alguien del equipo a un aviso de una incidencia? Devuelve su número.
+function respuestaDelEquipo(p, de) {
+  const refs = [p.inReplyTo, ...(Array.isArray(p.references) ? p.references : [p.references])].filter(Boolean).join(' ');
+  const m = refs.match(/<soporte-(\d+)\.eq([a-f0-9]{12})\./);
+  if (!m || m[2] !== firmaHilo(Number(m[1]))) return null;
+  const email = String(de.address || '').toLowerCase();
+  const delEquipo = buzones.some(x => x.usuario === email) || String(env.AVISOS_EQUIPO || '').toLowerCase().split(',').map(x => x.trim()).includes(email)
+    || require('./auth').permitidoGoogle(email, email.split('@')[1] || '');
+  return delEquipo ? Number(m[1]) : null;
+}
 
 // Quita la cita del correo anterior ("El lun, ... escribió:", "On ... wrote:", líneas con ">").
 function sinCita(texto) {
@@ -229,19 +266,24 @@ const fechaLocal = d => { const x = new Date(d || Date.now()); return new Date(x
 // Lo que hay que convertir en ticket de un correo ya parseado (o null si no es una incidencia).
 function aTicket(b, p, uid) {
   const de = p.from?.value?.[0] || {};
-  const propio = buzones.some(x => x.usuario === String(de.address || '').toLowerCase());
-  if (!de.address || automatico(p) || propio) return null;
-  const id = ticketDe(p);
-  const cuerpo = sinCita(p.text) || p.subject || '';
+  // Nuestros propios avisos (al cliente o al equipo) que vuelvan a entrar en el buzón: fuera.
+  if (!de.address || p.headers.has('x-soporte-aviso') || automatico(p)) return null;
   // Adjuntos de verdad (no los logos pequeños incrustados en las firmas).
   const archivos = (p.attachments || [])
     .filter(a => a.filename && !(a.contentDisposition === 'inline' && a.size < 30000))
     .map(a => ({ nombre: a.filename, buffer: a.content }));
+  const idExterno = 'mail:' + (p.messageId || `${b.usuario}:${uid}`);
+  const delEquipo = respuestaDelEquipo(p, de);
+  if (delEquipo) return { equipo: true, ticketId: delEquipo, texto: sinCita(p.text), email: de.address.toLowerCase(), idExterno, adjuntos: archivos };
+  const propio = buzones.some(x => x.usuario === String(de.address || '').toLowerCase());
+  if (propio) return null;
+  const id = ticketDe(p);
+  const cuerpo = sinCita(p.text) || p.subject || '';
   return {
     canal: 'Correo', email: de.address.toLowerCase(), nombre: de.name, ticketId: id, buzon: b.usuario,
     asunto: (p.subject || '').replace(/^(re|fw|fwd|rv)\s*:\s*/i, '').trim(),
     texto: id ? cuerpo : `${p.subject ? p.subject + '\n\n' : ''}${cuerpo}`,
-    idExterno: 'mail:' + (p.messageId || `${b.usuario}:${uid}`), adjuntos: archivos, fecha: fechaLocal(p.date),
+    idExterno, adjuntos: archivos, fecha: fechaLocal(p.date),
   };
 }
 
@@ -280,7 +322,7 @@ async function revisar(b) {
           for await (const m of c.fetch(uids.slice(i, i + 50).join(','), { uid: true, source: true }, { uid: true })) {
             try {
               const r = aTicket(b, await simpleParser(m.source), m.uid);
-              const t = r && await tickets.importarHistorico(r);
+              const t = r && !r.equipo && await tickets.importarHistorico(r);
               if (t) ids.add(t.id);
             } catch (e) { console.error(`Correo ${b.usuario} historial UID ${m.uid}:`, e.message); }
           }
@@ -297,7 +339,7 @@ async function revisar(b) {
         // Un correo que falla no bloquea los demás: se apunta en el log y se sigue.
         try {
           const r = aTicket(b, await simpleParser(m.source), m.uid);
-          if (r) { await tickets.recibir(r); n++; }
+          if (r) { await (r.equipo ? tickets.respuestaEquipo(r) : tickets.recibir(r)); n++; }
         } catch (e) { console.error(`Correo ${b.usuario} UID ${m.uid}:`, e.message); }
         if (m.uid > marca.uid) { marca.uid = m.uid; await ajustes.guardar(marca); }
       }
@@ -422,4 +464,4 @@ async function iniciar() {
 // Para los correos de las cuentas del portal (cuentas.js).
 const hayCorreo = () => !!principal();
 
-module.exports = { iniciar, rutas, revisarCorreo, sinCita, resumen, plantilla, parrafos, enviar, hayCorreo, automatico, aTicket };
+module.exports = { respuestaDelEquipo, firmaHilo, iniciar, rutas, revisarCorreo, sinCita, resumen, plantilla, parrafos, enviar, hayCorreo, automatico, aTicket };

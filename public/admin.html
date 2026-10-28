@@ -1180,7 +1180,7 @@ function pintarDetalle(t) {
     const cuerpo = `${m.adjunto ? adjuntoHtml(m.adjunto) : esc(m.texto)}${m.enlace ? `<br><a href="${esc(m.enlace)}" target="_blank" rel="noopener">${esc(m.enlace)}</a>` : ''}`;
     if (m.de === 'cliente') return `<div class="bj-msg cli">${avatar(nombreCli)}<div class="cuerpo"><div class="quien"><b>${esc(nombreCli)}</b> · Cliente · <span title="${esc(fechaHora(m.fecha))}">${hace(m.fecha)}</span></div><div class="burbuja">${cuerpo}</div></div></div>`;
     const autor = m.autor || 'Soporte';
-    return `<div class="bj-msg eq ${m.de === 'nota' ? 'nota' : ''}"><div class="cuerpo"><div class="quien">${m.de === 'nota' ? (m.llamada ? `<b>Llamada · ${m.llamada} min</b> · ` : '<b>Nota interna</b> · ') : ''}${esc(autor)} · <span title="${esc(fechaHora(m.fecha))}">${hace(m.fecha)}</span></div><div class="burbuja">${cuerpo}</div></div>${avatar(autor)}</div>`;
+    return `<div class="bj-msg eq ${m.de === 'nota' ? 'nota' : ''}"><div class="cuerpo"><div class="quien">${m.de === 'nota' ? (m.llamada ? `<b>Llamada · ${m.llamada} min</b> · ` : '<b>Nota interna</b> · ') : ''}${esc(autor)}${m.porCorreo ? ' · respondido desde el correo' : ''} · <span title="${esc(fechaHora(m.fecha))}">${hace(m.fecha)}</span></div><div class="burbuja">${cuerpo}</div></div>${avatar(autor)}</div>`;
   };
   const fila = (k, v) => `<span>${k}</span><div>${v}</div>`;
   det.innerHTML = `

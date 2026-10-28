@@ -62,6 +62,8 @@ services:
       # aplicación): IMAP_HOST y SMTP_HOST se deducen del MX. Estado en el panel → Canales.
       - key: MAIL_USER
         sync: false
+      - key: AVISOS_EQUIPO    # a quién le llega por correo el chat del portal y WhatsApp (separado por comas); por defecto, el propio buzón. Respondiendo, entra en el chat
+        sync: false
       - key: MAIL_PASS
         sync: false
       - key: IMAP_HOST

@@ -73,6 +73,14 @@ function avisar(t, evento, datos = {}) {
   }
 }
 
+// Avisos al equipo por correo (28/10/2026, «como Holded»): lo que el cliente escribe en el portal o
+// por WhatsApp y lo que se le responde desde el panel llega también al correo del equipo, y
+// respondiendo a ese correo la respuesta entra en el chat (correo.js). Un fallo solo va al log.
+const avisosEquipo = [];
+function avisarEquipo(t, evento, datos = {}) {
+  for (const f of avisosEquipo) Promise.resolve().then(() => f(t, evento, datos)).catch(e => console.error(`Aviso al equipo ${evento} #${t.id}:`, e.message));
+}
+
 // "600 11 12 22" o "+34600111222" → "34600111222", el formato de WhatsApp.
 const telefonoWa = s => {
   const d = String(s || '').replace(/\D/g, '');
@@ -80,11 +88,11 @@ const telefonoWa = s => {
 };
 
 // Guarda los archivos que vienen con un mensaje (correo) y los deja en el hilo del ticket.
-async function adjuntar(t, lista = [], origen = 'correo') {
+async function adjuntar(t, lista = [], origen = 'correo', de = 'cliente') {
   for (const f of lista.slice(0, 5)) {
     try {
       const a = await adjuntos.guardar({ ticket: t.id, nombre: f.nombre, buffer: f.buffer, origen });
-      t.mensajes.push({ de: 'cliente', texto: `Ha adjuntado «${a.nombre}»`, adjunto: a, fecha: ahora() });
+      t.mensajes.push({ de, texto: `Ha adjuntado «${a.nombre}»`, adjunto: a, fecha: ahora() });
     } catch (e) {
       t.mensajes.push({ de: 'nota', autor: 'Sistema', texto: `No se ha guardado el adjunto «${f.nombre}»: ${e.message}`, fecha: ahora() });
     }
@@ -137,7 +145,10 @@ async function recibir(r) {
     if (r.buzon && !t.buzon) t.buzon = r.buzon;
     t.mensajes.push(msg);
     await adjuntar(t, r.adjuntos);
-    return store.guardar(t);
+    await store.guardar(t);
+    // Lo que entra por correo ya está en el buzón; lo de WhatsApp se le reenvía al equipo.
+    if (r.canal !== 'Correo') avisarEquipo(t, 'mensaje', { texto });
+    return t;
   }
   t = await crear({
     canal: r.canal, empresa: r.nombre || r.email || r.telefono, contacto: r.nombre,
@@ -149,6 +160,26 @@ async function recibir(r) {
   await adjuntar(t, r.adjuntos);
   await store.guardar(t);
   avisar(t, 'nuevo');
+  if (r.canal !== 'Correo') avisarEquipo(t, 'nuevo', { texto });
+  return t;
+}
+
+// Respuesta del equipo desde su correo a un aviso «[Soporte] …» (correo.js ya ha comprobado que es
+// del equipo y de qué incidencia): entra en el chat como del técnico y le llega al cliente igual
+// que una respuesta escrita en el panel.
+async function respuestaEquipo(r) {
+  const t = await porId(r.ticketId);
+  if (!t || (r.idExterno && t.mensajes.some(m => m.idExterno === r.idExterno))) return null;
+  const texto = String(r.texto || '').trim();
+  if (!texto && !r.adjuntos?.length) return null;
+  const tecnico = require('./auth').TECNICO;
+  if (texto) {
+    ACCIONES.mensaje(t, { texto, tecnico });
+    Object.assign(t.mensajes.at(-1), { idExterno: r.idExterno, porCorreo: true });
+  }
+  await adjuntar(t, r.adjuntos, 'correo', 'tecnico');
+  await store.guardar(t);
+  if (texto) avisar(t, 'mensaje', { texto, tecnico });
   return t;
 }
 
@@ -322,6 +353,7 @@ const json = (res, data, status = 200) => {
 async function abrirDesdePortal(b) {
   const t = await crear({ ...b, canal: 'Portal' });
   avisar(t, 'nuevo');
+  avisarEquipo(t, 'nuevo', { texto: t.descripcion });
   return t;
 }
 
@@ -389,6 +421,7 @@ async function rutasPublicas(req, res, ruta) {
     t.mensajes.push({ de: 'cliente', texto: `Ha adjuntado «${a.nombre}»`, adjunto: a, fecha: ahora() });
     if (t.estado === 'Pendiente cliente') t.estado = 'En curso';
     await store.guardar(t);
+    avisarEquipo(t, 'mensaje', { texto: `Ha adjuntado «${a.nombre}» (se ve en el panel).` });
     return json(res, a, 201), true;
   }
 
@@ -400,6 +433,7 @@ async function rutasPublicas(req, res, ruta) {
       if (t.estado === 'Pendiente cliente') t.estado = 'En curso';
       if (t.estado === 'Cerrado') ACCIONES.reabrir(t);
       await store.guardar(t);
+      avisarEquipo(t, 'mensaje', { texto: texto.slice(0, 5000) });
     }
   }
   if (m[2] === '/nps' && t.estado === 'Cerrado') {
@@ -610,6 +644,8 @@ async function rutasConsola(req, res, ruta, equipo) {
   ACCIONES[m[2]](t, b);
   await store.guardar(t);
   avisar(t, m[2], b);
+  // La respuesta del panel también va al correo del equipo, para tener ahí toda la conversación.
+  if (m[2] === 'mensaje' && b.nota !== true && String(b.texto || '').trim()) avisarEquipo(t, 'respuesta', { texto: String(b.texto).trim(), tecnico: b.tecnico });
   return json(res, await vistaPanel(t)), true;
 }
 
@@ -624,4 +660,4 @@ async function paraDashboard() {
   }));
 }
 
-module.exports = { tituloCliente, abrirDesdePortal, iniciarCierreAuto, cerrarInactivos, DIAS_INACTIVIDAD, importarHistorico, cuando, iniciarReuniones, contabilizarReuniones, porId, rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };
+module.exports = { avisosEquipo, respuestaEquipo, tituloCliente, abrirDesdePortal, iniciarCierreAuto, cerrarInactivos, DIAS_INACTIVIDAD, importarHistorico, cuando, iniciarReuniones, contabilizarReuniones, porId, rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };
