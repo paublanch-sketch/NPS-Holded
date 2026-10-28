@@ -98,6 +98,49 @@ function generar() {
 }
 const TICKETS = generar();
 
+// Parte comercial de ejemplo (28/10/2026): licencias con renovaciones en 30 y 60 días y una vencida,
+// tres bajas con su motivo, Super Gemas, clientes que traen las asesorías y asesorías en el embudo.
+const PLANES = { Basic: 290, Standard: 590, Advanced: 990 };
+// [cliente, plan, días hasta la renovación; con motivo, días desde la baja]
+const LICENCIAS = [
+  ['Assessoria Montseny', 'Advanced', 140], ['Assessors Penedès', 'Standard', 210], ['Assessoria Lleida Centre', 'Standard', 18], ['Assessoria Maresme', 'Advanced', 300],
+  ['Perruqueria Nàiade', 'Basic', 9], ['Construccions Vall SL', 'Standard', 26], ['Taller Mecànic Vic', 'Basic', 47],
+  ['Fusteria Roca SL', 'Standard', -4], ['Clínica Dental Mar', 'Advanced', 52], ['Òptica Llum SL', 'Basic', 95], ['Celler Mas Pujol', 'Standard', 160],
+  ['Talleres Ebre SL', 'Standard', 230], ['Café Nòmada', 'Basic', 25, 'Precio'], ['Bodega Can Rovira', 'Advanced', 64], ['Forn Sant Jordi', 'Basic', 39],
+  ['Hotel Cala Blava', 'Advanced', 120], ['Pastisseria Oller', 'Basic', 70, 'Cierra o vende el negocio'],
+  ['Distribucions Garraf SL', 'Standard', 75], ['Estudi Vela Arquitectes', 'Basic', 12, 'Se va a otro programa'], ['Logística Delta SL', 'Advanced', 22], ['Tallers Nàutics Port', 'Standard', 180],
+];
+const GEMAS = { 'Fusteria Roca SL': ['pago', 29], 'Clínica Dental Mar': ['pago', 49], 'Hotel Cala Blava': ['pago', 29], 'Construccions Vall SL': ['gratis'], 'Assessoria Montseny': ['gratis'], 'Celler Mas Pujol': [''] };
+const REFERIDOS = { 'Perruqueria Nàiade': 'Assessoria Montseny', 'Construccions Vall SL': 'Assessoria Montseny', 'Forn Sant Jordi': 'Assessoria Montseny', 'Taller Mecànic Vic': 'Assessors Penedès',
+  'Pastisseria Oller': 'Assessors Penedès', 'Talleres Ebre SL': 'Assessoria Lleida Centre', 'Café Nòmada': 'Assessoria Lleida Centre', 'Bodega Can Rovira': 'Assessoria Maresme', 'Hotel Cala Blava': 'Assessoria Maresme' };
+const NOTAS = {
+  'Perruqueria Nàiade': ['Llamada', 'Le he llamado: renueva seguro y quiere ver la Super Gema de tesorería.', 'Pablo'],
+  'Fusteria Roca SL': ['Llamada', 'No contesta. Le escribo por correo para la renovación.', 'Pablo'],
+  'Construccions Vall SL': ['Correo', 'Enviada la propuesta para pasar a Standard anual.', 'Pablo'],
+};
+// Asesorías que aún están en el embudo (sin convenio firmado).
+const EMBUDO = [['Assessoria Garrotxa', 'Por contactar', 'Laia Puig'], ['Assessors Baix Llobregat', 'Contactada', 'Xavier Mora'], ['Assessoria Osona', 'En negociación', 'Montse Vila'], ["Assessoria Terres de l'Ebre", 'Convenio enviado', 'Jaume Ferrer']];
+const correoDe = contacto => contacto.split(' ')[0].toLowerCase().normalize('NFD').replace(/[^a-z]/g, '') + '@example.com';
+
+function comercialDe([nombre, , tipo, contacto], ahora) {
+  const dia = n => { const d = new Date(ahora); d.setDate(d.getDate() + n); return hoy(d); };
+  const x = {};
+  const l = LICENCIAS.find(y => y[0] === nombre);
+  if (l) {
+    const [, plan, dias, motivo] = l;
+    x.holded = motivo
+      ? { plan, estado: 'Baja', alta: dia(-dias - 365), renovacion: dia(-dias), importe: PLANES[plan], baja: { fecha: dia(-dias), motivo, detalle: '' } }
+      : { plan, estado: 'Activa', alta: dia(dias - 365), renovacion: dia(dias), importe: PLANES[plan] };
+  }
+  const g = GEMAS[nombre];
+  if (g) x.gemas = { cuenta: correoDe(contacto), activa: true, pago: g[0], eurosMes: g[1] ?? null, alta: dia(-90), holded: true, ultimoUso: `${dia(-2)} 10:30:00` };
+  if (REFERIDOS[nombre]) x.asesoria = REFERIDOS[nombre];
+  if (tipo === 'Asesoría') x.partner = { etapa: 'Partner activa', contacto, onboarding: new Date(`${dia(-120)}T10:00`).toISOString(), cambios: [] };
+  const n = NOTAS[nombre];
+  if (n) x.seguimiento = [{ id: 'ej' + nombre.length, fecha: new Date(ahora.getTime() - 2 * 864e5).toISOString(), tipo: n[0], texto: n[1], autor: n[2] }];
+  return x;
+}
+
 const RESPUESTAS = ['Hola, lo miro ahora mismo y te digo algo.', 'Recibido. ¿Me pasas una captura del error?', 'Ya lo tengo localizado, dame unos minutos.', 'Hola, te llamo en un momento para verlo juntos.'];
 
 const pad = n => String(n).padStart(2, '0');
@@ -154,7 +197,7 @@ function ticket([cliente, tipo, canal, estado, dias, hora, resp, diasCierre, hor
 
 const hoy = (d = new Date()) => local(d).slice(0, 10);
 // Al cambiar los datos de ejemplo se sube: así se rehacen aunque sean del mismo día.
-const VERSION = 3;  // 3: un solo técnico (28/10/2026)
+const VERSION = 4;  // 4: parte comercial (28/10/2026)
 
 async function contar() {
   const [t, c] = await Promise.all([store.tickets.todos(), store.clientes.todos()]);
@@ -172,9 +215,16 @@ async function borrar() {
 
 async function crear(ahora) {
   const fichas = await store.clientes.todos();
-  for (const [nombre, servicio, tipo_cliente] of CLIENTES) {
+  for (const c of CLIENTES) {
+    const [nombre, servicio, tipo_cliente] = c;
     if (fichas.some(f => f.nombre === nombre)) continue;
-    await store.clientes.guardar({ nombre, servicio, tipo_cliente, notas: 'Cliente de ejemplo: se quita en Canales → Datos de ejemplo.', ejemplo: true });
+    await store.clientes.guardar({ nombre, servicio, tipo_cliente, notas: 'Cliente de ejemplo: se quita en Canales → Datos de ejemplo.', ejemplo: true, ...comercialDe(c, ahora) });
+  }
+  for (const [nombre, etapa, contacto] of EMBUDO) {
+    if (fichas.some(f => f.nombre === nombre)) continue;
+    const partner = { etapa, contacto, cambios: [] };
+    if (etapa === 'Convenio enviado') partner.convenio = { enviado: new Date(ahora.getTime() - 3 * 864e5).toISOString(), caduca: ahora.getTime() + 27 * 864e5, email: correoDe(contacto), nombre: contacto };
+    await store.clientes.guardar({ nombre, servicio: 'Sin clasificar', tipo_cliente: 'Asesoría', email: correoDe(contacto), notas: 'Asesoría de ejemplo: se quita en Canales → Datos de ejemplo.', ejemplo: true, partner });
   }
   for (const [i, t] of TICKETS.entries()) await store.tickets.guardar({ ...ticket(t, i, ahora), ejemplo_dia: hoy(ahora), ejemplo_version: VERSION });
 }

@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Convenio de asesoría partner · Interactivos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --acento: #2563eb; --acento-o: #1d4ed8; --acento-f: #eef3fe; --error: #C81D25; --cal: #F9F9F8; --bruma: #5B616A; --pizarra: #1C1C1C;
+    --linea: #e8e7e3; --linea2: #dcdbd6; --blanco: #fff; --ok: #13803a; --ok-f: #e6f4ea;
+    --sombra: 0 1px 2px rgba(28,28,28,.04), 0 10px 30px rgba(28,28,28,.06);
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; font: 15px/1.55 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--cal); color: var(--pizarra); }
+  button, input { font: inherit; color: inherit; }
+  a { color: var(--acento); }
+  .oculto { display: none !important; }
+  .barra { background: var(--blanco); border-bottom: 1px solid var(--linea); }
+  .barra .dentro { max-width: 960px; margin: 0 auto; padding: 16px 24px; display: flex; align-items: center; gap: 16px; }
+  .barra img { display: block; height: 24px; width: auto; max-width: 60%; }
+  .barra .insignia { margin-left: auto; height: 46px; max-width: 34%; }
+  main { max-width: 960px; margin: 0 auto; padding: 28px 24px 64px; }
+  h1 { font-size: clamp(24px, 3.4vw, 32px); line-height: 1.15; margin: 0 0 8px; letter-spacing: -.02em; }
+  .sub { color: var(--bruma); margin: 0 0 22px; max-width: 640px; }
+  .tarjeta { background: var(--blanco); border: 1px solid var(--linea); border-radius: 16px; box-shadow: var(--sombra); padding: 22px 24px; }
+  .tarjeta + .tarjeta { margin-top: 20px; }
+  .tarjeta h2 { font-size: 17px; margin: 0 0 12px; }
+  .doc { width: 100%; height: 560px; border: 1px solid var(--linea); border-radius: 10px; background: var(--cal); }
+  .abrir { display: inline-block; margin-top: 10px; font-weight: 600; font-size: 14px; }
+  label { display: block; font-size: 13px; font-weight: 600; margin: 14px 0 6px; }
+  .campo { width: 100%; border: 1px solid var(--linea2); border-radius: 10px; padding: 10px 12px; background: var(--blanco); }
+  .campo:focus { outline: none; border-color: var(--acento); box-shadow: 0 0 0 3px var(--acento-f); }
+  .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+  .lienzo { position: relative; border: 1px dashed var(--linea2); border-radius: 12px; background: #fcfcfb; touch-action: none; }
+  .lienzo canvas { display: block; width: 100%; height: 180px; cursor: crosshair; }
+  .lienzo span { position: absolute; left: 14px; bottom: 10px; font-size: 12px; color: var(--bruma); pointer-events: none; }
+  .lienzo button { position: absolute; right: 8px; top: 8px; border: 1px solid var(--linea2); background: var(--blanco); border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .acepto { display: flex; gap: 10px; align-items: flex-start; font-weight: 500; font-size: 14px; margin-top: 18px; }
+  .acepto input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
+  .boton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 20px; border: 0; border-radius: 10px; background: var(--acento); color: #fff; font-weight: 600; padding: 12px 22px; cursor: pointer; }
+  .boton:hover { background: var(--acento-o); }
+  .boton:disabled { opacity: .55; cursor: default; }
+  .error { color: var(--error); font-size: 14px; font-weight: 600; margin: 12px 0 0; }
+  .hecho { text-align: center; padding: 34px 24px; }
+  .hecho .ico { width: 56px; height: 56px; border-radius: 50%; background: var(--ok-f); color: var(--ok); display: grid; place-items: center; margin: 0 auto 14px; }
+  .hecho .ico svg { width: 28px; height: 28px; }
+  .hecho p { color: var(--bruma); margin: 6px auto 0; max-width: 520px; }
+  .enlaces { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin-top: 18px; font-weight: 600; font-size: 14px; }
+  @media (max-width: 640px) {
+    .barra .dentro, main { padding-left: 16px; padding-right: 16px; }
+    .barra .insignia { height: 34px; }
+    .tarjeta { padding: 18px 16px; }
+    .doc { height: 420px; }
+    .dos { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header class="barra"><div class="dentro">
+  <img src="/img/logo-interactivos-holded.png" alt="Interactivos · Holded" width="701" height="71">
+  <img class="insignia" src="/img/holded-solution-partner.png" alt="Holded Solution Partner Platinum" width="1364" height="444">
+</div></header>
+<main>
+  <div id="cargando" class="sub">Cargando…</div>
+
+  <div id="error" class="tarjeta hecho oculto"><h1>Este enlace ya no vale</h1><p id="errorTxt"></p></div>
+
+  <div id="firmar" class="oculto">
+    <h1>Convenio de asesoría partner</h1>
+    <p class="sub" id="intro"></p>
+    <section class="tarjeta">
+      <h2>1. Lee el convenio</h2>
+      <iframe class="doc" id="doc" title="Convenio de asesoría partner"></iframe>
+      <a class="abrir" id="abrir" target="_blank" rel="noopener">Abrir el convenio en PDF</a>
+    </section>
+    <form class="tarjeta" id="form" novalidate>
+      <h2>2. Fírmalo</h2>
+      <div class="dos">
+        <div><label for="nombre">Nombre y apellidos</label><input class="campo" id="nombre" name="nombre" autocomplete="name" required></div>
+        <div><label for="nif">DNI o NIE</label><input class="campo" id="nif" name="nif" autocomplete="off" required></div>
+      </div>
+      <label for="cargo">Cargo en la asesoría <span style="font-weight:400;color:var(--bruma)">(opcional)</span></label>
+      <input class="campo" id="cargo" name="cargo" placeholder="Socio, gerente, administrador…">
+      <label>Tu firma</label>
+      <div class="lienzo"><canvas id="lienzo" aria-label="Recuadro para firmar con el ratón o el dedo"></canvas><span id="pista">Firma aquí con el ratón o con el dedo</span><button type="button" id="borrar">Borrar</button></div>
+      <label class="acepto"><input type="checkbox" id="acepto"><span id="aceptoTxt"></span></label>
+      <p class="error oculto" id="fallo" role="alert"></p>
+      <button class="boton" id="enviar">Firmar el convenio</button>
+    </form>
+  </div>
+
+  <div id="firmado" class="tarjeta hecho oculto">
+    <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+    <h1>Convenio firmado</h1>
+    <p id="firmadoTxt"></p>
+    <div class="enlaces"><a id="verPdf" target="_blank" rel="noopener">Ver el convenio</a><a id="verJust" target="_blank" rel="noopener">Ver el justificante de la firma</a></div>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const token = location.pathname.split('/').pop();
+const base = `/api/firma/${token}`;
+const fechaLarga = iso => new Date(iso).toLocaleString('es-ES', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+function verFirmado(d) {
+  $('firmar').classList.add('oculto');
+  $('firmado').classList.remove('oculto');
+  $('firmadoTxt').textContent = `${d.firmado.nombre} lo firmó en nombre de ${d.asesoria} el ${fechaLarga(d.firmado.fecha)}. Te hemos enviado una copia por correo. En unos días te escribiremos para empezar.`;
+  $('verPdf').href = `${base}/convenio.pdf`;
+  $('verJust').href = `${base}/justificante`;
+  scrollTo(0, 0);
+}
+
+// Firma con el ratón o el dedo; se guarda como PNG.
+const lienzo = $('lienzo'), ctx = lienzo.getContext('2d');
+let trazos = 0, dibujando = false;
+function ajustar() {
+  const r = lienzo.getBoundingClientRect(), k = devicePixelRatio || 1;
+  lienzo.width = Math.round(r.width * k); lienzo.height = Math.round(r.height * k);
+  ctx.setTransform(k, 0, 0, k, 0, 0);
+  ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#1c2230';
+  trazos = 0; $('pista').classList.remove('oculto');
+}
+const punto = e => { const r = lienzo.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+lienzo.addEventListener('pointerdown', e => { dibujando = true; lienzo.setPointerCapture(e.pointerId); ctx.beginPath(); ctx.moveTo(...punto(e)); ctx.lineTo(...punto(e)); ctx.stroke(); });
+lienzo.addEventListener('pointermove', e => { if (!dibujando) return; ctx.lineTo(...punto(e)); ctx.stroke(); trazos++; $('pista').classList.add('oculto'); });
+addEventListener('pointerup', () => { dibujando = false; });
+$('borrar').onclick = () => { ctx.clearRect(0, 0, lienzo.width, lienzo.height); trazos = 0; $('pista').classList.remove('oculto'); };
+
+function fallo(t) { $('fallo').textContent = t; $('fallo').classList.remove('oculto'); }
+
+(async () => {
+  let d;
+  try {
+    const r = await fetch(base);
+    d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'No se ha podido abrir');
+  } catch (e) {
+    $('cargando').classList.add('oculto');
+    $('errorTxt').textContent = e.message;
+    $('error').classList.remove('oculto');
+    return;
+  }
+  $('cargando').classList.add('oculto');
+  if (d.firmado) return verFirmado(d);
+  $('firmar').classList.remove('oculto');
+  $('intro').textContent = `${d.nombre ? `Hola ${d.nombre.split(' ')[0]}. ` : ''}Este es el convenio para que ${d.asesoria} sea asesoría partner de Interactivos. Léelo y, si estás de acuerdo, fírmalo aquí abajo.`;
+  $('doc').src = `${base}/convenio.pdf`;
+  $('abrir').href = `${base}/convenio.pdf`;
+  $('aceptoTxt').textContent = `He leído el convenio y lo acepto en nombre de ${d.asesoria}.`;
+  if (d.nombre) $('nombre').value = d.nombre;
+  ajustar();
+  addEventListener('resize', () => { if (!trazos) ajustar(); });
+
+  $('form').onsubmit = async e => {
+    e.preventDefault();
+    $('fallo').classList.add('oculto');
+    const nombre = $('nombre').value.trim(), nif = $('nif').value.trim();
+    if (nombre.length < 3) return fallo('Pon tu nombre y apellidos.');
+    if (!/^[A-Za-z0-9-]{8,12}$/.test(nif.replace(/\s/g, ''))) return fallo('Pon tu DNI o NIE.');
+    if (trazos < 3) return fallo('Firma en el recuadro antes de enviar.');
+    if (!$('acepto').checked) return fallo('Marca que has leído y aceptas el convenio.');
+    $('enviar').disabled = true;
+    try {
+      const r = await fetch(base, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre, nif, cargo: $('cargo').value.trim(), acepto: true, firma: lienzo.toDataURL('image/png') }) });
+      const x = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(x.error || 'No se ha podido firmar');
+      verFirmado({ ...d, firmado: { nombre, fecha: new Date().toISOString() } });
+    } catch (err) { fallo(err.message); $('enviar').disabled = false; }
+  };
+})();
+</script>
+</body>
+</html>

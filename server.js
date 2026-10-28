@@ -16,10 +16,11 @@ const metricas = require('./metricas');
 const ejemplo = require('./ejemplo');
 const google = require('./google');
 const cuentas = require('./cuentas');
+const comercial = require('./comercial');
 
 const PORT = process.env.PORT || 3000;
 // Soporte Premium (28/10/2026): 40 € al mes por cliente; las asesorías partner lo tienen gratis.
-const PREMIUM_EUROS_MES = 40;
+const { PREMIUM_EUROS_MES } = comercial;
 const { json, leerCuerpo } = tickets;
 
 // Tickets con el servicio y el origen de la ficha de su cliente.
@@ -141,6 +142,9 @@ http.createServer(async (req, res) => {
     if (await canales.rutasWhatsApp(req, res, ruta, url)) return;
     if (ruta.startsWith('/api/cuenta') && otroOrigen(req)) return json(res, { error: 'Origen no permitido' }, 403);
     if (await cuentas.rutas(req, res, ruta, { json, leerCuerpo })) return;
+    if (ruta.startsWith('/api/firma') && otroOrigen(req)) return json(res, { error: 'Origen no permitido' }, 403);
+    // Firma en línea del convenio de las asesorías partner (/firma/<token>).
+    if (await comercial.rutasFirma(req, res, ruta, { json, leerCuerpo, pagina })) return;
     if (await tickets.rutasPublicas(req, res, ruta)) return;
 
     // ---- Panel interno ----
@@ -174,6 +178,7 @@ http.createServer(async (req, res) => {
       return res.end(metricas.csvHoras(r));
     }
     if (await clientes.rutas(req, res, ruta, { json, leerCuerpo })) return;
+    if (await comercial.rutas(req, res, ruta, { json, leerCuerpo })) return;
     if (await cuentas.rutasPanel(req, res, ruta, { json, leerCuerpo })) return;
     if (await ejemplo.rutas(req, res, ruta, { json, leerCuerpo })) return;
     if (await canales.correo.rutas(req, res, ruta, { json, leerCuerpo })) return;

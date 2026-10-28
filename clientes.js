@@ -200,8 +200,15 @@ async function fusionar(de, a) {
   if (fd) {
     if (!fa) await guardarFicha(a, fd);
     else await guardarFicha(a, { servicio: fa.servicio === 'Sin clasificar' ? fd.servicio : undefined, tipo_cliente: fa.tipo_cliente === 'Sin clasificar' ? fd.tipo_cliente : undefined, kitDigital: fa.kitDigital ? undefined : fd.kitDigital });
+    // La parte comercial también pasa: licencia, Super Gemas, asesoría y el seguimiento de los dos.
+    const nueva = (await clientes.todos()).find(x => x.nombre === a);
+    for (const k of ['holded', 'gemas', 'partner', 'asesoria']) if (fd[k] && !nueva[k]) nueva[k] = fd[k];
+    if (fd.seguimiento?.length) nueva.seguimiento = [...(nueva.seguimiento || []), ...fd.seguimiento].sort((x, y) => x.fecha.localeCompare(y.fecha));
+    await clientes.guardar(nueva);
     await clientes.borrar(fd.id);
   }
+  // Los clientes que traía la asesoría «de» pasan a «a».
+  for (const f of await clientes.todos()) if (f.asesoria === de) { f.asesoria = a; await clientes.guardar(f); }
   return n;
 }
 
@@ -231,10 +238,12 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
       if (f.email) por.get(f.nombre).emails.add(f.email);
       if (f.telefono) por.get(f.nombre).telefonos.add(f.telefono);
     }
+    const { vistaFicha } = require('./comercial');
     const l = [...por.values()].map(c => ({
       ...c, horas: Math.round(c.horas * 10) / 10, emails: [...c.emails], telefonos: [...c.telefonos],
       ...clasificar({ cliente: c.nombre }, mapa), notas: mapa.get(c.nombre)?.notas || '', kitDigital: mapa.get(c.nombre)?.kitDigital || null,
       codigo: mapa.get(c.nombre)?.id ? 'CL-' + String(mapa.get(c.nombre).id).padStart(4, '0') : '',
+      ejemplo: !!mapa.get(c.nombre)?.ejemplo, ...vistaFicha(mapa.get(c.nombre) || {}),
     })).sort((a, b) => b.ultimo.localeCompare(a.ultimo));
     return json(res, { clientes: l, servicios: SERVICIOS, origenes: ORIGENES }), true;
   }

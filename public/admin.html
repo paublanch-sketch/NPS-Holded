@@ -519,6 +519,18 @@
   .mk-aro .l { font-size: 12.5px; color: var(--bruma); line-height: 1.35; }
   .mk-aro .e { font-size: 12px; font-weight: 700; margin-top: 3px; color: var(--t); }
   @keyframes mk-arco { from { stroke-dasharray: 0 400; } }
+  .quieto .mk-aro .arco { animation: none; }
+  /* Gráfica del detalle de cada KPI, como la de Super Gemas */
+  .dm-graf-t { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--bruma); margin: 4px 0 6px; }
+  .dm-graf { position: relative; margin: 0 0 18px; }
+  .dm-graf svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .dm-hot { position: absolute; top: 0; transform: translateX(-50%); cursor: default; }
+  .dm-hot:hover { background: rgba(37, 99, 235, .06); border-radius: 6px; }
+  .dm-hot .globo { display: none; position: absolute; left: 50%; transform: translate(-50%, calc(-100% - 10px)); white-space: nowrap; background: #1b2330; color: #fff; border-radius: 8px; padding: 6px 10px; font-size: 12px; line-height: 1.35; box-shadow: 0 6px 18px rgba(20, 30, 50, .28); z-index: 3; pointer-events: none; }
+  .dm-hot .globo b { display: block; font-size: 14px; }
+  .dm-hot:hover .globo { display: block; }
+  .dm-hot.primero .globo { left: 0; transform: translate(0, calc(-100% - 10px)); }
+  .dm-hot.ultimo .globo { left: auto; right: 0; transform: translate(0, calc(-100% - 10px)); }
   @media (prefers-reduced-motion: reduce) { .mk-aro .arco { animation: none; } }
   .mk-sec-cab .mk-ico svg { width: 18px; height: 18px; }
   @media (max-width: 760px) {
@@ -786,6 +798,95 @@
     .can-resumen { grid-template-columns: 1fr 1fr; }
     .can-mini b { font-size: 13px; }
   }
+
+  /* Comercial (28/10/2026): ARR, licencias, renovaciones, bajas, Super Gemas y segmentación */
+  .co-arr { display: grid; grid-template-columns: minmax(200px, 250px) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+  .co-total { background: var(--marino); color: #fff; border-radius: 14px; padding: 20px 22px; display: flex; flex-direction: column; justify-content: center; }
+  .co-total span { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #9bb8ff; }
+  .co-total b { font-size: 32px; letter-spacing: -.02em; line-height: 1.1; margin: 6px 0 4px; }
+  .co-total small { color: #c3cbdb; font-size: 13px; }
+  .co-serv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .co-tile { border: 1px solid var(--linea); border-radius: 14px; padding: 14px 16px; background: var(--blanco); min-width: 0; }
+  .co-tile .t { font-size: 13px; font-weight: 600; color: var(--bruma); display: flex; gap: 8px; align-items: center; }
+  .co-tile .t svg { width: 16px; height: 16px; flex: none; }
+  .co-tile b { display: block; font-size: 24px; letter-spacing: -.01em; margin: 6px 0 2px; }
+  .co-tile small { display: block; font-size: 12px; color: var(--bruma); }
+  .co-avisito { color: var(--at-t); font-weight: 600; }
+  .co-activos { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 16px; }
+  .co-activos span { background: var(--cal); border: 1px solid var(--linea); border-radius: 99px; padding: 5px 12px; font-size: 13px; color: var(--bruma); }
+  .co-activos span.tit { background: none; border: 0; padding-left: 0; font-weight: 600; }
+  .co-activos b { color: var(--pizarra); }
+  .co-dos { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .co-filas { border: 1px solid var(--linea); border-radius: 12px; overflow: hidden; }
+  .co-fila { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-top: 1px solid var(--linea); flex-wrap: wrap; }
+  .co-fila:first-child { border-top: 0; }
+  .co-fila .n { flex: 1 1 240px; min-width: 0; }
+  .co-fila .n a { font-weight: 600; text-decoration: none; }
+  .co-fila .n a:hover { text-decoration: underline; }
+  .co-fila .n small { display: block; font-size: 12px; color: var(--bruma); overflow-wrap: anywhere; }
+  .co-fila .d { font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .co-fila .acc { display: flex; gap: 6px; flex-wrap: wrap; }
+  .co-cr { color: var(--cr-t); } .co-at { color: var(--at-t); }
+  .co-barra { display: grid; grid-template-columns: minmax(90px, 150px) minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 13px; padding: 6px 0; }
+  .co-barra i { display: block; height: 10px; border-radius: 99px; background: var(--azul); min-width: 4px; }
+  .co-barra em { font-style: normal; color: var(--bruma); white-space: nowrap; }
+  .co-cifra { display: flex; gap: 22px; flex-wrap: wrap; margin-bottom: 12px; }
+  .co-cifra b { display: block; font-size: 24px; letter-spacing: -.01em; }
+  .co-cifra span { font-size: 12px; color: var(--bruma); }
+  .co-motivo { border: 1px solid var(--linea); border-radius: 10px; margin-top: 8px; }
+  .co-motivo summary { display: flex; justify-content: space-between; gap: 10px; padding: 9px 12px; cursor: pointer; font-size: 13px; font-weight: 600; }
+  .co-motivo p { margin: 0; padding: 7px 12px; font-size: 13px; border-top: 1px solid var(--linea); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .co-motivo p small { color: var(--bruma); }
+  .co-motivo p .boton { margin-left: auto; }
+  .co-nota { font-size: 12.5px; color: var(--bruma); margin: 0 0 10px; }
+  .co-seg-f { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 12px; margin-bottom: 14px; }
+  .co-seg-f label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin: 0 0 4px 2px; }
+  .co-seg-f .campo { width: 100%; }
+  .co-seg-t { border: 1px solid var(--linea); border-radius: 12px; }
+  .co-seg-t th, .co-seg-t td { white-space: nowrap; font-size: 13px; }
+  .co-seg-t td a { font-weight: 600; text-decoration: none; }
+  .co-seg-pie { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+  .co-seg-pie b { margin-right: auto; font-size: 14px; }
+  .co-imp-tabla { max-height: 300px; overflow: auto; border: 1px solid var(--linea); border-radius: 10px; margin-top: 10px; }
+  .co-imp-tabla th, .co-imp-tabla td { padding: 6px 8px; text-align: left; white-space: nowrap; font-size: 12px; }
+  .co-map { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 12px; }
+  dialog.ancho { width: min(820px, 96vw); }
+  .pl.est-act { background: #e7f6ec; color: #17803d; } .pl.est-baja { background: var(--cr-f); color: var(--cr-t); }
+  .pl.et-gris { background: var(--suave); color: var(--bruma); } .pl.et-azul { background: var(--azul-f); color: var(--azul-h); }
+  .pl.et-ambar { background: var(--at-f); color: var(--at-t); } .pl.et-lila { background: #f1ecfd; color: #6d3fd1; }
+  .pl.et-naranja { background: #fdf0e6; color: #b45309; } .pl.et-verde { background: #e7f6ec; color: #17803d; }
+  /* Ficha: licencia, Super Gemas y asesoría */
+  .co-ficha { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start; }
+  .co-card { padding: 16px 18px; min-width: 0; }
+  .co-card-cab { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .co-card-cab h2 { font-size: 16px; margin: 0; }
+  .co-dato { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 6px 0; border-top: 1px solid var(--linea); }
+  .co-dato span { color: var(--bruma); flex: none; }
+  .co-dato b { font-weight: 600; text-align: right; overflow-wrap: anywhere; min-width: 0; }
+  .co-dato small { font-weight: 600; margin-left: 4px; }
+  .co-baja { margin-top: 8px; background: var(--cr-f); color: var(--cr-t); border-radius: 10px; padding: 8px 10px; font-size: 13px; }
+  .co-conv { margin-top: 10px; background: var(--azul-f); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
+  .co-conv.ok { background: #eaf7ee; color: #14532d; }
+  .co-lab { display: block; font-size: 12px; font-weight: 600; color: var(--bruma); margin: 0 0 4px; }
+  .co-lab .campo { width: 100%; margin-top: 4px; font-weight: 400; color: var(--pizarra); }
+  .co-sub { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--bruma); margin: 16px 0 6px; }
+  .co-ref { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--linea); font-size: 13px; flex-wrap: wrap; }
+  .co-ref a { font-weight: 600; text-decoration: none; }
+  .co-ref > span { display: flex; gap: 4px; flex-wrap: wrap; }
+  .co-nf b { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--at-t); margin-right: 4px; }
+  .co-x { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 15px; line-height: 1; padding: 0 2px; float: right; }
+  .co-x:hover { color: var(--cr-t); }
+  /* Asesorías: embudo y pendientes de onboarding */
+  .as-embudo { display: flex; gap: 8px; flex-wrap: wrap; }
+  .as-embudo button { border: 1px solid var(--linea); background: var(--blanco); border-radius: 12px; padding: 9px 14px; text-align: left; cursor: pointer; font: inherit; min-width: 112px; box-shadow: var(--sombra-b); }
+  .as-embudo button b { display: block; font-size: 20px; line-height: 1.2; }
+  .as-embudo button span { font-size: 12px; color: var(--bruma); }
+  .as-embudo button.on { border-color: var(--azul); box-shadow: 0 0 0 3px var(--azul-f); }
+  .as-onb { background: var(--at-f); border: 1px solid #f5d49a; border-radius: 14px; padding: 14px 16px; }
+  .as-onb > b { display: block; margin-bottom: 6px; color: var(--at-t); }
+  .as-onb .co-fila { background: var(--blanco); border: 1px solid #f5d49a; border-radius: 10px; margin-top: 6px; }
+  @media (max-width: 1150px) { .co-arr { grid-template-columns: 1fr; } .co-dos { grid-template-columns: 1fr; } .co-seg-f { grid-template-columns: repeat(2, minmax(0, 1fr)); } .co-ficha { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 760px) { .co-serv { grid-template-columns: 1fr; } .co-map { grid-template-columns: 1fr 1fr; } .co-seg-f { grid-template-columns: 1fr; } .co-ficha { grid-template-columns: 1fr; } .co-barra { grid-template-columns: minmax(70px, 110px) minmax(0, 1fr) auto; } }
 </style>
 </head>
 <body>
@@ -794,8 +895,9 @@
   <div class="enlaces">
     <a class="ir" href="#/bandeja" data-v="bandeja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>Bandeja<span class="cuenta oculto" id="cuentaBandeja"></span></a>
     <a class="ir" href="#/metricas" data-v="metricas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20V12M9.7 20V7M14.3 20v-9M19 20V4"/></svg>Métricas</a>
+    <a class="ir" href="#/comercial" data-v="comercial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 6.5A7 7 0 1 0 17.5 17.5"/><path d="M4.5 10h9M4.5 14h9"/></svg>Comercial</a>
     <a class="ir" href="#/clientes" data-v="clientes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.6 2.6 3 5.2"/></svg>Clientes</a>
-    <a class="ir" href="#/asesorias" data-v="asesorias"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7V5.5A2 2 0 0 1 10.5 3.5h3a2 2 0 0 1 2 2V7M3 12.5h18M10.5 12.5v2h3v-2"/></svg>Asesorías</a>
+    <a class="ir" href="#/asesorias" data-v="asesorias"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7V5.5A2 2 0 0 1 10.5 3.5h3a2 2 0 0 1 2 2V7M3 12.5h18M10.5 12.5v2h3v-2"/></svg>Asesorías<span class="cuenta oculto" id="cuentaAses" title="Convenios firmados que esperan el onboarding"></span></a>
     <a class="ir" href="#/canales" data-v="canales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg>Canales<span class="cuenta oculto" id="alertaCanales">!</span></a>
   </div>
   <div class="abajo">
@@ -892,7 +994,7 @@ function ruta() {
   if (v === 'bandeja' && $('items')) return seleccionar(Number(arg) || null);
   pararVista();
   pararVista = () => {};
-  ({ bandeja: vistaBandeja, metricas: vistaMetricas, clientes: vistaClientes, asesorias: vistaAsesorias, canales: vistaCanales }[v] || vistaBandeja)(arg);
+  ({ bandeja: vistaBandeja, metricas: vistaMetricas, comercial: vistaComercial, clientes: vistaClientes, asesorias: vistaAsesorias, canales: vistaCanales }[v] || vistaBandeja)(arg);
 }
 addEventListener('hashchange', ruta);
 
@@ -1607,17 +1709,25 @@ function vistaMetricas() {
   document.addEventListener('click', cerrarFuera);
   pintarPeriodo();
   cargarMetricas();
-  const i = setInterval(() => !document.hidden && cargarMetricas(), 60000);
+  const i = setInterval(() => !document.hidden && cargarMetricas(true), 60000);
   pararVista = () => { clearInterval(i); document.removeEventListener('click', cerrarFuera); };
 }
 
-async function cargarMetricas() {
+// Al refrescarse sola cada minuto (auto) solo se repinta si algo ha cambiado, sin volver a animar
+// los aros y dejando abierto el porqué que estaba abierto (28/10/2026: «los indicadores se mueven»).
+let firmaMet = '';
+async function cargarMetricas(auto = false) {
   const [d, h] = rango();
   const q = new URLSearchParams({ desde: d, hasta: h, tecnico: fm.tecnico });
   if ($('csv')) $('csv').href = '/api/horas.csv?' + q;
   let r;
-  try { r = await api('/api/resumen?' + q); } catch (e) { return fallo(e); }
+  try { r = await api('/api/resumen?' + q); } catch (e) { return auto ? undefined : fallo(e); }
   if (!$('met')) return;
+  const firma = JSON.stringify({ ...r, actualizado: null });
+  if (auto && firma === firmaMet) return;
+  firmaMet = firma;
+  const abiertos = auto ? [...$('met').querySelectorAll('.mk-porque')].map(x => !x.classList.contains('oculto')) : [];
+  $('met').classList.toggle('quieto', auto);
   resumenMet = r;
   // Dos líneas (28/10/2026): Soporte Premium e Implementación. En cada una, los aros con todo sumado,
   // «Desglosar» con los de cada tipo de cliente y, debajo, los KPI. Debajo, los clientes antiguos del Kit Digital 1.
@@ -1657,6 +1767,12 @@ async function cargarMetricas() {
     const abrir = filas[0]?.classList.contains('oculto');
     filas.forEach(tr => tr.classList.toggle('oculto', !abrir));
     b.textContent = abrir ? 'Ver menos' : `Ver ${filas.length} más`;
+  });
+  const cajas = $('met').querySelectorAll('.mk-porque');
+  abiertos.forEach((si, i) => {
+    if (!si || !cajas[i]) return;
+    cajas[i].classList.remove('oculto');
+    cajas[i].closest('.mk-sec').querySelector('[data-porque]')?.setAttribute('aria-expanded', true);
   });
 }
 
@@ -1782,13 +1898,13 @@ const desplegados = new Set();
 const mediaNps = l => l.length ? Math.round(l.reduce((s, v) => s + v.nps, 0) / l.length / 2 * 10) / 10 : null;
 const nivelVal = v => v >= 4.5 ? 'ok' : v >= 4 ? 'atencion' : 'critico';
 const KPI_DET = {
-  abiertas: { titulo: 'Incidencias abiertas', ahora: true, total: b => num(b.abiertas || 0), valor: c => c.abiertas.length, fmt: v => num(v), items: c => c.abiertas.map(t => [t.id, t.titulo]) },
-  excedido: { titulo: 'Tiempo excedido sobre la 1 h de SLA', ahora: true, total: b => exceso(b.excedidoMin || 0), valor: c => c.excedidoMin, fmt: exceso, items: c => c.excedidos.map(t => [t.id, t.titulo, exceso(t.excesoMin) + ' sin responder']) },
-  fueraSla: { titulo: 'Incidencias respondidas fuera de SLA', total: b => num(b.fueraSla || 0), valor: c => c.fueraSla.length, fmt: v => num(v), items: c => c.fueraSla.map(t => [t.id, t.titulo, 'respondida en ' + dur(t.esperaMin)]) },
-  valoracion: { titulo: 'Valoración media (NPS / Google)', total: b => b.valoracion == null ? '—' : num(b.valoracion, 1) + '/5', valor: c => mediaNps(c.valoraciones), fmt: v => num(v, 1) + '/5', max: 5,
+  abiertas: { titulo: 'Incidencias abiertas', ahora: true, serie: 'abiertas', serieTit: 'Abiertas al final de cada', serieFmt: v => num(v), total: b => num(b.abiertas || 0), valor: c => c.abiertas.length, fmt: v => num(v), items: c => c.abiertas.map(t => [t.id, t.titulo]) },
+  excedido: { titulo: 'Tiempo excedido sobre la 1 h de SLA', ahora: true, serie: 'fueraSla', serieTit: 'Respondidas pasada la hora, por', serieFmt: v => num(v), total: b => exceso(b.excedidoMin || 0), valor: c => c.excedidoMin, fmt: exceso, items: c => c.excedidos.map(t => [t.id, t.titulo, exceso(t.excesoMin) + ' sin responder']) },
+  fueraSla: { titulo: 'Incidencias respondidas fuera de SLA', serie: 'fueraSla', serieTit: 'Respondidas pasada la hora, por', serieFmt: v => num(v), total: b => num(b.fueraSla || 0), valor: c => c.fueraSla.length, fmt: v => num(v), items: c => c.fueraSla.map(t => [t.id, t.titulo, 'respondida en ' + dur(t.esperaMin)]) },
+  valoracion: { titulo: 'Valoración media (NPS / Google)', serie: 'valoracion', serieTit: 'Valoración media, por', serieFmt: v => num(v, 1) + '/5', total: b => b.valoracion == null ? '—' : num(b.valoracion, 1) + '/5', valor: c => mediaNps(c.valoraciones), fmt: v => num(v, 1) + '/5', max: 5,
     items: c => c.valoraciones.map(v => [v.id, `${v.contacto || 'Sin nombre'}: ${v.nps}/10 · ${v.titulo}`, v.mejora ? `«${v.mejora}»` : '']) },
-  horas: { titulo: 'Tiempo dedicado', total: b => num(b.horas || 0, 1) + ' h', valor: c => c.horas, fmt: v => num(v, 1) + ' h', items: c => c.tickets ? [[null, `${c.tickets} ${c.tickets === 1 ? 'incidencia' : 'incidencias'} en el periodo`]] : [] },
-  tickets: { titulo: 'Incidencias en el periodo', total: b => num(b.tickets || 0), valor: c => c.tickets, fmt: v => num(v), items: () => [] },
+  horas: { titulo: 'Tiempo dedicado', serie: 'horas', serieTit: 'Horas dedicadas, por', serieFmt: v => num(v, v % 1 ? 1 : 0) + ' h', total: b => num(b.horas || 0, 1) + ' h', valor: c => c.horas, fmt: v => num(v, 1) + ' h', items: c => c.tickets ? [[null, `${c.tickets} ${c.tickets === 1 ? 'incidencia' : 'incidencias'} en el periodo`]] : [] },
+  tickets: { titulo: 'Incidencias en el periodo', serie: 'tickets', serieTit: 'Incidencias nuevas, por', serieFmt: v => num(v), total: b => num(b.tickets || 0), valor: c => c.tickets, fmt: v => num(v), items: () => [] },
 };
 function bloqueDe(servicio, grupo) {
   const r = resumenMet;
@@ -1808,6 +1924,8 @@ function abrirDetalle(servicio, grupo, clave) {
     <div class="dm-cab"><div><small>${esc(TITULO[servicio] || servicio)}${grupo ? ' · ' + esc(grupo) : ''}</small><h3>${esc(k.titulo)}</h3></div><button type="button" class="dm-x" data-cerrar aria-label="Cerrar">×</button></div>
     <div class="dm-rango">${k.ahora ? 'Ahora mismo' : `Del <b>${fechaLarga(desde)}</b> al <b>${fechaLarga(hasta)}</b>`} · ${filas.length} ${filas.length === 1 ? 'cliente' : 'clientes'}</div>
     <div class="dm-total">${k.total(b)}</div>
+    ${graficaDet(b.serie, k)}
+    ${filas.length ? '<div class="dm-graf-t" style="margin-top:6px">Por cliente</div>' : ''}
     ${filas.map(({ c, v }) => `<div class="dm-fila"><div class="dm-quien">
         <a href="#/clientes/${encodeURIComponent(c.cliente)}">${esc(c.cliente)}</a>${grupo || servicio === 'Kit Digital 1' ? '' : `<small>${esc(c.origen)}</small>`}
         <div class="dm-barra"><span class="${clave === 'valoracion' ? nivelVal(v) : ''}" style="width:${Math.max(3, v / max * 100).toFixed(1)}%"></span></div>
@@ -1816,6 +1934,55 @@ function abrirDetalle(servicio, grupo, clave) {
   </div>`;
   d.onclick = e => { if (e.target === d || e.target.closest('[data-cerrar], a')) d.close(); };
   d.showModal();
+}
+
+// La gráfica del detalle: cómo ha ido el KPI tramo a tramo (día, semana o mes según el periodo),
+// con la curva suave, el área y un globo con el dato al pasar por encima, como en Super Gemas.
+const TRAMO = { dia: 'día', semana: 'semana', mes: 'mes' };
+function graficaDet(s, k) {
+  const vals = (s?.puntos || []).map(p => p[k.serie]);
+  const con = vals.filter(v => v != null);
+  if (vals.length < 2 || !con.length) return '';
+  const W = 640, H = 210, izq = 46, der = 14, arr = 18, aba = 30, base = H - aba;
+  const entero = !['horas', 'valoracion'].includes(k.serie);
+  let paso, tope;
+  if (k.serie === 'valoracion') { paso = 1; tope = 5; }
+  else {
+    const crudo = Math.max(...con, entero ? 4 : 1) / 4, p10 = 10 ** Math.floor(Math.log10(crudo)), n = crudo / p10;
+    paso = (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p10;
+    if (entero) paso = Math.max(1, Math.round(paso));
+    tope = paso * Math.max(1, Math.ceil(Math.max(...con) / paso));
+  }
+  const X = i => izq + i * (W - izq - der) / (vals.length - 1);
+  const Y = v => arr + (1 - v / tope) * (base - arr);
+  const pts = vals.map((v, i) => v == null ? null : [X(i), Y(v)]);
+  // Un trazo por cada racha con dato (la valoración puede no tener nota en algún tramo).
+  const tramos = [];
+  pts.forEach((p, i) => { if (!p) return; if (i && pts[i - 1]) tramos.at(-1).push(p); else tramos.push([p]); });
+  const lim = y => Math.min(base, Math.max(arr, y));
+  const curva = l => l.map((q, i) => {
+    if (!i) return `M${q[0].toFixed(1)},${q[1].toFixed(1)}`;
+    const a = l[i - 2] || l[i - 1], b = l[i - 1], e = l[i + 1] || q, t = 0.18;
+    return ` C${(b[0] + (q[0] - a[0]) * t).toFixed(1)},${lim(b[1] + (q[1] - a[1]) * t).toFixed(1)} ${(q[0] - (e[0] - b[0]) * t).toFixed(1)},${lim(q[1] - (e[1] - b[1]) * t).toFixed(1)} ${q[0].toFixed(1)},${q[1].toFixed(1)}`;
+  }).join('');
+  const linea = tramos.map(curva).join(' ');
+  const area = tramos.filter(l => l.length > 1).map(l => `${curva(l)} L${l.at(-1)[0].toFixed(1)},${base} L${l[0][0].toFixed(1)},${base} Z`).join(' ');
+  let rejilla = '';
+  for (let v = 0; v <= tope + 1e-9; v += paso) rejilla += `<line x1="${izq}" y1="${Y(v).toFixed(1)}" x2="${W - der}" y2="${Y(v).toFixed(1)}" stroke="#eef1f5"/><text x="${izq - 8}" y="${(Y(v) + 3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="#9aa3b1">${esc(k.serieFmt(Math.round(v * 10) / 10))}</text>`;
+  const corta = f => new Date(f + 'T12:00').toLocaleDateString('es-ES', s.tipo === 'mes' ? { month: 'short', year: '2-digit' } : { day: 'numeric', month: 'short' });
+  const larga = p => s.tipo === 'dia' ? new Date(p.desde + 'T12:00').toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })
+    : s.tipo === 'semana' ? `Del ${corta(p.desde)} al ${corta(p.hasta)}` : new Date(p.desde + 'T12:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+  const cada = Math.ceil(vals.length / 7);
+  const ejeX = s.puntos.map((p, i) => i % cada && i !== vals.length - 1 ? '' : `<text x="${X(i).toFixed(1)}" y="${H - 9}" text-anchor="middle" font-size="10" fill="#9aa3b1">${esc(corta(p.desde))}</text>`).join('');
+  const ult = pts.map((p, i) => p ? i : -1).filter(i => i >= 0).at(-1);
+  const puntos = pts.map((p, i) => p ? `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${i === ult ? 5 : 3}" fill="${i === ult ? '#2563eb' : '#fff'}" stroke="#2563eb" stroke-width="2"/>` : '').join('');
+  // Una zona por tramo, de arriba abajo, con su globo a la altura del punto.
+  const ancho = (W - izq - der) / (vals.length - 1) / W * 100;
+  const zonas = s.puntos.map((p, i) => `<div class="dm-hot${i === 0 ? ' primero' : i === vals.length - 1 ? ' ultimo' : ''}" style="left:${(X(i) / W * 100).toFixed(2)}%;width:${ancho.toFixed(2)}%;height:${(base / H * 100).toFixed(1)}%"><span class="globo" style="top:${((pts[i] ? pts[i][1] : base) / base * 100).toFixed(1)}%">${esc(larga(p))}<b>${vals[i] == null ? 'Sin datos' : esc(k.serieFmt(vals[i]))}</b></span></div>`).join('');
+  const tit = `${k.serieTit} ${TRAMO[s.tipo]}`;
+  return `<div class="dm-graf-t">${esc(tit)}</div><div class="dm-graf"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(tit)}">
+    <defs><linearGradient id="dmArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2563eb" stop-opacity=".2"/><stop offset="1" stop-color="#2563eb" stop-opacity="0"/></linearGradient></defs>
+    ${rejilla}${area ? `<path d="${area}" fill="url(#dmArea)"/>` : ''}<path d="${linea}" fill="none" stroke="#2563eb" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>${puntos}${ejeX}</svg>${zonas}</div>`;
 }
 
 // ================= Clientes =================
@@ -1850,6 +2017,8 @@ function ordenarClientes(l) {
 // Clientes de la lista del Kit Digital 1 activos que aún no han abierto ninguna incidencia.
 const kitSinTickets = x => x.kitDigital && !x.tickets;
 // Falta clasificar: sin servicio, o Implementación/Premium sin origen (en Kit Digital 1 el origen no aplica).
+// Asesorías del embudo que aún no han firmado el convenio: salen en Asesorías, no en Clientes.
+const prospecto = x => !!x.partner && !['Convenio firmado', 'Partner activa'].includes(x.partner.etapa);
 const pendiente = x => x.servicio === 'Sin clasificar' || (['Implementación', 'Premium'].includes(x.servicio) && x.tipo_cliente === 'Sin clasificar');
 
 const ICO_CLI = {
@@ -1937,7 +2106,7 @@ function pintarClientes() {
   llenar('serv', c.servicios); llenar('orig', c.origenes);
   const q = f.q.trim().toLowerCase();
   const hoy = Date.now(), dias = iso => iso ? (hoy - new Date(iso)) / 864e5 : Infinity;
-  const l = c.clientes.filter(x =>
+  const l = c.clientes.filter(x => !prospecto(x) &&
     // Dos grupos que nunca se mezclan: los que tienen incidencias y los del Kit Digital 1 que no han abierto ninguna.
     (f.tick === 'kit' ? kitSinTickets(x) : !kitSinTickets(x) && (f.tick !== 'abiertas' || x.abiertos > 0))
     && (!f.serv || x.servicio === f.serv) && (!f.orig || x.tipo_cliente === f.orig)
@@ -1951,7 +2120,7 @@ function pintarClientes() {
   const ini = (f.pag - 1) * POR_PAGINA, pag = l.slice(ini, ini + POR_PAGINA);
   $('ccuenta').textContent = `${l.length} ${l.length === 1 ? 'cliente' : 'clientes'}`;
   // Pestañas: con incidencias / Kit Digital 1 activos que nunca han abierto ninguna / todos.
-  const cuantos = { con: c.clientes.filter(x => !kitSinTickets(x)).length, kit: c.clientes.filter(kitSinTickets).length };
+  const cuantos = { con: c.clientes.filter(x => !prospecto(x) && !kitSinTickets(x)).length, kit: c.clientes.filter(kitSinTickets).length };
   if ($('cliTick')) $('cliTick').style.visibility = f.tick === 'kit' ? 'hidden' : '';
   $('cliTabs').innerHTML = [['con', 'Con incidencias'], ['kit', 'Kit Digital 1 sin incidencias']]
     .map(([k, t]) => `<button type="button" data-t="${k}" class="${(f.tick === k || (k === 'con' && f.tick === 'abiertas')) ? 'on' : ''}">${t} <span class="n">${num(cuantos[k])}</span></button>`).join('');
@@ -2079,7 +2248,7 @@ async function vistaFicha(nombre) {
   scrollTo(0, 0);
   let c, todos;
   let acc;
-  try { [c, todos, acc] = await Promise.all([cargarClientes(), api('/api/tickets'), cargarAccesos()]); } catch (e) { return fallo(e); }
+  try { [c, todos, acc] = await Promise.all([cargarClientes(), api('/api/tickets'), cargarAccesos(), cargarComAj()]); } catch (e) { return fallo(e); }
   if (location.hash !== `#/clientes/${encodeURIComponent(nombre)}`) return;
   const x = c.clientes.find(y => y.nombre === nombre);
   if (!x) { $('vista').innerHTML = `${volver}<div class="contenido"><div class="vacio">Este cliente no existe.</div></div>`; return; }
@@ -2123,9 +2292,10 @@ async function vistaFicha(nombre) {
         </div>
         ${x.notas ? `<p style="margin:12px 0 0;font-size:13px;color:var(--bruma);white-space:pre-wrap">${esc(x.notas)}</p>` : ''}
       </section>
+      ${tarjetasCom(x, c)}
       <div class="ficha">
         <section><h2 style="font-size:16px;margin:0 0 10px">Incidencias</h2>${l.map(incidencia).join('') || '<div class="vacio">Sin incidencias.</div>'}</section>
-        <div class="ficha-lado">${tarjetaAcceso(nombre, acc.filter(a => a.cliente === nombre))}
+        <div class="ficha-lado">${tarjetaSeguimiento(x)}${tarjetaAcceso(nombre, acc.filter(a => a.cliente === nombre))}
         <section class="tarjeta" style="padding:16px 18px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px"><h2 style="font-size:16px;margin:0">Llamadas (${llamadas.length})</h2><button type="button" class="boton peq" id="nuevaLlamada">Apuntar llamada</button></div>
           ${llamadas.map(m => `<div class="nota-f">${esc(m.texto.replace(/^Llamada de \d+ min: /, ''))}<small>${m.llamada} min · ${esc(m.autor || '')} · ${fechaHora(m.fecha)} · <a href="#/bandeja/${m.t.id}">${esc(tituloBj(m.t))}</a></small></div>`).join('') || '<p style="margin:0;font-size:13px;color:var(--muted)">Aún no hay llamadas apuntadas.</p>'}
         </section>
@@ -2136,6 +2306,7 @@ async function vistaFicha(nombre) {
       </div>
     </div>`;
   montarAcceso(nombre);
+  montarCom(x, c, () => { clientesCache = null; vistaFicha(nombre); });
   $('nuevaLlamada').onclick = () => pedirLlamada({ ficha: x, abiertas: l.filter(t => t.estado !== 'Cerrado'), alGuardar: () => { clientesCache = null; vistaFicha(nombre); } });
   $('fsel').onchange = async e => {
     const s = e.target.closest('select[data-campo]');
@@ -2143,6 +2314,542 @@ async function vistaFicha(nombre) {
     try { await api('/api/clientes', { nombre, [s.dataset.campo]: s.value }); x[s.dataset.campo] = s.value; aviso(`${nombre}: ${s.value}`); }
     catch (err) { fallo(err); }
   };
+}
+
+// ================= Comercial =================
+// La parte comercial de Holded (reunión del 28/10/2026): ARR, licencias y renovaciones, bajas con
+// su motivo, Super Gemas y segmentación para campañas. Hosting, dominios y marketing irán aparte.
+let comAj = null;
+const cargarComAj = async (nuevo = false) => (!nuevo && comAj) || (comAj = await api('/api/comercial/ajustes'));
+const euros = n => n == null ? '—' : `${num(n, n % 1 ? 2 : 0)} €`;
+const diaTxt = d => d ? new Date(d + 'T12:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+const diasA = d => Math.round((new Date(d + 'T12:00') - new Date(iso(new Date()) + 'T12:00')) / 864e5);
+const enDias = n => n == null ? '' : n === 0 ? 'hoy' : n > 0 ? `en ${n} ${n === 1 ? 'día' : 'días'}` : `hace ${-n} ${n === -1 ? 'día' : 'días'}`;
+const haceTxt = d => { const h = hace(d); return h === 'ahora' ? 'ahora mismo' : /^\d+ (min|h|d)$/.test(h) ? `hace ${h}` : `el ${h}`; };
+const claseDias = n => n == null ? '' : n < 0 ? 'co-cr' : n <= 30 ? 'co-at' : '';
+const ETAPA_CL = { 'Por contactar': 'et-gris', Contactada: 'et-azul', 'En negociación': 'et-ambar', 'Convenio enviado': 'et-lila', 'Convenio firmado': 'et-naranja', 'Partner activa': 'et-verde', Descartada: 'et-gris' };
+const pildoraEtapa = e => `<span class="pl ${ETAPA_CL[e] || 'sin'}">${esc(e)}</span>`;
+const pildoraLic = h => !h ? '<span class="pl sin">Sin licencia</span>' : h.estado === 'Baja' ? '<span class="pl est-baja">De baja</span>' : `<span class="pl est-act">${esc(h.plan || 'Activa')}</span>`;
+const gemasTxt = g => !g || g.activa === false ? '' : { pago: 'De pago', gratis: 'Gratis' }[g.pago] || 'Sin decir si paga';
+const ICO_COM = {
+  euro: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 6.5A7 7 0 1 0 17.5 17.5"/><path d="M4.5 10h9M4.5 14h9"/></svg>',
+  licencia: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+  gema: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M6 4h12l3 5-9 11L3 9z"/><path d="M3 9h18M9.5 4 12 20l2.5-16"/></svg>',
+  baja: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 7 6 6 4-4 8 8"/><path d="M14 17h7v-7"/></svg>',
+  maletin: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7V5.5A2 2 0 0 1 10.5 3.5h3a2 2 0 0 1 2 2V7M3 12.5h18"/></svg>',
+};
+
+// Quién apunta las notas comerciales (Pablo, Operaciones, Paco…): se recuerda en este navegador.
+const autorCom = () => leer('autorComercial', '');
+const campoAutor = () => `<label>Quién lo apunta</label><input class="campo" name="autor" value="${esc(autorCom())}" placeholder="Tu nombre" list="dlAutores"><datalist id="dlAutores">${['Pablo', 'Sunamis', 'Paco', 'Pau'].map(n => `<option value="${n}">`).join('')}</datalist>`;
+const tomarAutor = f => { const a = f.autor.value.trim(); if (a) escribir('autorComercial', a); return a; };
+const PIE_DLG = (boton, clase = '') => `<div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton ${clase}">${boton}</button></div>`;
+const planesConocidos = () => [...new Set([...Object.keys(comAj?.precios || {}), ...(clientesCache?.clientes || []).filter(y => y.holded?.plan).map(y => y.holded.plan)])].sort((a, b) => a.localeCompare(b, 'es'));
+function copiarEnlace(titulo, texto, url) {
+  dialogo(`<h3>${esc(titulo)}</h3><p class="sub">${esc(texto)}</p><input class="campo" name="enlace" readonly value="${esc(url)}">
+    <div class="pie"><button type="button" class="boton sec" data-cerrar>Cerrar</button><button type="submit" class="boton">Copiar enlace</button></div>`,
+    async f => { try { await navigator.clipboard.writeText(f.enlace.value); aviso('Enlace copiado.'); } catch { f.enlace.select(); return false; } });
+}
+
+// ---- Acciones sobre un cliente (desde Comercial y desde su ficha); alFin repinta ----
+async function anotarCom(cliente, alFin) {
+  await cargarComAj();
+  dialogo(`<h3>Seguimiento · ${esc(cliente)}</h3><p class="sub">Lo ve todo el equipo en su ficha. Sin minutos: el tiempo de soporte va en el ticket.</p>
+    <div class="dos"><div><label>Qué ha sido</label><select class="campo" name="tipo">${comAj.tiposNota.map(t => `<option>${t}</option>`).join('')}</select></div><div>${campoAutor()}</div></div>
+    <label>Qué se ha hablado</label><textarea class="campo" name="texto" rows="4" placeholder="Le he llamado: renueva en diciembre y quiere ver una Super Gema…"></textarea>
+    ${PIE_DLG('Guardar')}`,
+    async f => {
+      if (!f.texto.value.trim()) { aviso('Escribe la nota.', true); return false; }
+      await api('/api/comercial/nota', { cliente, tipo: f.tipo.value, texto: f.texto.value, autor: tomarAutor(f) });
+      aviso('Nota guardada.'); clientesCache = null; alFin?.();
+    });
+  $('dlg').querySelector('textarea').focus();
+}
+function renovadaCom(cliente, renovacion, alFin) {
+  const d = renovacion ? new Date(renovacion + 'T12:00') : new Date();
+  d.setFullYear(d.getFullYear() + 1);
+  dialogo(`<h3>Renovada · ${esc(cliente)}</h3><p class="sub">Sigue con Holded. Queda apuntado en su seguimiento.</p>
+    <div class="dos"><div><label>Renovada hasta</label><input class="campo" type="date" name="hasta" value="${iso(d)}"></div><div>${campoAutor()}</div></div>
+    ${PIE_DLG('Marcar renovada', 'verde')}`,
+    async f => { await api('/api/comercial/renovada', { cliente, hasta: f.hasta.value, autor: tomarAutor(f) }); aviso(`${cliente}: renovada.`); clientesCache = null; alFin?.(); });
+}
+async function bajaCom(cliente, alFin) {
+  await cargarComAj();
+  dialogo(`<h3>Baja de Holded · ${esc(cliente)}</h3><p class="sub">Con el motivo, para saber por qué se van los clientes.</p>
+    <div class="dos"><div><label>Motivo</label><select class="campo" name="motivo"><option value="">Elige…</option>${comAj.motivos.map(m => `<option>${m}</option>`).join('')}</select></div>
+      <div><label>Fecha de la baja</label><input class="campo" type="date" name="fecha" value="${iso(new Date())}"></div></div>
+    <label>Qué ha dicho <small>(opcional)</small></label><textarea class="campo" name="detalle" rows="3" placeholder="No le convence el módulo de inventario; se va a…"></textarea>
+    ${campoAutor()}
+    ${PIE_DLG('Dar de baja', 'rojo')}`,
+    async f => {
+      if (!f.motivo.value) { aviso('Elige el motivo.', true); return false; }
+      await api('/api/comercial/baja', { cliente, motivo: f.motivo.value, detalle: f.detalle.value, fecha: f.fecha.value, autor: tomarAutor(f) });
+      aviso(`${cliente}: de baja.`); clientesCache = null; alFin?.();
+    });
+}
+async function licenciaCom(x, alFin) {
+  await cargarComAj();
+  const h = x.holded || {};
+  dialogo(`<h3>Licencia de Holded · ${esc(x.nombre)}</h3>
+    <div class="dos"><div><label>Plan</label><input class="campo" name="plan" list="dlPlanes" value="${esc(h.plan || '')}" placeholder="Basic, Standard…"><datalist id="dlPlanes">${planesConocidos().map(p => `<option value="${esc(p)}">`).join('')}</datalist></div>
+      <div><label>CIF <small>(opcional)</small></label><input class="campo" name="cif" value="${esc(h.cif || '')}"></div></div>
+    <div class="dos"><div><label>Alta</label><input class="campo" type="date" name="alta" value="${h.alta || ''}"></div><div><label>Renovación</label><input class="campo" type="date" name="renovacion" value="${h.renovacion || ''}"></div></div>
+    <label>Lo que nos deja al año <small>(vacío: el del plan)</small></label><input class="campo" name="importe" inputmode="decimal" value="${h.importe ?? ''}" placeholder="€">
+    <div class="pie">${x.holded ? '<button type="button" class="boton sec" id="licQuitar" style="margin-right:auto">Quitar</button>' : ''}<button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Guardar</button></div>`,
+    async f => { await api('/api/comercial/licencia', { cliente: x.nombre, plan: f.plan.value, cif: f.cif.value, alta: f.alta.value, renovacion: f.renovacion.value, importe: f.importe.value }); aviso('Licencia guardada.'); clientesCache = null; alFin?.(); });
+  $('licQuitar')?.addEventListener('click', async () => {
+    if (!confirm('¿Quitar la licencia de Holded de este cliente?')) return;
+    try { await api('/api/comercial/licencia', { cliente: x.nombre, quitar: true }); $('dlg').close(); clientesCache = null; alFin?.(); } catch (e) { fallo(e); }
+  });
+}
+function gemasCom(x, alFin) {
+  const g = x.gemas || {};
+  dialogo(`<h3>Super Gemas · ${esc(x.nombre)}</h3><p class="sub">Super Gemas no sabe quién paga: se marca aquí. La cuenta y su uso se traen con «Traer de Super Gemas» en Comercial.</p>
+    <label>Correo de su cuenta</label><input class="campo" name="cuenta" type="email" value="${esc(g.cuenta || x.emails[0] || '')}">
+    <div class="dos"><div><label>Estado</label><select class="campo" name="activa"><option value="1">Activa</option><option value="0" ${g.activa === false ? 'selected' : ''}>De baja</option></select></div>
+      <div><label>¿Paga?</label><select class="campo" name="pago"><option value="">Sin decir</option><option value="pago" ${g.pago === 'pago' ? 'selected' : ''}>De pago</option><option value="gratis" ${g.pago === 'gratis' ? 'selected' : ''}>Gratis</option></select></div></div>
+    <label>€ al mes <small>(si paga)</small></label><input class="campo" name="euros" inputmode="decimal" value="${g.eurosMes ?? ''}">
+    <div class="pie">${x.gemas ? '<button type="button" class="boton sec" id="gemQuitar" style="margin-right:auto">Quitar</button>' : ''}<button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Guardar</button></div>`,
+    async f => { await api('/api/comercial/gemas', { cliente: x.nombre, cuenta: f.cuenta.value, activa: f.activa.value === '1', pago: f.pago.value, eurosMes: f.euros.value }); aviso('Super Gemas guardado.'); clientesCache = null; alFin?.(); });
+  $('gemQuitar')?.addEventListener('click', async () => {
+    if (!confirm('¿Quitar Super Gemas de este cliente?')) return;
+    try { await api('/api/comercial/gemas', { cliente: x.nombre, quitar: true }); $('dlg').close(); clientesCache = null; alFin?.(); } catch (e) { fallo(e); }
+  });
+}
+async function enviarConvenioDlg(x, alFin) {
+  await cargarComAj(true);
+  if (!comAj.convenio) return aviso('Sube primero el convenio en PDF: Asesorías → «Convenio y aviso».', true);
+  const cv = x.partner?.convenio;
+  dialogo(`<h3>Enviar el convenio · ${esc(x.nombre)}</h3><p class="sub">Le llega un correo con un enlace para leer «${esc(comAj.convenio.nombre)}» y firmarlo en línea (vale 30 días). Cuando firme, se avisa a Operaciones para el onboarding.</p>
+    <div class="dos"><div><label>Quién firma</label><input class="campo" name="nombre" value="${esc(cv?.nombre || x.partner?.contacto || '')}"></div><div><label>Su correo</label><input class="campo" name="email" type="email" value="${esc(cv?.email || x.emails[0] || '')}"></div></div>
+    ${campoAutor()}
+    ${PIE_DLG(cv ? 'Reenviar' : 'Enviar')}`,
+    async f => {
+      const email = f.email.value.trim();
+      const r = await api('/api/asesorias/enviar', { cliente: x.nombre, email, nombre: f.nombre.value, autor: tomarAutor(f) });
+      clientesCache = null; alFin?.();
+      if (r.enviado) aviso(`Convenio enviado a ${email}.`);
+      else setTimeout(() => copiarEnlace('Convenio listo para firmar', `No hay correo saliente: pásale este enlace a ${email}. Vale 30 días.`, r.enlace));
+    });
+}
+function referirCom(x, alFin) {
+  const otros = clientesCache.clientes.filter(y => !y.partner && y.asesoria !== x.nombre && !y.ejemplo === !x.ejemplo).sort(cmpNom);
+  dialogo(`<h3>Cliente que nos pasa ${esc(x.nombre)}</h3><p class="sub">Queda vinculado a la asesoría y su origen pasa a «Referenciado por asesoría».</p>
+    <label>Cliente</label><input class="campo" name="cliente" list="dlRef" placeholder="Escribe para buscar"><datalist id="dlRef">${otros.map(y => `<option value="${esc(y.nombre)}">`).join('')}</datalist>
+    ${PIE_DLG('Vincular')}`,
+    async f => {
+      const cliente = f.cliente.value.trim();
+      if (!clientesCache.clientes.some(y => y.nombre === cliente)) { aviso('Elige un cliente de la lista. Si es nuevo, créalo antes en Clientes.', true); return false; }
+      await api('/api/comercial/asesoria', { cliente, asesoria: x.nombre });
+      aviso(`${cliente} queda vinculado a ${x.nombre}.`); clientesCache = null; alFin?.();
+    });
+}
+
+// ---- Ficha del cliente: licencia, Super Gemas, asesoría y seguimiento comercial ----
+function tarjetasCom(x, c) {
+  const h = x.holded, g = x.gemas;
+  const dato = (k, v) => `<div class="co-dato"><span>${k}</span><b>${v}</b></div>`;
+  const d = h?.renovacion ? diasA(h.renovacion) : null;
+  const anual = h ? (h.importe != null ? euros(h.importe) : comAj.precios[h.plan] != null ? `${euros(comAj.precios[h.plan])} <small style="color:var(--bruma);font-weight:500">del plan</small>` : '—') : '';
+  const lic = `<section class="tarjeta co-card"><div class="co-card-cab"><h2>Licencia de Holded</h2>${pildoraLic(h)}</div>
+    ${h ? `${dato('Plan', esc(h.plan || '—'))}${dato('Alta', diaTxt(h.alta))}${dato('Renovación', h.renovacion ? `${diaTxt(h.renovacion)}${h.estado !== 'Baja' ? `<small class="${claseDias(d)}">${enDias(d)}</small>` : ''}` : '—')}${dato('Nos deja al año', anual)}${h.cif ? dato('CIF', esc(h.cif)) : ''}
+      ${h.estado === 'Baja' && h.baja ? `<div class="co-baja"><b>De baja el ${diaTxt(h.baja.fecha)}</b> · ${esc(h.baja.motivo)}${h.baja.detalle ? `<br>${esc(h.baja.detalle)}` : ''}</div>` : ''}
+      <div class="botones" style="margin-top:12px"><button type="button" class="boton sec peq" data-co="licencia">Editar</button>${h.estado === 'Baja' ? '<button type="button" class="boton sec peq" data-co="reactivar">Reactivar</button>' : '<button type="button" class="boton sec peq" data-co="renovada">Renovada</button><button type="button" class="boton sec peq" data-co="baja">Baja</button>'}</div>`
+      : '<p class="co-nota">Sin licencia de Holded apuntada.</p><button type="button" class="boton sec peq" data-co="licencia">Añadir licencia</button>'}</section>`;
+  const est = !g ? '<span class="pl sin">Sin cuenta</span>' : g.activa === false ? '<span class="pl est-baja">De baja</span>' : g.pago === 'pago' ? '<span class="pl est-act">De pago</span>' : g.pago === 'gratis' ? '<span class="pl impl">Gratis</span>' : '<span class="pl et-ambar">Sin decir si paga</span>';
+  const gem = `<section class="tarjeta co-card"><div class="co-card-cab"><h2>Super Gemas</h2>${est}</div>
+    ${g ? `${dato('Cuenta', esc(g.cuenta || '—'))}${g.alta ? dato('Alta', diaTxt(g.alta)) : ''}${g.holded != null ? dato('Holded conectado', g.holded ? 'Sí' : 'No') : ''}${g.ultimoUso ? dato('Último uso', fechaLarga(g.ultimoUso.replace(' ', 'T'))) : ''}${g.pago === 'pago' ? dato('Paga', g.eurosMes != null ? `${euros(g.eurosMes)} al mes` : '—') : ''}
+      <div class="botones" style="margin-top:12px"><button type="button" class="boton sec peq" data-co="gemas">Editar</button></div>`
+      : '<p class="co-nota">Sin cuenta de Super Gemas (o aún no se ha unido).</p><button type="button" class="boton sec peq" data-co="gemas">Añadir</button>'}</section>`;
+  return `<div class="co-ficha">${lic}${gem}${x.partner ? tarjetaPartner(x, c) : tarjetaReferido(x, c)}</div>`;
+}
+function tarjetaReferido(x, c) {
+  const partners = c.clientes.filter(y => y.partner && y.partner.etapa !== 'Descartada' && y.nombre !== x.nombre && !y.ejemplo === !x.ejemplo).sort(cmpNom);
+  return `<section class="tarjeta co-card"><div class="co-card-cab"><h2>Asesoría que lo trae</h2>${x.asesoria ? '<span class="pl o-ref">Referenciado</span>' : ''}</div>
+    <p class="co-nota">Si nos lo ha pasado una asesoría partner, queda vinculado a ella y su origen pasa a «Referenciado por asesoría».</p>
+    <select class="campo" id="coAses" style="width:100%" aria-label="Asesoría que lo trae"><option value="">Ninguna</option>${partners.map(y => `<option ${y.nombre === x.asesoria ? 'selected' : ''}>${esc(y.nombre)}</option>`).join('')}</select>
+    ${x.asesoria ? `<a class="ir-t" href="#/clientes/${encodeURIComponent(x.asesoria)}" style="display:inline-block;margin-top:10px;font-size:13px">Ver la asesoría →</a>` : ''}</section>`;
+}
+function tarjetaPartner(x, c) {
+  const p = x.partner, cv = p.convenio;
+  const refs = c.clientes.filter(y => y.asesoria === x.nombre).sort(cmpNom);
+  const conv = cv?.firmado
+    ? `<div class="co-conv ok"><b>Convenio firmado</b> por ${esc(cv.firmado.nombre)}${cv.firmado.cargo ? ` (${esc(cv.firmado.cargo)})` : ''} el ${fechaLarga(cv.firmado.fecha)}.<br><a href="/api/asesorias/justificante?cliente=${encodeURIComponent(x.nombre)}" target="_blank" rel="noopener">Ver el justificante de la firma</a></div>`
+    : cv ? `<div class="co-conv"><b>Enviado a firmar</b> a ${esc(cv.email)} el ${fechaLarga(cv.enviado)}. ${cv.caduca < Date.now() ? '<span class="co-cr">El enlace ha caducado.</span>' : `Pendiente de firma; el enlace vale hasta el ${fechaLarga(cv.caduca)}.`}
+        <div class="botones" style="margin-top:8px"><button type="button" class="boton sec peq" data-co="enviar">Reenviar</button><button type="button" class="boton sec peq" data-co="anular">Anular</button></div></div>`
+    : p.etapa !== 'Partner activa' && p.etapa !== 'Descartada' ? '<button type="button" class="boton peq" data-co="enviar" style="margin-top:10px">Enviar el convenio para firmar</button>' : '';
+  return `<section class="tarjeta co-card"><div class="co-card-cab"><h2>Asesoría partner</h2>${pildoraEtapa(p.etapa)}</div>
+    <label class="co-lab">Etapa del embudo<select class="campo" id="coEtapa">${comAj.etapas.map(e => `<option ${e === p.etapa ? 'selected' : ''}>${e}</option>`).join('')}</select></label>
+    ${conv}
+    ${p.etapa === 'Convenio firmado' ? '<button type="button" class="boton verde peq" data-co="onboarding" style="margin-top:10px">Onboarding hecho</button>' : p.etapa === 'Partner activa' && p.onboarding ? `<p class="co-nota" style="margin:10px 0 0">Onboarding hecho el ${fechaLarga(p.onboarding)}.</p>` : ''}
+    <h3 class="co-sub">Clientes que nos ha pasado (${refs.length})</h3>
+    ${refs.map(y => `<div class="co-ref"><a href="#/clientes/${encodeURIComponent(y.nombre)}">${esc(y.nombre)}</a><span>${y.holded && y.holded.estado !== 'Baja' ? `<span class="pl est-act">${esc(y.holded.plan || 'Holded')}</span>` : ''}${y.servicio === 'Premium' ? '<span class="pl premium">Premium</span>' : ''}${gemasTxt(y.gemas) ? '<span class="pl kit">Super Gemas</span>' : ''}</span></div>`).join('') || '<p class="co-nota">Todavía ninguno.</p>'}
+    <button type="button" class="boton sec peq" data-co="referir" style="margin-top:8px">+ Vincular cliente</button></section>`;
+}
+function tarjetaSeguimiento(x) {
+  const l = [...(x.seguimiento || [])].reverse();
+  return `<section class="tarjeta" style="padding:16px 18px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px"><h2 style="font-size:16px;margin:0">Seguimiento comercial (${l.length})</h2><button type="button" class="boton peq" data-co="nota">Anotar</button></div>
+    <p style="margin:0 0 12px;font-size:12px;color:var(--bruma)">Llamadas, correos y reuniones comerciales: renovaciones, ofertas, por qué se va. Sin minutos; lo ve todo el equipo.</p>
+    ${l.map(n => `<div class="nota-f co-nf"><button type="button" class="co-x" data-borrar="${esc(n.id)}" title="Borrar la nota" aria-label="Borrar la nota">×</button><b>${esc(n.tipo)}</b>${esc(n.texto)}<small>${n.autor ? esc(n.autor) + ' · ' : ''}${fechaHora(n.fecha)}</small></div>`).join('') || '<p style="margin:0;font-size:13px;color:var(--muted)">Nada apuntado todavía.</p>'}</section>`;
+}
+function montarCom(x, c, recargar) {
+  const caja = $('vista').querySelector('.contenido');
+  caja.addEventListener('click', async e => {
+    const del = e.target.closest('[data-borrar]'), b = e.target.closest('[data-co]');
+    if (del) {
+      if (!confirm('¿Borrar esta nota del seguimiento?')) return;
+      try { await api('/api/comercial/nota/borrar', { cliente: x.nombre, id: del.dataset.borrar }); recargar(); } catch (err) { fallo(err); }
+      return;
+    }
+    if (!b) return;
+    const a = b.dataset.co, hacer = async (url, cuerpo, txt) => { try { await api(url, { cliente: x.nombre, autor: autorCom(), ...cuerpo }); aviso(txt); recargar(); } catch (err) { fallo(err); } };
+    if (a === 'nota') anotarCom(x.nombre, recargar);
+    if (a === 'licencia') licenciaCom(x, recargar);
+    if (a === 'renovada') renovadaCom(x.nombre, x.holded?.renovacion, recargar);
+    if (a === 'baja') bajaCom(x.nombre, recargar);
+    if (a === 'reactivar' && confirm('¿La licencia de Holded vuelve a estar activa?')) hacer('/api/comercial/reactivar', {}, 'Licencia activa otra vez.');
+    if (a === 'gemas') gemasCom(x, recargar);
+    if (a === 'enviar') enviarConvenioDlg(x, recargar);
+    if (a === 'anular' && confirm('¿Anular el envío del convenio? El enlace deja de valer.')) hacer('/api/asesorias/anular', {}, 'Envío anulado.');
+    if (a === 'onboarding') {
+      await hacer('/api/asesorias/onboarding', { hecho: true }, `${x.nombre}: onboarding hecho. Ya es partner activa.`);
+      mirarOnboarding();
+      if (!(accesosCache || []).some(y => y.cliente === x.nombre)) setTimeout(() => aviso('Dale acceso al portal desde «Acceso al portal» de su ficha.'), 400);
+    }
+    if (a === 'referir') referirCom(x, recargar);
+  });
+  $('coEtapa')?.addEventListener('change', async e => {
+    const etapa = e.target.value;
+    let aMano = false;
+    if (etapa === 'Convenio firmado' && !x.partner.convenio?.firmado) {
+      if (!confirm('No ha firmado en línea. ¿Lo ha firmado en papel? Pasa a partner con el soporte Premium gratis.')) { e.target.value = x.partner.etapa; return; }
+      aMano = true;
+    }
+    try { await api('/api/asesorias/etapa', { cliente: x.nombre, etapa, aMano, autor: autorCom() }); aviso(`${x.nombre}: ${etapa}.`); mirarOnboarding(); recargar(); }
+    catch (err) { fallo(err); e.target.value = x.partner.etapa; }
+  });
+  $('coAses')?.addEventListener('change', async e => {
+    try { await api('/api/comercial/asesoria', { cliente: x.nombre, asesoria: e.target.value }); aviso(e.target.value ? `Vinculado a ${e.target.value}.` : 'Ya no está vinculado a ninguna asesoría.'); recargar(); }
+    catch (err) { fallo(err); }
+  });
+}
+
+// ---- Periodo (el mismo botón que Métricas, como Super Gemas) ----
+function periodoHtml(p, d, h) {
+  return `<div class="periodo">
+    <button type="button" class="desplegable" id="${p}BtnPer" aria-haspopup="true" aria-expanded="false">${ICO.calendario}<span id="${p}TxtPer"></span>${ICO.abajo}</button>
+    <div class="periodo-panel oculto" id="${p}PanelPer" role="menu">
+      ${Object.entries(PERIODOS).map(([k, [n]]) => `<button type="button" role="menuitem" data-p="${k}">${n}</button>`).join('')}
+      <hr><button type="button" role="menuitem" data-p="custom">Personalizado</button>
+      <div class="periodo-fechas oculto" id="${p}FechasPer">
+        <label>Desde<input type="date" class="campo" id="${p}Desde" value="${d}"></label>
+        <label>Hasta<input type="date" class="campo" id="${p}Hasta" value="${h}"></label>
+        <button type="button" class="boton peq" id="${p}Aplicar">Aplicar</button>
+      </div></div></div>`;
+}
+function montarPeriodo(p, est, rangoDe, alCambiar) {
+  const corta = s => new Date(s + 'T12:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+  const pintar = () => {
+    const [a, b] = rangoDe();
+    $(p + 'TxtPer').textContent = `${est.periodo === 'custom' ? 'Personalizado' : PERIODOS[est.periodo][0]} · ${corta(a)} – ${corta(b)}`;
+    $(p + 'PanelPer').querySelectorAll('[data-p]').forEach(x => x.classList.toggle('on', x.dataset.p === est.periodo));
+  };
+  const abrir = si => { $(p + 'PanelPer').classList.toggle('oculto', !si); $(p + 'BtnPer').setAttribute('aria-expanded', si); };
+  $(p + 'BtnPer').onclick = e => { e.stopPropagation(); abrir($(p + 'PanelPer').classList.contains('oculto')); };
+  $(p + 'PanelPer').onclick = e => {
+    e.stopPropagation();
+    const b = e.target.closest('[data-p]');
+    if (!b) return;
+    if (b.dataset.p === 'custom') { $(p + 'FechasPer').classList.remove('oculto'); $(p + 'Desde').focus(); return; }
+    est.periodo = b.dataset.p;
+    $(p + 'FechasPer').classList.add('oculto');
+    abrir(false); pintar(); alCambiar();
+  };
+  $(p + 'Aplicar').onclick = () => {
+    const a = $(p + 'Desde').value, b = $(p + 'Hasta').value;
+    if (!a || !b || a > b) return aviso('Pon un «desde» anterior al «hasta».', true);
+    Object.assign(est, { periodo: 'custom', desde: a, hasta: b });
+    abrir(false); pintar(); alCambiar();
+  };
+  const fuera = () => abrir(false);
+  document.addEventListener('click', fuera);
+  pintar();
+  return () => document.removeEventListener('click', fuera);
+}
+
+// ---- Pantalla Comercial ----
+let fcom = leer('filtrosComercial', { periodo: 'anio' });
+if (!PERIODOS[fcom.periodo] && fcom.periodo !== 'custom') fcom.periodo = 'anio';
+const rangoCom = () => fcom.periodo === 'custom' && fcom.desde && fcom.hasta ? [fcom.desde, fcom.hasta] : (PERIODOS[fcom.periodo] || PERIODOS.anio)[1]();
+let comTab = 'd30';
+const segF = { lic: '', plan: '', renueva: '', premium: '', gemas: '', origen: '', asesoria: '', q: '' };
+
+function vistaComercial() {
+  const [d, h] = rangoCom();
+  $('vista').innerHTML = `<div class="mk">
+    <div class="mk-cab"><div class="mk-logo">${ICO_COM.euro}</div><div><h1>Comercial Holded</h1><p>ARR, licencias, renovaciones, bajas y Super Gemas. Hosting y dominios irán aparte.</p></div>
+      <div class="mk-chips"><button type="button" class="boton sec" id="coPrecios">Ingreso por plan</button><button type="button" class="boton" id="coImportar">Importar licencias</button></div></div>
+    <div class="filtros" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 28px 0">${periodoHtml('co', d, h)}<span class="co-nota" style="margin:0">El periodo cuenta para las bajas y el churn.</span></div>
+    <div class="contenido" id="com"><div class="vacio">Cargando…</div></div></div>`;
+  pararVista = montarPeriodo('co', fcom, rangoCom, () => { escribir('filtrosComercial', fcom); cargarComercial(); });
+  $('coPrecios').onclick = () => preciosCom(cargarComercial);
+  $('coImportar').onclick = () => importarCom(cargarComercial);
+  $('com').onclick = e => {
+    const fila = e.target.closest('[data-cli]'), a = e.target.closest('[data-a]');
+    if (fila && a) {
+      const n = fila.dataset.cli;
+      if (a.dataset.a === 'nota') anotarCom(n, cargarComercial);
+      if (a.dataset.a === 'renovada') renovadaCom(n, fila.dataset.ren, cargarComercial);
+      if (a.dataset.a === 'baja') bajaCom(n, cargarComercial);
+    }
+    const t = e.target.closest('#coTabs [data-t]');
+    if (t) { comTab = t.dataset.t; cargarComercial(); }
+    const u = e.target.closest('[data-unir]');
+    if (u) unirGemasDlg(u.dataset.unir, u.dataset.org, cargarComercial);
+    if (e.target.closest('#coTraer')) traerGemas(e.target.closest('#coTraer'));
+  };
+  cargarComercial();
+}
+async function cargarComercial() {
+  const [d, h] = rangoCom();
+  let r, c;
+  try { [r, c] = await Promise.all([api(`/api/comercial?desde=${d}&hasta=${h}`), cargarClientes(), cargarComAj(true)]); } catch (e) { return fallo(e); }
+  if (!$('com')) return;
+  pintarComercial(r, c);
+}
+async function traerGemas(b) {
+  b.disabled = true;
+  try { const r = await api('/api/comercial/gemas/traer', {}); aviso(`Super Gemas: ${r.unidas} cuentas unidas a su cliente${r.sinUnir ? ` y ${r.sinUnir} sin unir` : ''}.`); clientesCache = null; cargarComercial(); }
+  catch (e) { fallo(e); b.disabled = false; }
+}
+function unirGemasDlg(email, org, alFin) {
+  const c = clientesCache;
+  dialogo(`<h3>Unir cuenta de Super Gemas</h3><p class="sub">${esc(email)}${org ? ` · ${esc(org)}` : ''}</p>
+    <label>Cliente</label><input class="campo" name="cliente" list="dlUnir" value="${esc(org)}" placeholder="Escribe para buscar"><datalist id="dlUnir">${c.clientes.filter(x => !x.ejemplo).map(x => `<option value="${esc(x.nombre)}">`).join('')}</datalist>
+    <p class="co-nota" style="margin-top:6px">Si no existe, se crea su ficha con ese nombre.</p>
+    ${PIE_DLG('Unir')}`,
+    async f => {
+      const cliente = f.cliente.value.trim();
+      if (!cliente) { aviso('Escribe el cliente.', true); return false; }
+      await api('/api/comercial/gemas', { cuenta: email, unir: true, cliente, crear: !c.clientes.some(x => x.nombre === cliente) });
+      aviso('Cuenta unida.'); clientesCache = null; alFin?.();
+    });
+}
+
+function pintarComercial(r, c) {
+  const enlace = n => `<a href="#/clientes/${encodeURIComponent(n)}">${esc(n)}</a>`;
+  const tile = (ico, t, val, l1, l2) => `<div class="co-tile"><div class="t">${ico}${t}</div><b>${val}</b><small>${l1}</small>${l2 ? `<small>${l2}</small>` : ''}</div>`;
+  const a = r.arr, L = r.licencias, G = r.gemas, sg = comAj.supergemas;
+  const arr = `<section class="mk-sec"><div class="co-arr">
+      <div class="co-total"><span>ARR total</span><b>${euros(a.total)}</b><small>al año · ${euros(Math.round(a.total / 12))} al mes</small></div>
+      <div class="co-serv">
+        ${tile(ICO_COM.licencia, 'Licencias de Holded', euros(a.holded), `${num(L.activas)} activas · ${num(L.bajas)} de baja`, L.sinImporte ? `<span class="co-avisito">${L.sinImporte} sin importe: pon el ingreso por plan</span>` : '')}
+        ${tile(ICO.estrella, 'Soporte Premium', euros(a.premium), `${num(r.premium.pago)} de pago a ${r.premium.eurosMes} € al mes`, `${num(r.premium.asesorias)} asesorías partner, gratis`)}
+        ${tile(ICO_COM.gema, 'Super Gemas', euros(a.gemas), `${num(G.pago)} de pago · ${num(G.gratis)} gratis`, G.sinDecir ? `<span class="co-avisito">${G.sinDecir} sin decir si pagan</span>` : `${num(G.activas)} cuentas activas`)}
+      </div></div>
+    <div class="co-activos"><span class="tit">Clientes activos</span>${[['Licencia Holded', r.activos.holded], ['Soporte Premium', r.activos.premium], ['Super Gemas', r.activos.gemas], ['Implementación', r.activos.implementacion], ['Kit Digital 1', r.activos.kitDigital1]].map(([t, n]) => `<span>${t} <b>${num(n)}</b></span>`).join('')}</div>
+    ${r.ejemplo ? '<p class="co-nota" style="margin:12px 0 0">Incluye los datos de ejemplo; se quitan en Canales → Datos de ejemplo.</p>' : ''}</section>`;
+
+  const R = r.renovar;
+  const tabs = [['d30', 'Próximos 30 días', R.d30], ['d60', 'De 31 a 60 días', R.d60], ['vencidas', 'Vencidas sin marcar', R.vencidas]];
+  const filaRen = x => `<div class="co-fila" data-cli="${esc(x.cliente)}" data-ren="${esc(x.renovacion)}">${avatar(x.cliente)}
+      <div class="n">${enlace(x.cliente)}${x.ejemplo ? ' <span class="pl sin">Ejemplo</span>' : ''}<small>${esc(x.plan)}${x.anual != null ? ` · ${euros(x.anual)} al año` : ''} · ${x.ultimaNota ? `${esc(x.ultimaNota.tipo)} ${haceTxt(x.ultimaNota.fecha)}${x.ultimaNota.autor ? ` (${esc(x.ultimaNota.autor)})` : ''}: «${esc(x.ultimaNota.texto.slice(0, 90))}${x.ultimaNota.texto.length > 90 ? '…' : ''}»` : 'sin seguimiento todavía'}</small></div>
+      <span class="d ${claseDias(x.dias)}">${diaTxt(x.renovacion)} · ${enDias(x.dias)}</span>
+      <div class="acc"><button type="button" class="boton sec peq" data-a="nota">Anotar</button><button type="button" class="boton sec peq" data-a="renovada">Renovada</button><button type="button" class="boton sec peq" data-a="baja">Baja</button></div></div>`;
+  const ren = `<section class="mk-sec"><div class="mk-sec-cab"><div class="mk-ico">${ICO.calendario}</div><div><h2>Renovaciones</h2><p>Licencias que vencen. Llama antes de la fecha, anota lo que te digan y márcalas como renovadas o de baja, con el motivo.</p></div></div>
+    <div class="cl-tabs" id="coTabs">${tabs.map(([k, t, l]) => `<button type="button" data-t="${k}" class="${k === comTab ? 'on' : ''}">${t} <span class="n">${l.length}</span></button>`).join('')}</div>
+    <div class="co-filas" style="margin-top:12px">${R[comTab].map(filaRen).join('') || `<div class="vacio" style="padding:22px">${L.activas ? 'Ninguna licencia en este tramo.' : 'Aún no hay licencias: pégalas con «Importar licencias».'}</div>`}</div></section>`;
+
+  const max = Math.max(1, ...L.porPlan.map(p => p.n));
+  const planes = `<section class="mk-sec"><div class="mk-sec-cab"><div class="mk-ico">${ICO_COM.licencia}</div><div><h2>Licencias por plan</h2><p>Las activas y lo que nos deja cada plan al año.</p></div></div>
+    ${L.porPlan.map(p => `<div class="co-barra"><span>${esc(p.plan)}</span><i style="width:${Math.round(p.n / max * 100)}%"></i><em>${p.n} · ${p.sinImporte === p.n ? 'sin importe' : euros(Math.round(p.anual)) + ' al año'}</em></div>`).join('') || '<div class="vacio" style="padding:18px">Sin licencias activas.</div>'}</section>`;
+  const ch = r.churn;
+  const churn = `<section class="mk-sec"><div class="mk-sec-cab"><div class="mk-ico">${ICO_COM.baja}</div><div><h2>Bajas y churn</h2><p>Del periodo elegido: las licencias que se han dado de baja y por qué.</p></div></div>
+    <div class="co-cifra"><div><b class="${ch.tasa >= 10 ? 'co-cr' : ''}">${ch.tasa == null ? '—' : num(ch.tasa, 1) + ' %'}</b><span>Churn</span></div><div><b>${num(ch.bajas)}</b><span>Bajas</span></div><div><b>${num(ch.alInicio)}</b><span>Activas al empezar</span></div></div>
+    ${ch.motivos.map(m => `<details class="co-motivo"><summary><span>${esc(m.motivo)}</span><span>${m.n}</span></summary>${m.clientes.map(x => `<p>${enlace(x.cliente)}<small>${diaTxt(x.fecha)}${x.plan ? ' · ' + esc(x.plan) : ''}${x.detalle ? ` — ${esc(x.detalle)}` : ''}</small></p>`).join('')}</details>`).join('') || '<p class="co-nota">Ninguna baja en el periodo.</p>'}</section>`;
+
+  const gemas = `<section class="mk-sec"><div class="mk-sec-cab"><div class="mk-ico">${ICO_COM.gema}</div><div><h2>Super Gemas</h2><p>Las cuentas de Super Gemas, unidas a su cliente. Super Gemas no sabe quién paga: se marca en la ficha.</p></div>
+      ${sg.configurado ? '<button type="button" class="boton sec peq" id="coTraer" style="margin-left:auto">Traer de Super Gemas</button>' : ''}</div>
+    <div class="co-cifra"><div><b>${num(G.activas)}</b><span>Activas</span></div><div><b>${num(G.pago)}</b><span>De pago</span></div><div><b>${num(G.gratis)}</b><span>Gratis</span></div><div><b class="${G.sinDecir ? 'co-at' : ''}">${num(G.sinDecir)}</b><span>Sin decir</span></div><div><b>${euros(G.eurosMes)}</b><span>Al mes</span></div></div>
+    <p class="co-nota">${sg.configurado ? (sg.cuando ? `Última lectura ${haceTxt(sg.cuando)}.` : 'Aún no se ha leído: pulsa «Traer de Super Gemas».') : 'Para traer las cuentas solas falta subir api/soporte_cuentas.php a Super Gemas y poner SUPERGEMAS_CLAVE en Render. Mientras, se marcan a mano en la ficha de cada cliente.'}</p>
+    ${sg.sinUnir.length ? `<details class="co-motivo"><summary><span>Cuentas sin unir a ningún cliente</span><span>${sg.sinUnir.length}</span></summary>${sg.sinUnir.map(x => `<p><b>${esc(x.organizacion || x.nombre || x.email)}</b><small>${esc(x.email)}${x.baja ? ' · de baja' : ''}</small><button type="button" class="boton sec peq" data-unir="${esc(x.email)}" data-org="${esc(x.organizacion || x.nombre || '')}">Unir</button></p>`).join('')}</details>` : ''}</section>`;
+
+  const as = r.asesorias;
+  const ases = `<section class="mk-sec"><div class="mk-sec-cab"><div class="mk-ico">${ICO_COM.maletin}</div><div><h2>Asesorías partner</h2><p>${num(as.partners)} con el convenio firmado · ${num(as.referidos)} clientes referenciados.</p></div><a class="boton sec peq" href="#/asesorias" style="margin-left:auto">Ver asesorías</a></div>
+    ${as.pendientesOnboarding.length ? `<p class="co-nota co-at" style="font-weight:600">${as.pendientesOnboarding.length === 1 ? '1 asesoría ha firmado y espera' : `${as.pendientesOnboarding.length} asesorías han firmado y esperan`} el onboarding: ${as.pendientesOnboarding.map(x => enlace(x.cliente)).join(', ')}.</p>` : ''}
+    <div class="co-activos" style="margin-top:0">${comAj.etapas.filter(e => e !== 'Descartada').map(e => `<span>${esc(e)} <b>${num(as.porEtapa[e] || 0)}</b></span>`).join('')}</div></section>`;
+
+  const opc = (lista, v, todos) => `<option value="">${todos}</option>${lista.map(([k, t]) => `<option value="${esc(k)}" ${k === v ? 'selected' : ''}>${esc(t)}</option>`).join('')}`;
+  const partners = c.clientes.filter(x => x.partner && !x.ejemplo && ['Convenio firmado', 'Partner activa'].includes(x.partner.etapa)).map(x => [x.nombre, x.nombre]);
+  const seg = `<section class="mk-sec"><div class="mk-sec-cab"><div class="mk-ico">${ICO.personas.replace('<svg ', '<svg width="18" height="18" ')}</div><div><h2>Segmentación</h2><p>Grupos de clientes para campañas: elige qué tienen y qué no, y copia sus correos o descárgalos en CSV.</p></div></div>
+    <div class="co-seg-f" id="coSegF">
+      <div><label>Licencia de Holded</label><select class="campo" data-s="lic">${opc([['activa', 'Activa'], ['baja', 'De baja'], ['sin', 'Sin licencia']], segF.lic, 'Da igual')}</select></div>
+      <div><label>Plan</label><select class="campo" data-s="plan">${opc(planesConocidos().map(p => [p, p]), segF.plan, 'Todos')}</select></div>
+      <div><label>Renueva</label><select class="campo" data-s="renueva">${opc([['30', 'En 30 días'], ['60', 'En 60 días'], ['90', 'En 90 días'], ['vencida', 'Vencida sin marcar']], segF.renueva, 'Cuando sea')}</select></div>
+      <div><label>Soporte Premium</label><select class="campo" data-s="premium">${opc([['si', 'Lo tiene'], ['no', 'No lo tiene']], segF.premium, 'Da igual')}</select></div>
+      <div><label>Super Gemas</label><select class="campo" data-s="gemas">${opc([['si', 'Tiene'], ['no', 'No tiene'], ['pago', 'De pago'], ['gratis', 'Gratis']], segF.gemas, 'Da igual')}</select></div>
+      <div><label>Origen</label><select class="campo" data-s="origen">${opc(c.origenes.map(o => [o, o]), segF.origen, 'Todos')}</select></div>
+      <div><label>Asesoría que lo trae</label><select class="campo" data-s="asesoria">${opc(partners, segF.asesoria, 'Todas')}</select></div>
+      <div><label>Buscar</label><input class="campo" data-s="q" value="${esc(segF.q)}" placeholder="Nombre o correo"></div>
+    </div><div id="coSegLista"></div></section>`;
+
+  $('com').innerHTML = arr + ren + `<div class="co-dos">${planes}${churn}</div><div class="co-dos">${gemas}${ases}</div>` + seg;
+  $('coSegF').oninput = e => { const k = e.target.dataset.s; if (!k) return; segF[k] = e.target.value; pintarSeg(c); };
+  pintarSeg(c);
+}
+
+function pintarSeg(c) {
+  const caja = $('coSegLista');
+  if (!caja) return;
+  const f = segF, q = f.q.trim().toLowerCase();
+  // Para campañas: clientes reales (sin los de ejemplo) y sin las asesorías del embudo.
+  const l = c.clientes.filter(x => {
+    const h = x.holded, g = gemasTxt(x.gemas) ? x.gemas : null;
+    if (x.ejemplo || prospecto(x)) return false;
+    if (f.lic === 'activa' && !(h && h.estado !== 'Baja')) return false;
+    if (f.lic === 'baja' && !(h && h.estado === 'Baja')) return false;
+    if (f.lic === 'sin' && h) return false;
+    if (f.plan && h?.plan !== f.plan) return false;
+    if (f.renueva) {
+      if (!h?.renovacion || h.estado === 'Baja') return false;
+      const n = diasA(h.renovacion);
+      if (f.renueva === 'vencida' ? n >= 0 : n < 0 || n > Number(f.renueva)) return false;
+    }
+    if (f.premium && (x.servicio === 'Premium') !== (f.premium === 'si')) return false;
+    if (f.gemas === 'si' && !g) return false;
+    if (f.gemas === 'no' && g) return false;
+    if (['pago', 'gratis'].includes(f.gemas) && g?.pago !== f.gemas) return false;
+    if (f.origen && x.tipo_cliente !== f.origen) return false;
+    if (f.asesoria && x.asesoria !== f.asesoria) return false;
+    return !q || `${x.nombre} ${x.emails.join(' ')}`.toLowerCase().includes(q);
+  }).sort(cmpNom);
+  const correos = [...new Set(l.map(x => x.emails[0]).filter(Boolean))];
+  caja.innerHTML = (l.length ? `<div class="tabla co-seg-t"><table><thead><tr><th>Cliente</th><th>Licencia</th><th>Renovación</th><th>Premium</th><th>Super Gemas</th><th>Origen</th><th>Correo</th></tr></thead><tbody>
+    ${l.slice(0, 50).map(x => `<tr><td><a href="#/clientes/${encodeURIComponent(x.nombre)}">${esc(x.nombre)}</a></td><td>${pildoraLic(x.holded)}</td><td>${x.holded?.renovacion ? diaTxt(x.holded.renovacion) : '—'}</td><td>${x.servicio === 'Premium' ? 'Sí' : '—'}</td><td>${esc(gemasTxt(x.gemas) || '—')}</td><td>${esc(x.asesoria ? `Asesoría: ${x.asesoria}` : x.tipo_cliente)}</td><td>${esc(x.emails[0] || '—')}</td></tr>`).join('')}
+    </tbody></table></div>${l.length > 50 ? `<p class="co-nota" style="margin:8px 0 0">Se ven 50 de ${num(l.length)}; el CSV los lleva todos.</p>` : ''}` : '<div class="vacio" style="padding:20px">Ningún cliente cumple todo eso.</div>')
+    + `<div class="co-seg-pie"><b>${num(l.length)} ${l.length === 1 ? 'cliente' : 'clientes'} · ${num(correos.length)} con correo</b><button type="button" class="boton sec peq" id="segCopiar" ${correos.length ? '' : 'disabled'}>Copiar correos</button><button type="button" class="boton peq" id="segCsv" ${l.length ? '' : 'disabled'}>Descargar CSV</button></div>`;
+  $('segCopiar').onclick = async () => { try { await navigator.clipboard.writeText(correos.join(', ')); aviso(`${correos.length} correos copiados.`); } catch { aviso('No se han podido copiar.', true); } };
+  $('segCsv').onclick = () => descargarCsv(l);
+}
+function descargarCsv(l) {
+  const celda = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const filas = [['Cliente', 'Correo', 'Teléfono', 'Plan de Holded', 'Licencia', 'Renovación', 'Ingreso anual', 'Soporte Premium', 'Super Gemas', 'Origen', 'Asesoría'],
+    ...l.map(x => [x.nombre, x.emails[0] || '', x.telefonos[0] || '', x.holded?.plan || '', x.holded ? (x.holded.estado === 'Baja' ? 'De baja' : 'Activa') : 'Sin licencia', x.holded?.renovacion || '',
+      x.holded?.importe ?? '', x.servicio === 'Premium' ? 'Sí' : 'No', gemasTxt(x.gemas) || 'No', x.tipo_cliente, x.asesoria || ''])];
+  const blob = new Blob(['﻿' + filas.map(f => f.map(celda).join(';')).join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `segmento-${iso(new Date())}.csv` });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+async function preciosCom(alFin) {
+  try { await Promise.all([cargarComAj(true), cargarClientes()]); } catch (e) { return fallo(e); }
+  const planes = planesConocidos();
+  dialogo(`<h3>Ingreso anual por plan</h3><p class="sub">Lo que nos deja al año una licencia de cada plan. Cuenta para las licencias que no traen su propio importe.</p>
+    ${planes.map((p, i) => `<div class="dos"><div><label>Plan</label><input class="campo" name="p${i}" value="${esc(p)}"></div><div><label>€ al año</label><input class="campo" name="e${i}" inputmode="decimal" value="${comAj.precios[p] ?? ''}"></div></div>`).join('')}
+    <div class="dos"><div><label>${planes.length ? 'Otro plan' : 'Plan'}</label><input class="campo" name="pN" placeholder="Nombre del plan"></div><div><label>€ al año</label><input class="campo" name="eN" inputmode="decimal"></div></div>
+    ${PIE_DLG('Guardar')}`,
+    async f => {
+      const precios = {};
+      planes.forEach((p, i) => { if (f['p' + i].value.trim() && f['e' + i].value.trim()) precios[f['p' + i].value.trim()] = f['e' + i].value; });
+      if (f.pN.value.trim() && f.eN.value.trim()) precios[f.pN.value.trim()] = f.eN.value;
+      await api('/api/comercial/ajustes', { precios });
+      aviso('Ingresos por plan guardados.'); alFin?.();
+    });
+}
+
+// ---- Importar el Excel de licencias: se pega (o se sube el CSV), se dice qué es cada columna,
+// se comprueba y se importa. Volver a importar actualiza las licencias, no duplica clientes. ----
+const CAMPOS_IMP = [
+  ['empresa', 'Empresa', /empresa|raz[oó]n social|cliente|nombre|compa[ñn]/i],
+  ['cif', 'CIF / NIF', /\bcif\b|\bnif\b|vat|identif/i],
+  ['email', 'Correo', /mail|correo/i],
+  ['telefono', 'Teléfono', /tel[eé]f|m[oó]vil|phone/i],
+  ['plan', 'Plan', /plan|licencia|suscrip|tarifa|producto/i],
+  ['estado', 'Estado', /estado|status|activ/i],
+  ['alta', 'Fecha de alta', /alta|inicio|contrat|compra|start|creaci/i],
+  ['renovacion', 'Renovación', /renov|venc|caduc|\bfin\b|hasta|expir|pr[oó]xim/i],
+  ['importe', 'Importe', /importe|precio|€|eur|cuota|pvp|amount|total|valor/i],
+  ['motivo', 'Motivo de baja', /motivo|observ|coment|nota/i],
+];
+function leerTabla(txt) {
+  const lineas = String(txt || '').replace(/\r/g, '').split('\n').filter(l => l.trim());
+  if (lineas.length < 2) return null;
+  const sep = lineas[0].includes('\t') ? '\t' : lineas[0].split(';').length > lineas[0].split(',').length ? ';' : ',';
+  const partir = l => {
+    if (sep === '\t') return l.split('\t').map(x => x.trim().replace(/^"(.*)"$/, '$1'));
+    const out = [];
+    let cur = '', dentro = false;
+    for (let i = 0; i < l.length; i++) {
+      const ch = l[i];
+      if (dentro) { if (ch === '"' && l[i + 1] === '"') { cur += '"'; i++; } else if (ch === '"') dentro = false; else cur += ch; }
+      else if (ch === '"') dentro = true;
+      else if (ch === sep) { out.push(cur.trim()); cur = ''; }
+      else cur += ch;
+    }
+    out.push(cur.trim());
+    return out;
+  };
+  const filas = lineas.map(partir);
+  return { cab: filas[0], filas: filas.slice(1).filter(f => f.some(Boolean)) };
+}
+function importarCom(alFin) {
+  let tabla = null, comprobado = false;
+  dialogo(`<h3>Importar licencias de Holded</h3>
+    <p class="sub">En el Excel de licencias, copia las filas con la de los títulos y pégalas aquí, o sube el CSV. Se unen a los clientes que ya están por CIF, correo o nombre; volver a importar actualiza, no duplica.</p>
+    <div id="impPegar"><textarea class="campo" name="pegado" rows="7" placeholder="Empresa → CIF → Correo → Plan → Alta → Renovación → Importe…"></textarea>
+      <input class="campo" type="file" name="fichero" accept=".csv,.txt,.tsv" style="margin-top:8px"></div>
+    <div id="impMapa" class="oculto"><label>Qué es cada columna <small>(lo que no esté, «No está»)</small></label><div class="co-map" id="impCampos"></div>
+      <label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" name="mensual" style="width:auto"> El importe es al mes (se multiplica por 12)</label></div>
+    <div id="impRes"></div>
+    <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton" id="impBtn">Leer</button></div>`,
+    async f => {
+      if (!tabla) {
+        const txt = f.fichero.files[0] ? await f.fichero.files[0].text() : f.pegado.value;
+        tabla = leerTabla(txt);
+        if (!tabla?.filas.length) { tabla = null; aviso('Pega las filas con la de los títulos encima.', true); return false; }
+        const usadas = new Set();
+        $('impCampos').innerHTML = CAMPOS_IMP.map(([k, t, re]) => {
+          const i = tabla.cab.findIndex((h, j) => !usadas.has(j) && re.test(h));
+          if (i >= 0) usadas.add(i);
+          return `<div><label>${t}</label><select class="campo" name="col_${k}"><option value="">No está</option>${tabla.cab.map((h, j) => `<option value="${j}" ${j === i ? 'selected' : ''}>${esc(h || `Columna ${j + 1}`)}</option>`).join('')}</select></div>`;
+        }).join('');
+        $('impPegar').classList.add('oculto');
+        $('impMapa').classList.remove('oculto');
+        $('impBtn').textContent = `Comprobar ${tabla.filas.length} filas`;
+        const otraVez = () => { comprobado = false; $('impRes').innerHTML = ''; $('impBtn').textContent = `Comprobar ${tabla.filas.length} filas`; };
+        $('impMapa').onchange = otraVez;
+        return false;
+      }
+      if (f.col_empresa.value === '') { aviso('Di qué columna es la empresa.', true); return false; }
+      const filas = tabla.filas.map(x => Object.fromEntries(CAMPOS_IMP.map(([k]) => [k, f['col_' + k].value === '' ? '' : x[Number(f['col_' + k].value)] ?? ''])));
+      if (!comprobado) {
+        const r = await api('/api/comercial/importar', { filas, mensual: f.mensual.checked });
+        comprobado = true;
+        $('impRes').innerHTML = `<p class="co-nota" style="margin:14px 0 0"><b>${r.unidos}</b> se unen a clientes que ya están · <b>${r.nuevos}</b> clientes nuevos · <b class="${r.errores ? 'co-cr' : ''}">${r.errores}</b> con errores, que no se importan</p>
+          <div class="co-imp-tabla"><table><thead><tr><th>Fila</th><th>Empresa</th><th>Qué pasa</th><th>Plan</th><th>Estado</th><th>Renovación</th><th>Al año</th></tr></thead><tbody>
+          ${r.filas.slice(0, 300).map(x => `<tr><td>${x.n}</td><td>${esc(x.empresa)}</td><td>${x.accion === 'error' ? `<span class="co-cr">${esc(x.motivo)}</span>` : x.accion === 'unir' ? `Se une a «${esc(x.cliente)}» <small>(${esc(x.como)})</small>` : 'Cliente nuevo'}</td><td>${esc(x.plan || '')}</td><td>${esc(x.estado || '')}</td><td>${x.renovacion ? diaTxt(x.renovacion) : ''}</td><td>${x.anual != null ? euros(x.anual) : ''}</td></tr>`).join('')}</tbody></table></div>`;
+        $('impBtn').textContent = `Importar ${r.unidos + r.nuevos} licencias`;
+        return false;
+      }
+      const r = await api('/api/comercial/importar', { filas, mensual: f.mensual.checked, aplicar: true });
+      aviso(`Licencias importadas: ${r.unidos} unidas a su cliente y ${r.nuevos} clientes nuevos.`);
+      clientesCache = null; alFin?.();
+    });
+  const d = $('dlg');
+  d.classList.add('ancho');
+  d.addEventListener('close', () => d.classList.remove('ancho'), { once: true });
+}
+
+// Convenios firmados que esperan el onboarding: número en el menú y aviso cuando llega uno nuevo.
+let pendOnb = null;
+async function mirarOnboarding() {
+  let l;
+  try { l = await api('/api/asesorias/pendientes'); } catch { return; }
+  if (pendOnb) for (const p of l.filter(p => !pendOnb.some(q => q.cliente === p.cliente))) aviso(`${p.cliente} ha firmado el convenio: toca hacer el onboarding.`);
+  pendOnb = l;
+  $('cuentaAses').textContent = l.length;
+  $('cuentaAses').classList.toggle('oculto', !l.length);
 }
 
 // ================= Asesorías y acceso al portal =================
@@ -2203,50 +2910,101 @@ function montarAcceso(cliente) {
   };
 }
 
+// Embudo de asesorías partner (28/10/2026): de la primera llamada al convenio firmado en línea
+// y el onboarding. Con el convenio firmado pasan a partner: Premium gratis y acceso al portal.
+let filtroAs = '';
 async function vistaAsesorias() {
-  $('vista').innerHTML = `<div class="cl-cab"><div><h1>Asesorías</h1><p>Las asesorías partner: tienen el soporte Premium gratis y entran al portal con su cuenta.</p></div>
-      <button type="button" class="boton" id="nuevaAs">+ Nueva asesoría</button></div>
+  $('vista').innerHTML = `<div class="cl-cab"><div><h1>Asesorías</h1><p>El embudo de las asesorías partner: de la primera llamada al convenio firmado y el onboarding. Con el convenio firmado tienen el soporte Premium gratis.</p></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="boton sec" id="asConv">Convenio y aviso</button><button type="button" class="boton" id="nuevaAs">+ Nueva asesoría</button></div></div>
     <div class="contenido" id="asLista"><div class="vacio">Cargando…</div></div>`;
   $('nuevaAs').onclick = nuevaAsesoria;
+  $('asConv').onclick = convenioDlg;
   let c, acc;
-  try { [c, acc] = await Promise.all([cargarClientes(), cargarAccesos()]); } catch (e) { return fallo(e); }
+  try { [c, acc] = await Promise.all([cargarClientes(), cargarAccesos(), cargarComAj()]); } catch (e) { return fallo(e); }
   if (!$('asLista')) return;
-  const l = c.clientes.filter(x => x.tipo_cliente === 'Asesoría').sort(cmpNom);
+  const todas = c.clientes.filter(x => x.partner).sort(cmpNom);
+  const vivas = todas.filter(x => x.partner.etapa !== 'Descartada');
+  if (filtroAs && !comAj.etapas.includes(filtroAs)) filtroAs = '';
+  const l = filtroAs ? todas.filter(x => x.partner.etapa === filtroAs) : vivas;
+  const pendientes = todas.filter(x => x.partner.etapa === 'Convenio firmado');
+  const firmadas = todas.filter(x => ['Convenio firmado', 'Partner activa'].includes(x.partner.etapa));
+  const refs = n => c.clientes.filter(y => y.asesoria === n).length;
   const de = x => acc.filter(a => a.cliente === x.nombre);
-  const conAcceso = l.filter(x => de(x).some(a => a.estado === 'Activa')).length;
   const fila = x => {
-    const cs = de(x), act = cs.filter(a => a.estado === 'Activa').length, inv = cs.length - act;
+    const cs = de(x), act = cs.filter(a => a.estado === 'Activa').length, inv = cs.length - act, cv = x.partner.convenio;
+    const sub = cv?.firmado ? `Firmado el ${fechaLarga(cv.firmado.fecha)}` : cv ? `Convenio enviado el ${fechaLarga(cv.enviado)}` : [x.partner.contacto, x.emails[0], x.telefonos[0]].filter(Boolean).join(' · ') || 'Sin datos de contacto';
     return `<a class="as-fila" href="#/clientes/${encodeURIComponent(x.nombre)}">${avatar(x.nombre)}
-      <span class="as-n"><b>${esc(x.nombre)}</b><small>${esc([x.emails[0], x.telefonos[0]].filter(Boolean).join(' · ') || 'Sin datos de contacto')}</small></span>
+      <span class="as-n"><b>${esc(x.nombre)}</b><small>${esc(sub)}</small></span>
+      <span class="as-d"><b>${refs(x.nombre)}</b><small>clientes</small></span>
       <span class="as-d"><b>${x.tickets}</b><small>tickets</small></span>
-      <span class="as-d"><b>${x.abiertos}</b><small>abiertos</small></span>
       <span class="as-d"><b>${num(x.horas, 1)} h</b><small>de soporte</small></span>
-      <span class="as-p">${cs.length ? `${act ? `<span class="pl acc-activa">${act} con acceso</span>` : ''}${inv ? `<span class="pl acc-inv">${inv} ${inv > 1 ? 'invitadas' : 'invitada'}</span>` : ''}` : '<span class="pl sin">Sin acceso al portal</span>'}</span>
-      ${pildoraServ(x.servicio)}</a>`;
+      <span class="as-p">${pildoraEtapa(x.partner.etapa)}${cs.length ? `${act ? `<span class="pl acc-activa">${act} con acceso</span>` : ''}${inv ? `<span class="pl acc-inv">${inv} ${inv > 1 ? 'invitadas' : 'invitada'}</span>` : ''}` : ''}</span></a>`;
   };
-  $('asLista').innerHTML = l.length ? `<div class="as-resumen"><span><b>${l.length}</b> ${l.length === 1 ? 'asesoría' : 'asesorías'}</span><span><b>${conAcceso}</b> con acceso al portal</span><span><b>${l.reduce((s, x) => s + x.abiertos, 0)}</b> tickets abiertos</span></div>
-    <div class="as-lista">${l.map(fila).join('')}</div>`
-    : '<div class="vacio">Aún no hay ninguna asesoría. Dala de alta con «+ Nueva asesoría».</div>';
+  const cuenta = e => todas.filter(x => x.partner.etapa === e).length;
+  $('asLista').innerHTML = `
+    ${pendientes.length ? `<div class="as-onb"><b>Convenio firmado: toca hacer el onboarding</b>${pendientes.map(x => `<div class="co-fila"><div class="n"><a href="#/clientes/${encodeURIComponent(x.nombre)}">${esc(x.nombre)}</a><small>${x.partner.convenio?.firmado ? `Firmó ${esc(x.partner.convenio.firmado.nombre)} el ${fechaLarga(x.partner.convenio.firmado.fecha)}` : 'Firmado en papel'}</small></div><button type="button" class="boton verde peq" data-onb="${esc(x.nombre)}">Onboarding hecho</button></div>`).join('')}</div>` : ''}
+    <div class="as-embudo" id="asEmbudo">
+      <button type="button" data-e="" class="${filtroAs ? '' : 'on'}"><b>${vivas.length}</b><span>Todas</span></button>
+      ${comAj.etapas.map(e => `<button type="button" data-e="${esc(e)}" class="${filtroAs === e ? 'on' : ''}"><b>${cuenta(e)}</b><span>${esc(e)}</span></button>`).join('')}
+    </div>
+    <div class="as-resumen"><span><b>${firmadas.length}</b> partners con el convenio firmado</span><span><b>${todas.filter(x => x.partner.etapa === 'Partner activa').length}</b> con el onboarding hecho</span><span><b>${c.clientes.filter(y => y.asesoria).length}</b> clientes referenciados</span><span><b>${todas.filter(x => de(x).some(a => a.estado === 'Activa')).length}</b> con acceso al portal</span></div>
+    ${l.length ? `<div class="as-lista">${l.map(fila).join('')}</div>` : `<div class="vacio">${todas.length ? 'Ninguna asesoría en esta etapa.' : 'Aún no hay ninguna asesoría. Dala de alta con «+ Nueva asesoría».'}</div>`}`;
+  $('asEmbudo').onclick = e => { const b = e.target.closest('[data-e]'); if (!b) return; filtroAs = b.dataset.e; vistaAsesorias(); };
+  $('asLista').querySelectorAll('[data-onb]').forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    try { await api('/api/asesorias/onboarding', { cliente: b.dataset.onb, hecho: true, autor: autorCom() }); aviso(`${b.dataset.onb}: onboarding hecho. Ya es partner activa.`); clientesCache = null; mirarOnboarding(); vistaAsesorias(); }
+    catch (e) { fallo(e); b.disabled = false; }
+  });
 }
-function nuevaAsesoria() {
-  dialogo(`<h3>Nueva asesoría</h3><p class="sub">Queda como cliente Premium con origen «Asesoría», y la persona de contacto recibe un correo para poner su contraseña del portal.</p>
+async function nuevaAsesoria() {
+  try { await cargarComAj(); } catch (e) { return fallo(e); }
+  dialogo(`<h3>Nueva asesoría</h3><p class="sub">Entra en el embudo. Con el convenio firmado pasa a partner: soporte Premium gratis y acceso al portal.</p>
     <label>Nombre de la asesoría</label><input class="campo" name="nombre" required>
     <div class="dos"><div><label>Persona de contacto</label><input class="campo" name="contacto"></div><div><label>Teléfono <small>(opcional)</small></label><input class="campo" name="telefono" type="tel"></div></div>
-    <label>Correo para entrar al portal</label><input class="campo" name="email" type="email" placeholder="nombre@asesoria.com">
+    <div class="dos"><div><label>Correo</label><input class="campo" name="email" type="email" placeholder="nombre@asesoria.com"></div>
+      <div><label>Etapa</label><select class="campo" name="etapa">${comAj.etapas.filter(e => e !== 'Descartada').map(e => `<option>${e}</option>`).join('')}</select></div></div>
     <label>Notas <small>(opcional)</small></label><textarea class="campo" name="notas" rows="2"></textarea>
-    <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Crear y dar acceso</button></div>`,
+    ${PIE_DLG('Crear')}`,
     async fm => {
-      const nombre = fm.nombre.value.trim(), email = fm.email.value.trim();
+      const nombre = fm.nombre.value.trim(), email = fm.email.value.trim(), etapa = fm.etapa.value;
       if (!nombre) { aviso('Falta el nombre.', true); return false; }
-      if (!correoOk(email)) { aviso('Pon el correo con el que entrará al portal.', true); return false; }
-      await api('/api/clientes', { nuevo: true, nombre, servicio: 'Premium', tipo_cliente: 'Asesoría', email, telefono: fm.telefono.value, notas: fm.notas.value });
+      if (email && !correoOk(email)) { aviso('Ese correo no es válido.', true); return false; }
+      await api('/api/asesorias/nueva', { nombre, contacto: fm.contacto.value, telefono: fm.telefono.value, email, notas: fm.notas.value, etapa, autor: autorCom() });
       clientesCache = null; accesosCache = null;
-      let r;
-      try { r = await api('/api/accesos', { cliente: nombre, email, nombre: fm.contacto.value.trim() }); }
-      catch (e) { setTimeout(() => fallo(new Error(`Asesoría creada, pero sin acceso al portal: ${e.message}. Dáselo desde su ficha.`))); }
-      // El aviso del acceso puede abrir otro diálogo: después de cerrar este.
-      if (r) setTimeout(() => avisoAcceso(r, email));
+      // Ya firmado (en papel): queda partner y, con correo, se le da acceso al portal como siempre.
+      if (['Convenio firmado', 'Partner activa'].includes(etapa) && email) {
+        let r;
+        try { r = await api('/api/accesos', { cliente: nombre, email, nombre: fm.contacto.value.trim() }); }
+        catch (e) { setTimeout(() => fallo(new Error(`Asesoría creada, pero sin acceso al portal: ${e.message}. Dáselo desde su ficha.`))); }
+        if (r) setTimeout(() => avisoAcceso(r, email));
+      } else aviso(`${nombre}: ${etapa}.`);
+      if (etapa === 'Convenio firmado') mirarOnboarding();
       if (location.hash === '#/asesorias') vistaAsesorias();
+    });
+}
+// El PDF del convenio que se envía a firmar y a quién avisar cuando una asesoría lo firma.
+async function convenioDlg() {
+  try { await cargarComAj(true); } catch (e) { return fallo(e); }
+  const cv = comAj.convenio;
+  dialogo(`<h3>Convenio y aviso</h3><p class="sub">El convenio de partner que se envía a firmar en línea, y a quién avisar cuando una asesoría lo firma para hacer el onboarding.</p>
+    <label>Convenio en PDF</label>
+    <p class="co-nota" style="margin:0 0 6px">${cv ? `Ahora: <a href="/api/asesorias/convenio" target="_blank" rel="noopener">${esc(cv.nombre)}</a>, subido el ${fechaLarga(cv.fecha)}. Si subes otro, los que ya se han enviado siguen con el suyo.` : 'Aún no hay ninguno: sin él no se puede enviar a firmar.'}</p>
+    <input class="campo" type="file" name="pdf" accept="application/pdf,.pdf">
+    <label>Correo de Operaciones <small>(recibe el aviso de cada convenio firmado)</small></label>
+    <input class="campo" type="email" name="ops" value="${esc(comAj.operaciones || '')}" placeholder="operaciones@interactivos.net">
+    ${PIE_DLG('Guardar')}`,
+    async f => {
+      const ops = f.ops.value.trim();
+      if (ops && !correoOk(ops)) { aviso('El correo de Operaciones no es válido.', true); return false; }
+      const pdf = f.pdf.files[0];
+      if (pdf) {
+        const r = await fetch('/api/asesorias/convenio', { method: 'POST', headers: { 'X-Nombre': encodeURIComponent(pdf.name) }, body: pdf });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error || 'No se ha podido subir el convenio');
+      }
+      await api('/api/comercial/ajustes', { operaciones: ops });
+      comAj = null;
+      aviso(pdf ? 'Convenio subido.' : 'Guardado.');
     });
 }
 
@@ -2432,7 +3190,8 @@ function marcarCanales(r) {
   $('salir').onclick = async () => { await fetch('/api/logout', { method: 'POST' }); location.href = '/admin/login'; };
   cargarClientes().catch(() => {});
   mirarPedidas();
-  setInterval(() => !document.hidden && mirarPedidas(), 30000);
+  mirarOnboarding();
+  setInterval(() => { if (!document.hidden) { mirarPedidas(); mirarOnboarding(); } }, 30000);
   pintarEjemplo();
   api('/api/canales').then(marcarCanales).catch(() => {});
   // Vuelta de «Continuar con Google».

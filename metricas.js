@@ -37,6 +37,26 @@ const nivel = {
 const peor = (...l) => l.includes('critico') ? 'critico' : l.includes('atencion') ? 'atencion' : 'ok';
 
 const dia = s => String(s || '').slice(0, 10);
+
+// Tramos para la gráfica de cada KPI (28/10/2026, «un gráfico como Super Gemas»): por día hasta dos
+// semanas, por semana (de lunes a domingo) hasta cuatro meses y, si es más largo, por mes.
+function tramosDe(desde, hasta) {
+  const d0 = new Date(desde + 'T12:00'), d1 = new Date(hasta + 'T12:00');
+  const dias = Math.round((d1 - d0) / 864e5) + 1;
+  const tipo = dias <= 14 ? 'dia' : dias <= 120 ? 'semana' : 'mes';
+  const f = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const l = [];
+  for (let a = new Date(d0); a <= d1 && l.length < 400;) {
+    let b = new Date(a);
+    if (tipo === 'semana') b.setDate(b.getDate() + (6 - (b.getDay() + 6) % 7));
+    if (tipo === 'mes') b = new Date(a.getFullYear(), a.getMonth() + 1, 0, 12);
+    if (b > d1) b = new Date(d1);
+    l.push({ desde: f(a), hasta: f(b) });
+    a = new Date(b);
+    a.setDate(a.getDate() + 1);
+  }
+  return { tipo, l };
+}
 const r1 = n => Math.round(n * 10) / 10;
 const media = l => l.length ? l.reduce((a, b) => a + b, 0) / l.length : null;
 const fechaLocal = d => new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 19);
@@ -60,9 +80,29 @@ function resumen(todos, { desde, hasta, tecnico }, ahora = new Date()) {
   // Juzgable: ya tiene respuesta, o lleva más de la hora sin ella (un ticket de hace 5 minutos aún no cuenta).
   const juzgable = t => conSla(t) && (t.primera_respuesta || espera(t) > SLA_MIN);
 
-  const horasDe = lista => r1(lista.reduce((s, t) => s + t.trabajo
-    .filter(w => w.fecha >= desde && w.fecha <= hasta && (!tecnico || w.tecnico === tecnico))
-    .reduce((a, w) => a + w.horas, 0), 0));
+  const horasDe = (lista, a = desde, b = hasta) => r1(lista.reduce((s, t) => s + t.trabajo
+    .filter(w => w.fecha >= a && w.fecha <= b && (!tecnico || w.tecnico === tecnico))
+    .reduce((x, w) => x + w.horas, 0), 0));
+
+  // Cómo va cada KPI a lo largo del periodo, tramo a tramo (la gráfica del detalle).
+  const tramos = tramosDe(desde, hasta);
+  const serieDe = lista => ({
+    tipo: tramos.tipo,
+    puntos: tramos.l.map(c => {
+      const en = s => dia(s) >= c.desde && dia(s) <= c.hasta;
+      const fin = c.hasta + 'T23:59';
+      const nps = lista.filter(t => t.estado === 'Cerrado' && t.nps != null && en(t.cierre)).map(t => t.nps);
+      return {
+        desde: c.desde, hasta: c.hasta,
+        tickets: lista.filter(t => en(t.entrada)).length,
+        horas: horasDe(lista, c.desde, c.hasta),
+        fueraSla: lista.filter(t => en(t.entrada) && juzgable(t) && espera(t) > SLA_MIN).length,
+        valoracion: nps.length ? r1(media(nps) / 2) : null,
+        // Abiertas al acabar el tramo (lo que aún no ha llegado, sin dato).
+        abiertas: c.desde > dia(ahoraLocal) ? null : lista.filter(t => t.entrada <= fin && !(t.estado === 'Cerrado' && (t.cierre || t.entrada) <= fin)).length,
+      };
+    }),
+  });
 
   // Indicadores de ahora (abiertas, tiempo excedido) y del periodo (fuera de SLA, valoración).
   const bloque = (lista, nombre) => {
@@ -87,6 +127,7 @@ function resumen(todos, { desde, hasta, tecnico }, ahora = new Date()) {
       respuestasNps: val.respuestas,
       // Horas dedicadas en el periodo (cronómetro y horas del Sheet).
       horas: horasDe(lista),
+      serie: serieDe(lista),
       // Qué hay detrás de cada indicador, para el «Por qué» del panel: quién, qué y cuánto.
       detalle: {
         fueraSla: medibles.filter(t => espera(t) > SLA_MIN).sort((a, b) => espera(b) - espera(a)).map(t => ({

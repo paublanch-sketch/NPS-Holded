@@ -29,6 +29,13 @@ services:
         sync: false
       - key: KIT_DIGITAL_2    # 1 cuando abra el Kit Digital 2: sale como servicio y con su línea en Métricas
         sync: false
+      # Comercial: cuentas de Super Gemas (api/soporte_cuentas.php de Super Gemas, con su cron_clave)
+      - key: SUPERGEMAS_CLAVE
+        sync: false
+      - key: SUPERGEMAS_URL   # por defecto https://supergemas.interactivos.net/api/soporte_cuentas.php
+        sync: false
+      - key: OPERACIONES_EMAIL # aviso de cada convenio de partner firmado; también se pone en Asesorías
+        sync: false
       # Lo que muestra el portal público
       - key: WA_NUMERO_PUBLICO  # número de WhatsApp de soporte, con prefijo (34600...)
         sync: false
