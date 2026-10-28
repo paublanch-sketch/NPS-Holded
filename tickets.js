@@ -22,8 +22,11 @@ function pararSesion(t) {
 }
 
 // Lo que ve el cliente: nada de horas, notas internas ni datos de otros.
+// Lo que ve el cliente. El número de ticket es interno: no sale ni en el portal, ni en los
+// correos, ni en WhatsApp, ni en el Meet (28/10/2026). Se le enseña el título de su incidencia.
+const tituloCliente = t => t.asunto || t.tipo_incidencia || 'Tu incidencia';
 const vistaCliente = t => ({
-  id: t.id, empresa: t.cliente, contacto: t.contacto || '', estado: t.estado, tecnico: t.tecnico, entrada: t.entrada,
+  titulo: tituloCliente(t), empresa: t.cliente, contacto: t.contacto || '', estado: t.estado, tecnico: t.tecnico, entrada: t.entrada,
   mensajes: t.mensajes.filter(m => m.de !== 'nota'),
   pideValoracion: t.estado === 'Cerrado' && t.nps == null,
   nps: t.nps,
@@ -312,7 +315,7 @@ async function rutasPublicas(req, res, ruta) {
   if (req.method === 'POST' && ruta === '/api/soporte/estado') {
     const pedidos = new Set((await leerCuerpo(req)).tokens?.filter(x => /^[a-f0-9]{32}$/.test(x)).slice(0, 40));
     const l = (await store.todos()).filter(t => pedidos.has(t.token)).map(t => ({
-      token: t.token, id: t.id, titulo: t.asunto || t.tipo_incidencia, estado: estadoCliente(t.estado),
+      token: t.token, titulo: tituloCliente(t), estado: estadoCliente(t.estado),
       fecha: t.entrada, actualizado: t.mensajes.at(-1)?.fecha || t.entrada,
     })).sort((a, b) => b.fecha.localeCompare(a.fecha));
     return json(res, l), true;
@@ -402,8 +405,8 @@ const alRecuperar = { fn: null };
 // ---------- Google Meet ----------
 const codigoMeet = url => (String(url).match(/meet\.google\.com\/([a-z]{3}-[a-z]{4}-[a-z]{3})/) || [])[1] || null;
 const errorUso = m => Object.assign(new Error(m), { status: 400 });
-const tituloReunion = t => `Soporte Holded · #${t.id} ${t.cliente}`;
-const descReunion = t => `Incidencia #${t.id}: ${t.asunto || t.tipo_incidencia}${process.env.PUBLIC_URL ? '\n' + process.env.PUBLIC_URL.replace(/\/$/, '') + '/t/' + t.token : ''}`;
+const tituloReunion = t => `Soporte Holded · ${t.cliente} · ${tituloCliente(t)}`;
+const descReunion = t => `Incidencia: ${tituloCliente(t)}${process.env.PUBLIC_URL ? '\n' + process.env.PUBLIC_URL.replace(/\/$/, '') + '/t/' + t.token : ''}`;
 const sumar = (isoLocal, min) => google.local(new Date(new Date(isoLocal).getTime() + min * 60000));
 
 async function nuevaCita(t, { inicio, minutos, tecnico, origen }) {
@@ -489,7 +492,9 @@ async function rutasConsola(req, res, ruta, equipo) {
     return adjuntos.servir(res, a), true;
   }
   if (req.method === 'GET' && ruta === '/api/tickets') {
-    const l = (await store.todos()).filter(t => !t.archivado).map(vistaTecnico).sort((a, b) => b.entrada.localeCompare(a.entrada));
+    // Con el servicio y el origen de la ficha del cliente: la bandeja ordena Premium primero.
+    const cli = require('./clientes'), mapa = await cli.fichas();
+    const l = (await store.todos()).filter(t => !t.archivado).map(t => ({ ...vistaTecnico(t), ...cli.clasificar(t, mapa) })).sort((a, b) => b.entrada.localeCompare(a.entrada));
     return json(res, l), true;
   }
   // Alta manual desde la consola: llamadas, WhatsApp o correos que llegan fuera del portal.
@@ -525,4 +530,4 @@ async function paraDashboard() {
   }));
 }
 
-module.exports = { importarHistorico, cuando, iniciarReuniones, contabilizarReuniones, alRecuperar, porId, rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };
+module.exports = { tituloCliente, importarHistorico, cuando, iniciarReuniones, contabilizarReuniones, alRecuperar, porId, rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };

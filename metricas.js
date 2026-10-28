@@ -112,11 +112,12 @@ function resumen(todos, { desde, hasta, tecnico }, ahora = new Date()) {
     // Los grupos de la página 2 del mockup. Los clientes sin origen no entran en ninguno.
     porTipo: [
       { servicio: 'Premium', grupos: [
-        { nombre: 'Gestoría / Asesoría', origenes: ['Gestoría / asesoría'] },
-        { nombre: 'Cliente directo', origenes: ['Directo', 'Antiguo cliente AKIRA', 'Referido por gestoría'] },
+        { nombre: 'Asesoría', origenes: ['Asesoría'] },
+        { nombre: 'Referenciado por asesoría', origenes: ['Referenciado por asesoría'] },
+        { nombre: 'Cliente directo', origenes: ['Directo', 'Antiguo cliente AKIRA'] },
       ] },
       { servicio: 'Implementación', grupos: [
-        { nombre: 'Referenciado por gestoría', origenes: ['Referido por gestoría', 'Gestoría / asesoría'] },
+        { nombre: 'Referenciado por asesoría', origenes: ['Referenciado por asesoría', 'Asesoría'] },
         { nombre: 'Cliente directo', origenes: ['Directo', 'Antiguo cliente AKIRA'] },
       ] },
     ].map(s => {

@@ -12,25 +12,27 @@ const crypto = require('crypto');
 const store = require('./store');
 
 const CLIENTES = [
-  // Premium · gestorías
-  ['Gestoría Albiol & Puig', 'Premium', 'Gestoría / asesoría', 'Marta Albiol'],
-  ['Assessoria Montseny', 'Premium', 'Gestoría / asesoría', 'Jordi Vidal'],
-  ['Assessors Penedès', 'Premium', 'Gestoría / asesoría', 'Núria Sala'],
-  ['Gestoria Vallès Nord', 'Premium', 'Gestoría / asesoría', 'Marc Puig'],
-  ['Assessoria Lleida Centre', 'Premium', 'Gestoría / asesoría', 'Carme Bosch'],
-  ['Gestió Maresme', 'Premium', 'Gestoría / asesoría', 'Albert Roig'],
+  // Premium · asesorías partner (las propias asesorías, con Premium gratis)
+  ['Assessoria Montseny', 'Premium', 'Asesoría', 'Jordi Vidal'],
+  ['Assessors Penedès', 'Premium', 'Asesoría', 'Núria Sala'],
+  ['Assessoria Lleida Centre', 'Premium', 'Asesoría', 'Carme Bosch'],
+  ['Assessoria Maresme', 'Premium', 'Asesoría', 'Albert Roig'],
+  // Premium · clientes que nos ha traído una asesoría
+  ['Perruqueria Nàiade', 'Premium', 'Referenciado por asesoría', 'Marta Albiol'],
+  ['Construccions Vall SL', 'Premium', 'Referenciado por asesoría', 'Marc Puig'],
+  ['Taller Mecànic Vic', 'Premium', 'Referenciado por asesoría', 'Eva Soler'],
   // Premium · directos
   ['Fusteria Roca SL', 'Premium', 'Directo', 'Pere Roca'],
   ['Clínica Dental Mar', 'Premium', 'Antiguo cliente AKIRA', 'Laura Mas'],
   ['Òptica Llum SL', 'Premium', 'Directo', 'Anna Riera'],
   ['Celler Mas Pujol', 'Premium', 'Directo', 'Joan Pujol'],
-  // Implementación · referidos por gestoría
-  ['Talleres Ebre SL', 'Implementación', 'Referido por gestoría', 'Toni Ferré'],
-  ['Café Nòmada', 'Implementación', 'Referido por gestoría', 'Irene Soler'],
-  ['Bodega Can Rovira', 'Implementación', 'Referido por gestoría', 'Quim Rovira'],
-  ['Forn Sant Jordi', 'Implementación', 'Referido por gestoría', 'Jordi Mir'],
-  ['Hotel Cala Blava', 'Implementación', 'Referido por gestoría', 'Elena Font'],
-  ['Pastisseria Oller', 'Implementación', 'Referido por gestoría', 'Rosa Oller'],
+  // Implementación · referenciados por asesoría
+  ['Talleres Ebre SL', 'Implementación', 'Referenciado por asesoría', 'Toni Ferré'],
+  ['Café Nòmada', 'Implementación', 'Referenciado por asesoría', 'Irene Soler'],
+  ['Bodega Can Rovira', 'Implementación', 'Referenciado por asesoría', 'Quim Rovira'],
+  ['Forn Sant Jordi', 'Implementación', 'Referenciado por asesoría', 'Jordi Mir'],
+  ['Hotel Cala Blava', 'Implementación', 'Referenciado por asesoría', 'Elena Font'],
+  ['Pastisseria Oller', 'Implementación', 'Referenciado por asesoría', 'Rosa Oller'],
   // Implementación · directos
   ['Distribucions Garraf SL', 'Implementación', 'Directo', 'Sergi Pons'],
   ['Estudi Vela Arquitectes', 'Implementación', 'Directo', 'Clara Vela'],
@@ -43,7 +45,7 @@ const TEXTOS = {
   'Facturación y Verifactu': ['Una factura sale «Rechazada por Verifactu» con el código 1103.', 'Cambiar la serie de facturas rectificativas.', 'Añadir el IBAN al pie de las facturas.', 'El ticket de la tienda no lleva el QR de Verifactu.', 'Facturas recapitulativas mensuales por cliente.', 'Factura de anticipo de un proyecto.', 'Activar Verifactu en tres empresas de su cartera.'],
   'Contabilidad e impuestos': ['¿Cómo saco el modelo 303 del trimestre?', 'Cuadrar el IVA soportado del trimestre con el libro.', 'No me deja cerrar el ejercicio: dice que hay asientos descuadrados.', 'Asientos de amortización automáticos.', 'Exportar el libro de IVA para el modelo 390.', 'Plan de cuentas para las reservas y los anticipos.'],
   'Bancos y conciliación': ['El banco no sincroniza desde el viernes.', 'Conciliar los cobros con tarjeta del TPV.', 'Importar el extracto de La Caixa en Norma 43.', 'Duplicados al importar el extracto del Sabadell.', 'Reglas para los cobros por transferencia.', 'Conectar la cuenta de la pasarela de pago.'],
-  'Acceso y usuarios': ['Dar de alta a una nueva administrativa con permisos de solo lectura.', 'El gestor externo no puede entrar a la cuenta.', 'La recepcionista no puede ver las citas.', 'Usuario para la enóloga con acceso a inventario.'],
+  'Acceso y usuarios': ['Dar de alta a una nueva administrativa con permisos de solo lectura.', 'La asesoría externa no puede entrar a la cuenta.', 'La recepcionista no puede ver las citas.', 'Usuario para la enóloga con acceso a inventario.'],
   'Equipo y fichajes': ['Los fichajes de ayer no aparecen en el informe.', 'Configurar los turnos de la vendimia.', 'Los conductores fichan desde el móvil y no se guarda la ubicación.'],
   'Formación': ['Formación de remesas y vencimientos para el equipo.', 'Sesión para montar los proyectos y las horas.', 'Formación de inventario y escandallos.', 'Formación de almacenes y pedidos de compra.', 'Sesión sobre cierres trimestrales en Holded.'],
 };
@@ -54,10 +56,11 @@ const TECNICOS = ['Blanch', 'David', 'Pablo', 'Pako'];
 // Cuántos casos tiene cada grupo. «tarde» = respondidos pasada la hora (fuera de SLA);
 // «sinResponder» abren tiempo excedido. Las notas (NPS 0–10) dan la valoración media.
 const GRUPOS = [
-  { origenes: ['Gestoría / asesoría'], servicio: 'Premium', abiertos: 6, abiertosTarde: 0, sinResponder: 0, cerrados: 26, cerradosTarde: 1, notas: [10, 10, 9, 10, 10, 9, 10, 8, 10, 10] },
+  { origenes: ['Asesoría'], servicio: 'Premium', abiertos: 3, abiertosTarde: 0, sinResponder: 0, cerrados: 14, cerradosTarde: 1, notas: [10, 10, 9, 10, 10, 9, 10, 8, 10, 10] },
+  { origenes: ['Referenciado por asesoría'], servicio: 'Premium', abiertos: 3, abiertosTarde: 0, sinResponder: 0, cerrados: 12, cerradosTarde: 0, notas: [9, 10, 10, 9, 8, 10] },
   { origenes: ['Directo', 'Antiguo cliente AKIRA'], servicio: 'Premium', abiertos: 4, abiertosTarde: 0, sinResponder: 0, cerrados: 15, cerradosTarde: 0, notas: [9, 8, 10, 7, 9, 8, 9, 10] },
-  // El único indicador en rojo: los casos fuera de SLA de los referidos por gestoría.
-  { origenes: ['Referido por gestoría'], servicio: 'Implementación', abiertos: 5, abiertosTarde: 1, sinResponder: 0, cerrados: 18, cerradosTarde: 1, notas: [9, 8, 9, 7, 9, 8, 9, 8] },
+  // El único indicador en rojo: los casos fuera de SLA de los referenciados por asesoría.
+  { origenes: ['Referenciado por asesoría'], servicio: 'Implementación', abiertos: 5, abiertosTarde: 1, sinResponder: 0, cerrados: 18, cerradosTarde: 1, notas: [9, 8, 9, 7, 9, 8, 9, 8] },
   { origenes: ['Directo'], servicio: 'Implementación', abiertos: 4, abiertosTarde: 0, sinResponder: 0, cerrados: 13, cerradosTarde: 1, notas: [9, 10, 8, 9, 10, 9, 8] },
 ];
 
@@ -151,6 +154,8 @@ function ticket([cliente, tipo, canal, estado, dias, hora, resp, diasCierre, hor
 }
 
 const hoy = (d = new Date()) => local(d).slice(0, 10);
+// Al cambiar los datos de ejemplo se sube: así se rehacen aunque sean del mismo día.
+const VERSION = 2;
 
 async function contar() {
   const [t, c] = await Promise.all([store.tickets.todos(), store.clientes.todos()]);
@@ -172,7 +177,7 @@ async function crear(ahora) {
     if (fichas.some(f => f.nombre === nombre)) continue;
     await store.clientes.guardar({ nombre, servicio, tipo_cliente, notas: 'Cliente de ejemplo: se quita en Canales → Datos de ejemplo.', ejemplo: true });
   }
-  for (const [i, t] of TICKETS.entries()) await store.tickets.guardar({ ...ticket(t, i, ahora), ejemplo_dia: hoy(ahora) });
+  for (const [i, t] of TICKETS.entries()) await store.tickets.guardar({ ...ticket(t, i, ahora), ejemplo_dia: hoy(ahora), ejemplo_version: VERSION });
 }
 
 async function poner(ahora = new Date()) {
@@ -195,7 +200,7 @@ function mantener(ahora = new Date()) {
   return enMarcha ||= (async () => {
     if ((await ajuste()).quitados) return;
     const t = (await store.tickets.todos()).filter(x => x.ejemplo);
-    if (t.length === TICKETS.length && t.every(x => x.ejemplo_dia === hoy(ahora))) return;
+    if (t.length === TICKETS.length && t.every(x => x.ejemplo_dia === hoy(ahora) && x.ejemplo_version === VERSION)) return;
     await borrar();
     await crear(ahora);
     console.log(`Datos de ejemplo puestos (${TICKETS.length} tickets, fechas del ${hoy(ahora)}).`);

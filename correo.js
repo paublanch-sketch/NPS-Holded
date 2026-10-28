@@ -129,7 +129,9 @@ function escalaNps(t) {
 <table role="presentation" width="100%" style="font-size:12px;color:#5B616A;margin-bottom:16px"><tr><td>Nada probable</td><td align="right">Muy probable</td></tr></table>`;
 }
 
-const asuntoDe = t => `[Incidencia #${t.id}] ${t.asunto || t.tipo_incidencia}`;
+// Sin número de ticket: las respuestas del cliente se enlazan por el Message-ID (In-Reply-To).
+const asuntoDe = t => `${tickets.tituloCliente(t)} · Soporte Holded`;
+const tituloDe = t => `«${tickets.tituloCliente(t)}»`;
 
 // Cabeceras para que todo quede en el mismo hilo en el correo del cliente y para reconocer
 // sus respuestas aunque cambie el asunto: el Message-ID lleva el número de incidencia.
@@ -145,12 +147,12 @@ function correoPara(t, evento, b) {
   const ver = URL_PUBLICA ? { texto: 'Ver mi incidencia', url: enlace(t) } : null;
   switch (evento) {
     case 'nuevo': return {
-      titulo: `Hemos recibido tu incidencia #${t.id}`,
+      titulo: `Hemos recibido tu incidencia ${tituloDe(t)}`,
       texto: `Hola${nombre}:\n\nHemos recibido tu incidencia y un técnico de Holded te contestará en menos de 1 hora laborable (lunes a viernes de 9:00 a 18:00).\n\nPuedes responder a este correo para añadir información o capturas.`,
       boton: ver,
     };
     case 'mensaje': return b.nota ? null : {
-      titulo: `${b.tecnico || 'Soporte'} ha respondido a tu incidencia #${t.id}`,
+      titulo: `${b.tecnico || 'Soporte'} ha respondido a tu incidencia ${tituloDe(t)}`,
       texto: b.texto, boton: ver,
     };
     case 'video': return {
@@ -159,16 +161,16 @@ function correoPara(t, evento, b) {
       boton: { texto: 'Unirme a la videollamada', url: t.video },
     };
     case 'cerrar': return {
-      titulo: `Hemos resuelto tu incidencia #${t.id}`,
+      titulo: `Hemos resuelto tu incidencia ${tituloDe(t)}`,
       texto: `Hola${nombre}:\n\nDamos por resuelta tu incidencia. Si vuelve a pasar, responde a este correo y la retomamos.\n\n¿Nos ayudas con 10 segundos? Del 0 al 10, ¿qué probabilidad hay de que nos recomiendes?${URL_PUBLICA ? '' : ' Responde a este correo solo con el número.'}`,
       extra: escalaNps(t),
     };
     case 'cita': return {
       titulo: 'Videollamada agendada',
-      texto: `Hola${nombre}:\n\nTienes una videollamada de Google Meet el ${tickets.cuando(b.cita.inicio)} para tu incidencia #${t.id}.${t.email ? ' También te llega la invitación de Google Calendar.' : ''}`,
+      texto: `Hola${nombre}:\n\nTienes una videollamada de Google Meet el ${tickets.cuando(b.cita.inicio)} para tu incidencia ${tituloDe(t)}.${t.email ? ' También te llega la invitación de Google Calendar.' : ''}`,
       boton: { texto: 'Unirme a la videollamada', url: b.cita.enlace },
     };
-    case 'anularCita': return { titulo: 'Videollamada anulada', texto: `Hola${nombre}:\n\nHemos anulado la videollamada prevista para tu incidencia #${t.id}. Si necesitas otra, responde a este correo.`, boton: ver };
+    case 'anularCita': return { titulo: 'Videollamada anulada', texto: `Hola${nombre}:\n\nHemos anulado la videollamada prevista para tu incidencia ${tituloDe(t)}. Si necesitas otra, responde a este correo.`, boton: ver };
     case 'pideMejora': return { titulo: '¡Gracias por tu valoración!', texto: '¿Qué mejorarías? Puedes responder a este correo con lo que quieras contarnos.' };
   }
   return null;
@@ -191,10 +193,10 @@ tickets.avisos.push(async (t, evento, b) => {
 // «Envíame mis incidencias» desde el portal.
 tickets.alRecuperar.fn = async (email, lista) => {
   if (!principal() || !URL_PUBLICA) return;
-  const filas = lista.map(t => `<tr><td style="padding:8px 0;border-top:1px solid #e6e5e1"><a href="${h(enlace(t))}" style="color:#1C1C1C;font-weight:600;text-decoration:none">#${t.id} · ${h(t.asunto || t.tipo_incidencia)}</a><br><span style="color:#5B616A;font-size:13px">${h(t.entrada.slice(0, 10))} · ${h(t.estado === 'Cerrado' ? 'Resuelta' : t.estado === 'Nuevo' ? 'Abierta' : t.estado)}</span></td></tr>`).join('');
+  const filas = lista.map(t => `<tr><td style="padding:8px 0;border-top:1px solid #e6e5e1"><a href="${h(enlace(t))}" style="color:#1C1C1C;font-weight:600;text-decoration:none">${h(tickets.tituloCliente(t))}</a><br><span style="color:#5B616A;font-size:13px">${h(t.entrada.slice(0, 10))} · ${h(t.estado === 'Cerrado' ? 'Resuelta' : t.estado === 'Nuevo' ? 'Abierta' : t.estado)}</span></td></tr>`).join('');
   await enviar({
     to: email, subject: 'Tus incidencias de soporte Holded',
-    text: 'Estas son tus incidencias:\n\n' + lista.map(t => `#${t.id} ${t.asunto || t.tipo_incidencia}: ${enlace(t)}`).join('\n'),
+    text: 'Estas son tus incidencias:\n\n' + lista.map(t => `${tickets.tituloCliente(t)}: ${enlace(t)}`).join('\n'),
     html: plantilla({ titulo: 'Tus incidencias', cuerpo: parrafos('Has pedido los enlaces de tus incidencias. Ábrelas desde aquí:') + `<table role="presentation" width="100%">${filas}</table>`, pie: 'Si no lo has pedido tú, puedes ignorar este correo.' }),
   });
 };

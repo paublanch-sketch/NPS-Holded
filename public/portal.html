@@ -134,10 +134,9 @@
   .pestanas { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
   .pestanas button { border: 0; background: var(--cal); color: var(--bruma); padding: 7px 16px; border-radius: 99px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .pestanas button.on { background: var(--acento); color: #fff; }
-  .lista a { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto 84px 16px; gap: 10px; align-items: center; padding: 12px 4px; border-top: 1px solid var(--linea); text-decoration: none; color: inherit; font-size: 14px; }
+  .lista a { display: grid; grid-template-columns: minmax(0, 1fr) auto 84px 16px; gap: 10px; align-items: center; padding: 12px 4px; border-top: 1px solid var(--linea); text-decoration: none; color: inherit; font-size: 14px; }
   .lista a:first-child { border-top: 0; }
   .lista a:hover { background: var(--cal); }
-  .lista .id { color: var(--bruma); font-weight: 600; }
   .lista .tit { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lista time { color: var(--muted); font-size: 12px; text-align: right; }
   .lista svg { color: var(--muted); width: 16px; height: 16px; }
@@ -161,6 +160,9 @@
   .t-cab h1 { font-size: 24px; margin: 0 0 4px; letter-spacing: -.01em; }
   .t-cab p { margin: 0; color: var(--bruma); }
   .pasos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 22px 0 4px; }
+  .espera { margin-top: 18px; padding: 18px 20px; border-radius: 14px; background: var(--acento); color: #fff; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 10px 24px rgba(37, 99, 235, .25); }
+  .espera b { font-size: 20px; letter-spacing: -.01em; }
+  .espera span { font-size: 14px; opacity: .9; }
   .pasos div { font-size: 12px; font-weight: 600; color: var(--muted); }
   .pasos div::before { content: ""; display: block; height: 6px; border-radius: 6px; background: var(--linea); margin-bottom: 8px; }
   .pasos div.on { color: var(--pizarra); }
@@ -244,7 +246,7 @@
     .heroe .auri { display: none; } .heroe { grid-template-columns: 1fr; }
     .cat { font-size: 13px; padding: 8px 12px; } .cat[aria-pressed="true"] { padding: 7px 11px; }
     .dos { grid-template-columns: 1fr; } .seguro { margin-left: 0; } .adjuntar { flex-wrap: wrap; }
-    .lista a { grid-template-columns: 44px minmax(0, 1fr) auto 16px; } .lista time { display: none; }
+    .lista a { grid-template-columns: minmax(0, 1fr) auto 16px; } .lista time { display: none; }
     .val-cab, .val-cuerpo, .val-pie { padding-left: 24px; padding-right: 24px; } .val-cab h2 { font-size: 23px; }
     .caras { gap: 4px; } .cara .circulo { width: 46px; height: 46px; } .cara .circulo svg { width: 22px; height: 22px; } .cara .et { font-size: 10.5px; } .msg { max-width: 92%; }
   }
@@ -390,6 +392,7 @@
         <span class="est" id="tEstado"></span>
       </div>
       <div class="pasos" id="pasos"><div>Recibida</div><div>En curso</div><div>Resuelta</div></div>
+      <div class="espera oculto" id="esperaAviso" role="status"><b>Estamos esperando tu respuesta</b><span>Escríbenos abajo para que podamos seguir con tu incidencia.</span></div>
       <div class="video oculto" id="video">
         <div><b>Videollamada en curso</b><div style="font-size:14px;color:var(--bruma)">Con Google Meet: se abre en el navegador o en la app.</div></div>
         <a class="boton" id="videoLink" target="_blank" rel="noopener">Unirme</a>
@@ -578,7 +581,7 @@ if (!token) {
     $('filtroMias').innerHTML = FILTROS.map(([k, n]) => `<button type="button" data-f="${k}" class="${k === filtro ? 'on' : ''}">${n}</button>`).join('');
     const l = mias.filter(FILTROS.find(f => f[0] === filtro)[2]);
     const vista = todas ? l : l.slice(0, 5);
-    $('mias').innerHTML = vista.map(m => `<a href="/t/${esc(m.token)}"><span class="id">#${m.id}</span><span class="tit">${esc(m.titulo)}</span><span class="est ${CLASE[m.estado] || ''}">${esc(m.estado)}</span><time>${hora(m.actualizado)}</time>${icono('flecha')}</a>`).join('')
+    $('mias').innerHTML = vista.map(m => `<a href="/t/${esc(m.token)}"><span class="tit">${esc(m.titulo)}</span><span class="est ${CLASE[m.estado] || ''}">${esc(m.estado)}</span><time>${hora(m.actualizado)}</time>${icono('flecha')}</a>`).join('')
       || `<div class="vacio">${mias.length ? 'No hay incidencias en este estado.' : 'Aún no has abierto ninguna incidencia desde este dispositivo.'}</div>`;
     $('verTodas').classList.toggle('oculto', l.length <= 5);
     $('verTodas').textContent = todas ? 'Ver menos' : `Ver todas mis incidencias (${l.length}) →`;
@@ -616,7 +619,7 @@ if (token) {
   ];
   const deEscala = n => Math.min(10, Math.max(2, Math.round(n / 2) * 2));
   let nota = /^(10|[0-9])$/.test(q.get('nps') || '') ? deEscala(Number(q.get('nps'))) : null, ultimo = '', enviado = false, desdeCorreo = nota != null;
-  const recordar = t => guardar('soporte-mias', [{ token, id: t.id }, ...leer('soporte-mias', []).filter(m => m.token !== token)].slice(0, 40));
+  const recordar = t => guardar('soporte-mias', [{ token }, ...leer('soporte-mias', []).filter(m => m.token !== token)].slice(0, 40));
   $('caras').innerHTML = CARAS.map(([n, cls, et, cara]) => `<button type="button" class="cara ${cls}" role="radio" aria-checked="${n === nota}" data-n="${n}">
     <span class="circulo"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/>${cara}</svg></span><span class="et">${et}</span></button>`).join('');
   $('caras').onclick = e => {
@@ -727,10 +730,11 @@ if (token) {
   function pintar(t) {
     recordar(t);
     pintarCita(t);
-    document.title = `Incidencia #${t.id} · Soporte Holded`;
-    $('tTitulo').textContent = `Incidencia #${t.id}`;
+    document.title = `${t.titulo} · Soporte Holded`;
+    $('tTitulo').textContent = t.titulo;
     $('tSub').textContent = `${t.empresa} · ${t.tecnico ? 'Te atiende ' + t.tecnico : 'Asignando técnico…'}`;
     const [cls, txt] = { 'Cerrado': ['resuelta', 'Resuelta'], 'En curso': ['curso', 'En curso'], 'Pendiente cliente': ['espera', 'Esperando tu respuesta'], 'Nuevo': ['abierta', 'Recibida'] }[t.estado] || ['', t.estado];
+    $('esperaAviso').classList.toggle('oculto', t.estado !== 'Pendiente cliente');
     $('tEstado').className = 'est ' + cls;
     $('tEstado').textContent = txt;
     const n = t.estado === 'Cerrado' ? 3 : t.estado === 'Nuevo' ? 1 : 2;

@@ -3,7 +3,11 @@
 const { tickets, clientes, ajustes } = require('./store');
 
 const SERVICIOS = ['Implementación', 'Premium', 'Kit Digital', 'Sin clasificar'];
-const ORIGENES = ['Gestoría / asesoría', 'Referido por gestoría', 'Directo', 'Antiguo cliente AKIRA', 'Sin clasificar'];
+// «Asesoría» es la propia asesoría partner como cliente (con Premium gratis); «Referenciado por
+// asesoría», un cliente que nos ha traído una. La palabra «gestoría» no se usa (28/10/2026).
+const ORIGENES = ['Asesoría', 'Referenciado por asesoría', 'Directo', 'Antiguo cliente AKIRA', 'Sin clasificar'];
+const ORIGEN_ANTIGUO = { 'Gestoría / asesoría': 'Asesoría', 'Referido por gestoría': 'Referenciado por asesoría' };
+const origenNuevo = o => ORIGEN_ANTIGUO[o] || o;
 
 // nombre de cliente → { servicio, tipo_cliente } de su ficha.
 async function fichas() {
@@ -15,7 +19,7 @@ function clasificar(t, mapa) {
   const c = mapa.get(t.cliente);
   return {
     servicio: c?.servicio || (SERVICIOS.includes(t.servicio) ? t.servicio : 'Sin clasificar'),
-    tipo_cliente: c?.tipo_cliente || (ORIGENES.includes(t.tipo_cliente) ? t.tipo_cliente : 'Sin clasificar'),
+    tipo_cliente: origenNuevo(c?.tipo_cliente) || (ORIGENES.includes(origenNuevo(t.tipo_cliente)) ? origenNuevo(t.tipo_cliente) : 'Sin clasificar'),
   };
 }
 
@@ -44,6 +48,11 @@ const UNA_VEZ = [
     for (const f of await clientes.todos()) if (!f.ejemplo) nombres.add(f.nombre);
     nombres.delete('SHEILOR SLU');
     for (const n of nombres) if (n) await guardarFicha(n, { servicio: 'Kit Digital', tipo_cliente: 'Antiguo cliente AKIRA' });
+  }],
+  // 28/10/2026: fuera la palabra «gestoría» en los orígenes guardados.
+  ['origen-asesoria', async () => {
+    for (const f of await clientes.todos()) if (ORIGEN_ANTIGUO[f.tipo_cliente]) { f.tipo_cliente = ORIGEN_ANTIGUO[f.tipo_cliente]; await clientes.guardar(f); }
+    for (const t of await tickets.todos()) if (ORIGEN_ANTIGUO[t.tipo_cliente]) { t.tipo_cliente = ORIGEN_ANTIGUO[t.tipo_cliente]; await tickets.guardar(t); }
   }],
   // 27/10/2026: al conectar el buzón entró el histórico de la bandeja de entrada. Los boletines y
   // avisos de plataformas (Vercel, LinkedIn, WordPress, Read…) se borran con sus adjuntos; los

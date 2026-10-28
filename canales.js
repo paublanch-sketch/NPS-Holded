@@ -39,12 +39,12 @@ const enVentana = t => {
 // copia tal cual en Meta; {{1}}, {{2}}… son las variables, en ese orden. Meta rechaza
 // las plantillas que empiezan o acaban con una variable.
 const PLANTILLAS_WA = [
-  { nombre: 'soporte_incidencia_nueva', cuerpo: 'Hemos registrado tu incidencia #{{1}} en el Soporte Holded de Interactivos. Un técnico te contestará por este chat.', ejemplo: ['231'] },
-  { nombre: 'soporte_respuesta', cuerpo: 'Tienes una respuesta nueva en tu incidencia #{{1}} del Soporte Holded:\n\n{{2}}\n\nPuedes contestar por aquí mismo.', ejemplo: ['231', 'Blanch: Ya está corregida la serie de facturas, prueba ahora.'] },
-  { nombre: 'soporte_videollamada', cuerpo: 'Te invitamos a una videollamada de Google Meet por tu incidencia #{{1}}, con {{2}}.\n\nEnlace: {{3}}\n\nSe abre en el navegador o en la app de Meet.', ejemplo: ['231', 'Blanch', 'https://meet.google.com/abc-defg-hij'] },
-  { nombre: 'soporte_cita', cuerpo: 'Tu videollamada de Google Meet por la incidencia #{{1}} queda agendada para el {{2}}.\n\nEnlace: {{3}}\n\nSi no puedes asistir, escríbenos por aquí.', ejemplo: ['231', 'martes 28 de octubre a las 10:00', 'https://meet.google.com/abc-defg-hij'] },
-  { nombre: 'soporte_cita_anulada', cuerpo: 'Hemos anulado la videollamada prevista por tu incidencia #{{1}}. Si necesitas otra, escríbenos por aquí.', ejemplo: ['231'] },
-  { nombre: 'soporte_cierre', cuerpo: 'Hemos cerrado tu incidencia #{{1}}. Del 0 al 10, ¿qué probabilidad hay de que nos recomiendes? Responde solo con el número.', ejemplo: ['231'] },
+  { nombre: 'soporte_incidencia_nueva', cuerpo: 'Hemos registrado tu incidencia «{{1}}» en el Soporte Holded de Interactivos. Un técnico te contestará por este chat.', ejemplo: ['No me deja cerrar el ejercicio'] },
+  { nombre: 'soporte_respuesta', cuerpo: 'Tienes una respuesta nueva en tu incidencia «{{1}}» del Soporte Holded:\n\n{{2}}\n\nPuedes contestar por aquí mismo.', ejemplo: ['No me deja cerrar el ejercicio', 'Blanch: Ya está corregida la serie de facturas, prueba ahora.'] },
+  { nombre: 'soporte_videollamada', cuerpo: 'Te invitamos a una videollamada de Google Meet por tu incidencia «{{1}}», con {{2}}.\n\nEnlace: {{3}}\n\nSe abre en el navegador o en la app de Meet.', ejemplo: ['No me deja cerrar el ejercicio', 'Blanch', 'https://meet.google.com/abc-defg-hij'] },
+  { nombre: 'soporte_cita', cuerpo: 'Tu videollamada de Google Meet por la incidencia «{{1}}» queda agendada para el {{2}}.\n\nEnlace: {{3}}\n\nSi no puedes asistir, escríbenos por aquí.', ejemplo: ['No me deja cerrar el ejercicio', 'martes 28 de octubre a las 10:00', 'https://meet.google.com/abc-defg-hij'] },
+  { nombre: 'soporte_cita_anulada', cuerpo: 'Hemos anulado la videollamada prevista por tu incidencia «{{1}}». Si necesitas otra, escríbenos por aquí.', ejemplo: ['No me deja cerrar el ejercicio'] },
+  { nombre: 'soporte_cierre', cuerpo: 'Hemos cerrado tu incidencia «{{1}}». Del 0 al 10, ¿qué probabilidad hay de que nos recomiendes? Responde solo con el número.', ejemplo: ['No me deja cerrar el ejercicio'] },
 ];
 
 // Meta no admite saltos de línea, tabuladores ni más de cuatro espacios seguidos
@@ -60,27 +60,27 @@ function mensajeWhatsApp(t, evento, b, ventana) {
   const plantilla = (nombre, ...vars) => ({ type: 'template', template: { name: nombre, language: { code: WA.idioma }, components: [{ type: 'body', parameters: vars.map(v => ({ type: 'text', text: variable(v) })) }] } });
   switch (evento) {
     case 'nuevo': return ventana
-      ? libre(`Hola${t.contacto ? ' ' + t.contacto : ''}, hemos recibido tu incidencia #${t.id}. Un técnico te contestará por aquí.${URL_PUBLICA ? `\nTambién puedes seguirla en ${enlace(t)}` : ''}`)
-      : plantilla('soporte_incidencia_nueva', t.id);
+      ? libre(`Hola${t.contacto ? ' ' + t.contacto : ''}, hemos recibido tu incidencia «${tickets.tituloCliente(t)}». Un técnico te contestará por aquí.${URL_PUBLICA ? `\nTambién puedes seguirla en ${enlace(t)}` : ''}`)
+      : plantilla('soporte_incidencia_nueva', tickets.tituloCliente(t));
     case 'mensaje': {
       if (b.nota) return null;
       const texto = `${b.tecnico || 'Soporte'}: ${b.texto}`;
       if (ventana) return libre(texto);
       const resumido = variable(texto, 600);
-      return plantilla('soporte_respuesta', t.id, resumido.endsWith('…') && URL_PUBLICA ? `${resumido.slice(0, -1)}… (mensaje completo en ${enlace(t)})` : resumido);
+      return plantilla('soporte_respuesta', tickets.tituloCliente(t), resumido.endsWith('…') && URL_PUBLICA ? `${resumido.slice(0, -1)}… (mensaje completo en ${enlace(t)})` : resumido);
     }
     case 'video': return ventana
       ? libre(`${b.tecnico || 'El técnico'} te invita a una videollamada de Google Meet:\n${t.video}`)
-      : plantilla('soporte_videollamada', t.id, b.tecnico || 'el técnico', t.video);
+      : plantilla('soporte_videollamada', tickets.tituloCliente(t), b.tecnico || 'el técnico', t.video);
     case 'cita': return ventana
       ? libre(`Videollamada de Google Meet agendada para el ${tickets.cuando(b.cita.inicio)}.\nEnlace: ${b.cita.enlace}`)
-      : plantilla('soporte_cita', t.id, tickets.cuando(b.cita.inicio), b.cita.enlace);
+      : plantilla('soporte_cita', tickets.tituloCliente(t), tickets.cuando(b.cita.inicio), b.cita.enlace);
     case 'anularCita': return ventana
       ? libre('Hemos anulado la videollamada prevista. Si necesitas otra, escríbenos por aquí.')
-      : plantilla('soporte_cita_anulada', t.id);
+      : plantilla('soporte_cita_anulada', tickets.tituloCliente(t));
     case 'cerrar': return ventana
-      ? libre(`Hemos cerrado tu incidencia #${t.id}. Del 0 al 10, ¿qué probabilidad hay de que nos recomiendes? Responde solo con el número.`)
-      : plantilla('soporte_cierre', t.id);
+      ? libre(`Hemos cerrado tu incidencia «${tickets.tituloCliente(t)}». Del 0 al 10, ¿qué probabilidad hay de que nos recomiendes? Responde solo con el número.`)
+      : plantilla('soporte_cierre', tickets.tituloCliente(t));
     // Solo salen justo después de un mensaje del cliente: siempre dentro de la ventana.
     case 'pideMejora': return libre('¡Gracias! ¿Qué mejorarías? Puedes responder aquí mismo.');
     case 'gracias': return libre('Gracias por tu opinión, nos ayuda mucho.');
