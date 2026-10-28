@@ -120,7 +120,7 @@
   .item .l2 { font-size: 12px; color: var(--bruma); margin-top: 2px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
   .item .l3 { font-size: 13px; color: var(--bruma); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .punto { width: 8px; height: 8px; border-radius: 50%; background: var(--azul); flex: none; display: inline-block; }
-  .detalle { display: grid; grid-template-columns: minmax(0, 1fr) clamp(290px, 22vw, 360px); min-height: 0; height: 100vh; }
+  .detalle { display: grid; grid-template-columns: minmax(0, 1fr) clamp(250px, 20vw, 300px); min-height: 0; height: 100vh; }
   .conv { display: flex; flex-direction: column; min-height: 0; }
   .conv .cab { padding: 18px 24px 14px; background: var(--blanco); border-bottom: 1px solid var(--linea); }
   .conv .cab h2 { font-size: 19px; margin: 0; letter-spacing: -.01em; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -1547,8 +1547,8 @@ async function cargarMetricas() {
   try { r = await api('/api/resumen?' + q); } catch (e) { return fallo(e); }
   if (!$('met')) return;
   resumenMet = r;
-  // Dos líneas (28/10/2026): Soporte Premium e Implementación, con todo sumado; al desplegar cada
-  // una salen sus tipos de cliente. Debajo, los clientes antiguos del Kit Digital 1.
+  // Dos líneas (28/10/2026): Soporte Premium e Implementación, con todo sumado y, debajo, los aros
+  // de cada tipo de cliente (abiertos; se pueden plegar). Debajo, los clientes antiguos del Kit Digital 1.
   $('met').innerHTML = `
     <div class="mk-leyenda"><span class="tit">LEYENDA</span>
       <span><i class="mk-dot" style="background:var(--mk-ok)"></i><b>OK</b> — dentro de la hora</span>
@@ -1564,7 +1564,7 @@ async function cargarMetricas() {
     const caja = b.nextElementSibling, abrir = caja.classList.contains('oculto');
     caja.classList.toggle('oculto', !abrir);
     b.setAttribute('aria-expanded', abrir);
-    abrir ? desplegados.add(b.dataset.desplegar) : desplegados.delete(b.dataset.desplegar);
+    abrir ? plegados.delete(b.dataset.desplegar) : plegados.add(b.dataset.desplegar);
   });
   $('met').querySelectorAll('tr[data-id]').forEach(tr => tr.onclick = () => { location.hash = `#/bandeja/${tr.dataset.id}`; });
   $('met').querySelectorAll('[data-porque]').forEach(b => b.onclick = () => {
@@ -1631,8 +1631,8 @@ function bloqueServicio(b, r) {
       ${tile(ICO.estrella, niveles.valoracion, b.valoracion == null ? '—' : num(b.valoracion, 1), b.valoracion == null ? '' : '/5', `Valoración media (NPS / Google)${b.respuestasNps ? ` · ${b.respuestasNps} resp.` : ''}`, null, 'valoracion', det('valoracion'))}
       ${tile(ICO.historial, null, num(b.horas || 0, 1), ' h', 'Tiempo dedicado', 'Tiempo', undefined, det('horas'))}
     </div>
-    ${tipos ? `<button type="button" class="mk-desplegar" data-desplegar="${esc(b.nombre)}" aria-expanded="${desplegados.has(b.nombre)}">Ver por tipo de cliente · ${tipos.grupos.map(g => esc(g.nombre)).join(', ')} <span class="mk-flecha">▾</span></button>
-    <div class="mk-tipos-det${desplegados.has(b.nombre) ? '' : ' oculto'}">${gruposServicio(tipos)}</div>` : ''}
+    ${tipos ? `<button type="button" class="mk-desplegar" data-desplegar="${esc(b.nombre)}" aria-expanded="${!plegados.has(b.nombre)}">Por tipo de cliente · ${tipos.grupos.map(g => esc(g.nombre)).join(', ')} <span class="mk-flecha">▾</span></button>
+    <div class="mk-tipos-det${plegados.has(b.nombre) ? ' oculto' : ''}">${gruposServicio(tipos)}</div>` : ''}
   </section>`;
 }
 
@@ -1702,7 +1702,8 @@ function gruposServicio(s) {
 
 // ---------- Detalle de un KPI por clientes (como en Super Gemas) ----------
 let resumenMet = null;
-const desplegados = new Set();
+// Los aros por tipo de cliente (4×3 en Premium, 4×2 en Implementación) salen abiertos; se pueden plegar.
+const plegados = new Set();
 const mediaNps = l => l.length ? Math.round(l.reduce((s, v) => s + v.nps, 0) / l.length / 2 * 10) / 10 : null;
 const nivelVal = v => v >= 4.5 ? 'ok' : v >= 4 ? 'atencion' : 'critico';
 const KPI_DET = {
