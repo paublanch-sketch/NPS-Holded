@@ -1,5 +1,5 @@
 // Servicio Holded (Node 18+).
-//   /            portal público: cualquiera abre una incidencia y la sigue en /t/<token>
+//   /            portal del cliente: entra con su cuenta, abre incidencias y las sigue en /t/<token>
 //   /admin       panel interno con un único acceso de admin: bandeja, métricas y clientes
 // Datos: tickets de la app (con el histórico del Sheet importado con importar.js) y
 // fichas de clientes.
@@ -15,6 +15,7 @@ const clientes = require('./clientes');
 const metricas = require('./metricas');
 const ejemplo = require('./ejemplo');
 const google = require('./google');
+const cuentas = require('./cuentas');
 
 const PORT = process.env.PORT || 3000;
 const { json, leerCuerpo } = tickets;
@@ -133,6 +134,8 @@ http.createServer(async (req, res) => {
       });
     }
     if (await canales.rutasWhatsApp(req, res, ruta, url)) return;
+    if (ruta.startsWith('/api/cuenta') && otroOrigen(req)) return json(res, { error: 'Origen no permitido' }, 403);
+    if (await cuentas.rutas(req, res, ruta, { json, leerCuerpo })) return;
     if (await tickets.rutasPublicas(req, res, ruta)) return;
 
     // ---- Panel interno ----
@@ -163,6 +166,7 @@ http.createServer(async (req, res) => {
       return res.end(metricas.csvHoras(r));
     }
     if (await clientes.rutas(req, res, ruta, { json, leerCuerpo })) return;
+    if (await cuentas.rutasPanel(req, res, ruta, { json, leerCuerpo })) return;
     if (await ejemplo.rutas(req, res, ruta, { json, leerCuerpo })) return;
     if (await canales.correo.rutas(req, res, ruta, { json, leerCuerpo })) return;
     if (req.method === 'POST' && ruta === '/api/google/probar') {

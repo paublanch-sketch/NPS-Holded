@@ -190,17 +190,6 @@ tickets.avisos.push(async (t, evento, b) => {
   }, buzon);
 });
 
-// «Envíame mis incidencias» desde el portal.
-tickets.alRecuperar.fn = async (email, lista) => {
-  if (!principal() || !URL_PUBLICA) return;
-  const filas = lista.map(t => `<tr><td style="padding:8px 0;border-top:1px solid #e6e5e1"><a href="${h(enlace(t))}" style="color:#1C1C1C;font-weight:600;text-decoration:none">${h(tickets.tituloCliente(t))}</a><br><span style="color:#5B616A;font-size:13px">${h(t.entrada.slice(0, 10))} · ${h(t.estado === 'Cerrado' ? 'Resuelta' : t.estado === 'Nuevo' ? 'Abierta' : t.estado)}</span></td></tr>`).join('');
-  await enviar({
-    to: email, subject: 'Tus incidencias de soporte Holded',
-    text: 'Estas son tus incidencias:\n\n' + lista.map(t => `${tickets.tituloCliente(t)}: ${enlace(t)}`).join('\n'),
-    html: plantilla({ titulo: 'Tus incidencias', cuerpo: parrafos('Has pedido los enlaces de tus incidencias. Ábrelas desde aquí:') + `<table role="presentation" width="100%">${filas}</table>`, pie: 'Si no lo has pedido tú, puedes ignorar este correo.' }),
-  });
-};
-
 // Quita la cita del correo anterior ("El lun, ... escribió:", "On ... wrote:", líneas con ">").
 function sinCita(texto) {
   const lineas = String(texto || '').replace(/\r/g, '').split('\n');
@@ -425,4 +414,7 @@ async function iniciar() {
   }
 }
 
-module.exports = { iniciar, rutas, revisarCorreo, sinCita, resumen, plantilla, automatico, aTicket };
+// Para los correos de las cuentas del portal (cuentas.js).
+const hayCorreo = () => !!principal();
+
+module.exports = { iniciar, rutas, revisarCorreo, sinCita, resumen, plantilla, parrafos, enviar, hayCorreo, automatico, aTicket };

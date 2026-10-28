@@ -292,18 +292,16 @@ const json = (res, data, status = 200) => {
 };
 
 // Rutas públicas del portal. Devuelve true si ha atendido la petición.
-// Estado que ve el cliente en «Tus incidencias».
-const estadoCliente = e => ({ 'Nuevo': 'Abierta', 'En curso': 'En curso', 'Pendiente cliente': 'Te esperamos', 'Cerrado': 'Resuelta' }[e] || e);
-const recuperaciones = new Map(); // IP → intentos de «envíame mis incidencias» en la última hora
-const ipDe = req => String(req.headers['x-forwarded-for'] || req.socket.remoteAddress).split(',')[0].trim();
+// Alta desde el portal, con los datos de la cuenta que ha entrado (cuentas.js).
+async function abrirDesdePortal(b) {
+  const t = await crear({ ...b, canal: 'Portal' });
+  avisar(t, 'nuevo');
+  return t;
+}
 
 async function rutasPublicas(req, res, ruta) {
-  if (req.method === 'POST' && ruta === '/api/soporte') {
-    const b = await leerCuerpo(req);
-    const t = await crear({ ...b, canal: 'Portal' });
-    avisar(t, 'nuevo');
-    return json(res, { token: t.token, id: t.id }, 201), true;
-  }
+  // Desde el 28/10/2026 el portal va con login: sin cuenta no se abren incidencias desde la web.
+  if (req.method === 'POST' && ruta === '/api/soporte') return json(res, { error: 'Entra con tu cuenta para abrir una incidencia.', login: true }, 401), true;
   // Entrada automática desde otros sistemas (Make, Zapier...) con clave compartida.
   if (req.method === 'POST' && ruta === '/api/entrada') {
     if (!ENTRADA_KEY || req.headers['x-entrada-key'] !== ENTRADA_KEY) return json(res, { error: 'Clave no válida' }, 401), true;
@@ -311,34 +309,12 @@ async function rutasPublicas(req, res, ruta) {
     avisar(t, 'nuevo');
     return json(res, { id: t.id, enlace: `/t/${t.token}` }, 201), true;
   }
-  // Estado de las incidencias que el navegador del cliente recuerda (solo las de sus enlaces).
-  if (req.method === 'POST' && ruta === '/api/soporte/estado') {
-    const pedidos = new Set((await leerCuerpo(req)).tokens?.filter(x => /^[a-f0-9]{32}$/.test(x)).slice(0, 40));
-    const l = (await store.todos()).filter(t => pedidos.has(t.token)).map(t => ({
-      token: t.token, titulo: tituloCliente(t), estado: estadoCliente(t.estado),
-      fecha: t.entrada, actualizado: t.mensajes.at(-1)?.fecha || t.entrada,
-    })).sort((a, b) => b.fecha.localeCompare(a.fecha));
-    return json(res, l), true;
-  }
-  // «Envíame mis incidencias»: siempre responde lo mismo, haya o no tickets con ese correo.
-  if (req.method === 'POST' && ruta === '/api/soporte/recuperar') {
-    const ip = ipDe(req), ahoraMs = Date.now();
-    const r = (recuperaciones.get(ip) || []).filter(x => ahoraMs - x < 3600000);
-    if (r.length >= 5) return json(res, { error: 'Demasiadas peticiones. Prueba dentro de un rato.' }, 429), true;
-    recuperaciones.set(ip, [...r, ahoraMs]);
-    const email = String((await leerCuerpo(req)).email || '').trim().toLowerCase();
-    if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) && alRecuperar.fn) {
-      const l = (await store.todos()).filter(t => t.email?.toLowerCase() === email && t.origen !== 'Sheet')
-        .sort((a, b) => b.entrada.localeCompare(a.entrada)).slice(0, 15);
-      if (l.length) alRecuperar.fn(email, l).catch(e => console.error('Recuperar:', e.message));
-    }
-    return json(res, { ok: true, correo: !!alRecuperar.fn }), true;
-  }
-
   const m = ruta.match(/^\/api\/soporte\/([a-f0-9]{32})(\/mensaje|\/nps|\/huecos|\/reservar|\/adjunto(?:\/(\d+))?)?$/);
   if (!m) return false;
   const t = await porToken(m[1]);
   if (!t) return json(res, { error: 'Ticket no encontrado' }, 404), true;
+  // Si su empresa tiene cuenta en el portal, el enlace solo no basta: hay que entrar.
+  if (!(await require('./cuentas').puedeVer(req, t))) return json(res, { error: 'Entra con tu cuenta para ver esta incidencia.', login: true }, 401), true;
   if (req.method === 'GET' && !m[2]) return json(res, vistaCliente(t)), true;
 
   // Videollamada: huecos libres del calendario de soporte y reserva de uno.
@@ -398,9 +374,6 @@ async function rutasPublicas(req, res, ruta) {
   }
   return json(res, vistaCliente(t)), true;
 }
-
-// La pone canales.js si hay correo: envía al cliente los enlaces de sus incidencias.
-const alRecuperar = { fn: null };
 
 // ---------- Google Meet ----------
 const codigoMeet = url => (String(url).match(/meet\.google\.com\/([a-z]{3}-[a-z]{4}-[a-z]{3})/) || [])[1] || null;
@@ -530,4 +503,4 @@ async function paraDashboard() {
   }));
 }
 
-module.exports = { tituloCliente, importarHistorico, cuando, iniciarReuniones, contabilizarReuniones, alRecuperar, porId, rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };
+module.exports = { tituloCliente, abrirDesdePortal, importarHistorico, cuando, iniciarReuniones, contabilizarReuniones, porId, rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };

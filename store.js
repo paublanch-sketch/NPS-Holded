@@ -68,4 +68,4 @@ function coleccionPostgres(url, nombre) {
 
 const crear = nombre => process.env.DATABASE_URL ? coleccionPostgres(process.env.DATABASE_URL, nombre) : coleccionFichero(nombre);
 
-module.exports = { tickets: crear('tickets'), clientes: crear('clientes'), adjuntos: crear('adjuntos'), ajustes: crear('ajustes') };
+module.exports = { tickets: crear('tickets'), clientes: crear('clientes'), adjuntos: crear('adjuntos'), ajustes: crear('ajustes'), cuentas: crear('cuentas') };

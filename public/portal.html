@@ -33,20 +33,70 @@
   main { max-width: 1240px; margin: 0 auto; padding: 32px 24px 64px; }
 
   /* Héroe */
-  .heroe { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 18px 24px; align-items: center; margin-bottom: 28px; }
+  .heroe { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 18px 24px; align-items: center; margin-bottom: 28px; }
   .heroe .auri { color: var(--acento); align-self: start; margin-top: 2px; }
   .heroe .auri svg { width: 44px; height: 44px; stroke-width: 1.6; }
   .antetitulo { color: var(--acento); font-weight: 700; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
   .heroe h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.1; margin: 0 0 10px; letter-spacing: -.02em; }
   .heroe p { color: var(--bruma); margin: 0; font-size: 16px; max-width: 540px; }
-  .tiempo { display: flex; gap: 14px; align-items: center; background: var(--blanco); border: 1px solid var(--linea); border-radius: 16px; padding: 16px 22px; box-shadow: var(--sombra); white-space: nowrap; }
-  .tiempo svg { width: 28px; height: 28px; color: var(--bruma); }
-  .tiempo small { display: block; color: var(--bruma); font-size: 13px; }
-  .tiempo b { font-size: 16px; }
-  .ilustracion { width: 200px; height: 150px; }
 
-  /* Rejilla principal */
-  .rejilla { display: grid; grid-template-columns: minmax(0, 1fr) 470px; gap: 24px; align-items: start; }
+  /* Submenú de la cuenta: abrir ticket, mis tickets y quién ha entrado */
+  .submenu { background: var(--blanco); border-bottom: 1px solid var(--linea); position: sticky; top: 0; z-index: 20; }
+  .submenu .dentro { max-width: 1240px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; gap: 4px; }
+  .submenu a { display: inline-flex; align-items: center; gap: 8px; padding: 14px 14px 12px; color: var(--bruma); text-decoration: none; font-weight: 600; font-size: 14px; border-bottom: 2px solid transparent; white-space: nowrap; }
+  .submenu a svg { width: 18px; height: 18px; }
+  .submenu a:hover { color: var(--pizarra); }
+  .submenu a.on { color: var(--acento); border-bottom-color: var(--acento); }
+  .burbuja { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; background: var(--acento); color: #fff; font-size: 12px; font-weight: 700; display: inline-grid; place-items: center; }
+  .quien { margin-left: auto; display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--bruma); min-width: 0; padding-left: 12px; }
+  .quien span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .quien button { flex: none; border: 1px solid var(--linea2); background: var(--blanco); border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .quien button:hover { background: var(--cal); }
+
+  /* Entrar */
+  .entrar { max-width: 440px; margin: 16px auto 0; }
+  .entrar .tarjeta { padding: 30px 28px 22px; }
+  .entrar .auri { color: var(--acento); }
+  .entrar .auri svg { width: 40px; height: 40px; stroke-width: 1.6; }
+  .entrar h1 { font-size: 26px; line-height: 1.2; margin: 10px 0 6px; letter-spacing: -.02em; }
+  .entrar .tarjeta > p { color: var(--bruma); margin: 0 0 22px; }
+  .entrar .campo { margin-bottom: 14px; }
+  .boton.ancho { width: 100%; justify-content: center; margin-top: 4px; }
+  .entrar .enlace { margin: 12px auto 0; display: flex; color: var(--acento); font-weight: 600; }
+  .aviso-ok { margin-top: 14px; color: var(--ok); background: var(--ok-f); border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+  .sin-cuenta { margin-top: 22px; text-align: center; color: var(--bruma); font-size: 14px; }
+  .sin-cuenta .otros { justify-content: center; margin-top: 10px; }
+
+  /* Otras formas de contactar, en una línea */
+  .otros { margin-top: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; color: var(--bruma); font-size: 14px; }
+  .otros a { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--linea2); border-radius: 99px; background: var(--blanco); color: var(--pizarra); text-decoration: none; font-weight: 500; font-size: 13px; }
+  .otros a:hover { border-color: #c4c2bc; }
+  .otros a svg { width: 16px; height: 16px; color: var(--bruma); }
+  .otros small { flex-basis: 100%; color: var(--muted); font-size: 12px; }
+  .sin-cuenta .otros small { text-align: center; }
+
+  /* Mis tickets: los abiertos arriba y los cerrados debajo */
+  .mis { max-width: 860px; margin: 0 auto; }
+  .mis-cab { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .mis-cab h1 { font-size: clamp(26px, 3.4vw, 34px); line-height: 1.15; margin: 0 0 4px; letter-spacing: -.02em; }
+  .mis-cab p { margin: 0; color: var(--bruma); }
+  .sec-t { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 28px 0 10px; }
+  .sec-t:first-of-type { margin-top: 0; }
+  .lista-t { overflow: hidden; }
+  .fila-t { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-top: 1px solid var(--linea); color: inherit; text-decoration: none; transition: background .15s; }
+  .fila-t:first-child { border-top: 0; }
+  .fila-t:hover { background: var(--cal); }
+  .fila-t .t { flex: 1; min-width: 0; }
+  .fila-t .t b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fila-t .t small { color: var(--bruma); font-size: 13px; }
+  .fila-t > svg { color: var(--muted); width: 18px; height: 18px; }
+  .fila-t.tuya { background: var(--acento-f); }
+  .fila-t.tuya:hover { background: #e3ebfd; }
+  .vacio { padding: 22px 20px; color: var(--bruma); font-size: 14px; }
+
+  /* Abrir ticket */
+  #vistaNueva { max-width: 860px; margin: 0 auto; }
+  .rejilla { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
   .tarjeta { background: var(--blanco); border: 1px solid var(--linea); border-radius: var(--radio); box-shadow: var(--sombra); }
   form.tarjeta { padding: 26px 26px 22px; }
   .bloque + .bloque { margin-top: 28px; }
@@ -88,12 +138,6 @@
   .archivo small { color: var(--muted); }
   .archivo button { border: 0; background: var(--linea); width: 22px; height: 22px; border-radius: 50%; cursor: pointer; line-height: 1; }
 
-  .urgente { margin-top: 14px; display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 12px; background: var(--acento-f); border: 1px solid var(--acento-l); cursor: pointer; }
-  .urgente input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--acento); flex: none; }
-  .urgente b { font-weight: 600; }
-  .urgente small { display: block; color: var(--bruma); font-size: 13px; }
-
-  .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
   label.et { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
   label.et small { font-weight: 400; color: var(--muted); }
   .con-icono { position: relative; }
@@ -111,48 +155,12 @@
   .seguro svg { width: 16px; height: 16px; }
   .error { color: var(--error); font-size: 14px; margin-top: 12px; min-height: 1em; font-weight: 500; }
 
-  /* Lateral */
-  .lateral { display: flex; flex-direction: column; gap: 22px; }
-  .lateral .tarjeta { padding: 22px; }
-  .lateral .cab { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
-  .bola { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--acento-f); color: var(--acento); display: grid; place-items: center; }
-  .lateral h3 { font-size: 18px; margin: 0 0 2px; letter-spacing: -.01em; }
-  .lateral .cab p { margin: 0; color: var(--bruma); font-size: 14px; }
-  .contacto-t { background: linear-gradient(180deg, #f3f7ff 0%, var(--blanco) 55%); }
-  .filas { border: 1px solid var(--linea); border-radius: 12px; overflow: hidden; background: var(--blanco); }
-  .fila { display: flex; gap: 14px; align-items: center; padding: 14px 16px; text-decoration: none; color: inherit; border-top: 1px solid var(--linea); transition: background .15s; }
-  .fila:first-child { border-top: 0; }
-  a.fila:hover, button.fila:hover { background: var(--cal); }
-  button.fila { width: 100%; border-left: 0; border-right: 0; border-bottom: 0; background: none; text-align: left; cursor: pointer; }
-  .fila .bola { width: 38px; height: 38px; }
-  .fila .bola svg { width: 18px; height: 18px; }
-  .fila .t { flex: 1; min-width: 0; }
-  .fila .t b { display: block; font-size: 14px; font-weight: 600; }
-  .fila .t small { color: var(--bruma); font-size: 13px; }
-  .fila .flecha { color: var(--muted); width: 18px; height: 18px; }
-
-  .pestanas { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
-  .pestanas button { border: 0; background: var(--cal); color: var(--bruma); padding: 7px 16px; border-radius: 99px; font-size: 13px; font-weight: 600; cursor: pointer; }
-  .pestanas button.on { background: var(--acento); color: #fff; }
-  .lista a { display: grid; grid-template-columns: minmax(0, 1fr) auto 84px 16px; gap: 10px; align-items: center; padding: 12px 4px; border-top: 1px solid var(--linea); text-decoration: none; color: inherit; font-size: 14px; }
-  .lista a:first-child { border-top: 0; }
-  .lista a:hover { background: var(--cal); }
-  .lista .tit { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .lista time { color: var(--muted); font-size: 12px; text-align: right; }
-  .lista svg { color: var(--muted); width: 16px; height: 16px; }
+  /* Seguimiento de una incidencia */
   .est { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 99px; white-space: nowrap; text-align: center; }
   .est.abierta { background: var(--acento-f); color: var(--acento); }
   .est.curso { background: var(--azul-f); color: var(--azul); }
-  .est.espera { background: var(--ambar-f); color: var(--ambar); }
+  .est.espera { background: var(--acento); color: #fff; }
   .est.resuelta { background: var(--ok-f); color: var(--ok); }
-  .vacio { color: var(--bruma); font-size: 14px; padding: 14px 4px 4px; }
-  .ver-todas { width: 100%; margin-top: 12px; justify-content: center; }
-  .recuperar { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--linea); }
-  .recuperar p { margin: 0 0 8px; font-size: 13px; color: var(--bruma); }
-  .recuperar form { display: flex; gap: 8px; }
-  .recuperar input { flex: 1; min-width: 0; padding: 10px 12px; }
-
-  /* Seguimiento de una incidencia */
   .ticket { max-width: 800px; margin: 0 auto; }
   .volver { display: inline-flex; gap: 6px; align-items: center; margin-bottom: 16px; color: var(--bruma); text-decoration: none; font-size: 14px; }
   .ticket .tarjeta { padding: 24px; }
@@ -238,15 +246,15 @@
   .val-pie .copy { color: #B4B7BC; font-size: 11px; margin: 0; }
   .gracias .val-cuerpo > p { text-align: center; color: #5B616A; font-size: 14px; margin: 0 0 28px; }
 
-  @media (max-width: 1100px) { .heroe .ilustracion { display: none; } .rejilla { grid-template-columns: minmax(0, 1fr) 380px; } }
-  @media (max-width: 900px) { .rejilla { grid-template-columns: 1fr; } .heroe { grid-template-columns: auto minmax(0, 1fr); } .tiempo { grid-column: 1 / -1; justify-self: start; } }
   @media (max-width: 600px) {
     main { padding: 22px 16px 48px; } form.tarjeta { padding: 18px; } .barra .dentro { padding: 12px 16px; }
     .marca img { height: 17px; } .insignia { height: 34px; } .barra .dentro { gap: 12px; }
     .heroe .auri { display: none; } .heroe { grid-template-columns: 1fr; }
     .cat { font-size: 13px; padding: 8px 12px; } .cat[aria-pressed="true"] { padding: 7px 11px; }
-    .dos { grid-template-columns: 1fr; } .seguro { margin-left: 0; } .adjuntar { flex-wrap: wrap; }
-    .lista a { grid-template-columns: minmax(0, 1fr) auto 16px; } .lista time { display: none; }
+    .seguro { margin-left: 0; } .adjuntar { flex-wrap: wrap; }
+    .submenu .dentro { padding: 0 8px; } .submenu a { padding: 13px 10px 11px; } .quien > span { display: none; }
+    .entrar .tarjeta { padding: 24px 20px 18px; }
+    .fila-t { flex-wrap: wrap; gap: 6px 12px; padding: 14px 16px; } .fila-t .t { flex: 1 1 100%; } .fila-t > svg { display: none; } .fila-t .t b { white-space: normal; }
     .val-cab, .val-cuerpo, .val-pie { padding-left: 24px; padding-right: 24px; } .val-cab h2 { font-size: 23px; }
     .caras { gap: 4px; } .cara .circulo { width: 46px; height: 46px; } .cara .circulo svg { width: 22px; height: 22px; } .cara .et { font-size: 10.5px; } .msg { max-width: 92%; }
   }
@@ -292,8 +300,44 @@
   <a class="marca" href="/"><img src="/img/logo-interactivos-holded.png" alt="Interactivos · Holded" width="701" height="71"></a>
   <img class="insignia" src="/img/holded-solution-partner.png" alt="Holded Solution Partner Platinum" width="1364" height="444">
 </div></header>
+<nav class="submenu oculto" id="submenu" aria-label="Tu soporte"><div class="dentro">
+  <a href="/#nuevo" id="mNuevo"><svg class="i"><use href="#i-form"/></svg>Abrir ticket</a>
+  <a href="/#mis" id="mMis"><svg class="i"><use href="#i-doc"/></svg>Mis tickets<span class="burbuja oculto" id="mAbiertas"></span></a>
+  <span class="quien"><span id="quien"></span><button type="button" id="salir">Salir</button></span>
+</div></nav>
 
 <main>
+  <!-- Entrar con la cuenta (o poner la contraseña con el enlace del correo) -->
+  <section id="vistaEntrar" class="entrar oculto">
+    <div class="tarjeta">
+      <div class="auri"><svg class="i"><use href="#i-auri"/></svg></div>
+      <h1 id="eTitulo">Entra en tu soporte</h1>
+      <p id="eTexto">Con el correo y la contraseña de tu cuenta.</p>
+      <form id="formEntrar" novalidate>
+        <div class="campo" id="campoEmail"><label class="et" for="eEmail">Correo</label><div class="con-icono"><svg class="i"><use href="#i-correo"/></svg><input class="texto" id="eEmail" type="email" autocomplete="username"></div></div>
+        <div class="campo" id="campoClave"><label class="et" for="eClave" id="etClave">Contraseña</label><div class="con-icono"><svg class="i"><use href="#i-candado"/></svg><input class="texto" id="eClave" type="password" autocomplete="current-password"></div></div>
+        <div class="campo oculto" id="campoClave2"><label class="et" for="eClave2">Repite la contraseña</label><div class="con-icono"><svg class="i"><use href="#i-candado"/></svg><input class="texto" id="eClave2" type="password" autocomplete="new-password"></div></div>
+        <button class="boton ancho" id="btnEntrar"><span>Entrar</span></button>
+        <div class="error" id="errEntrar" role="alert"></div>
+        <div class="aviso-ok oculto" id="okEntrar" role="status"></div>
+        <button type="button" class="enlace" id="olvido">¿Has olvidado tu contraseña?</button>
+      </form>
+    </div>
+    <div class="sin-cuenta"><b>¿Aún no tienes cuenta?</b> Pídesela a tu técnico de Interactivos.<div class="otros" id="otrosEntrar"></div></div>
+  </section>
+
+  <!-- Mis tickets -->
+  <section id="vistaMis" class="mis oculto">
+    <div class="mis-cab">
+      <div><h1>Mis tickets</h1><p id="misSub">Las incidencias de tu empresa.</p></div>
+      <a class="boton" href="#nuevo"><svg class="i"><use href="#i-form"/></svg>Abrir ticket</a>
+    </div>
+    <h2 class="sec-t" id="tAbiertas">Abiertos</h2>
+    <div class="tarjeta lista-t" id="misAbiertas"><div class="vacio">Cargando…</div></div>
+    <h2 class="sec-t oculto" id="tCerradas">Cerrados</h2>
+    <div class="tarjeta lista-t oculto" id="misCerradas"></div>
+  </section>
+
   <!-- Abrir incidencia -->
   <section id="vistaNueva" class="oculto">
     <div class="heroe">
@@ -303,23 +347,6 @@
         <h1>¿En qué podemos ayudarte?</h1>
         <p>Cuéntanos qué pasa y un técnico de Holded te contestará aquí mismo en menos de 1 hora laborable.</p>
       </div>
-      <div class="tiempo"><svg class="i"><use href="#i-reloj"/></svg><span><small>Tiempo de respuesta</small><b>&lt; 1 hora laborable</b></span></div>
-      <svg class="ilustracion" viewBox="0 0 200 150" aria-hidden="true">
-        <defs>
-          <radialGradient id="g-halo" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#c7d7fb" stop-opacity=".9"/><stop offset="1" stop-color="#eef3fe" stop-opacity="0"/></radialGradient>
-          <linearGradient id="g-bocadillo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4f8af7"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient>
-          <filter id="f-sombra" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#2563eb" flood-opacity=".28"/></filter>
-        </defs>
-        <ellipse cx="96" cy="78" rx="78" ry="62" fill="url(#g-halo)"/>
-        <ellipse cx="104" cy="132" rx="52" ry="7" fill="#1C1C1C" opacity=".07"/>
-        <g filter="url(#f-sombra)">
-          <path d="M66 30h76a16 16 0 0 1 16 16v38a16 16 0 0 1-16 16H98l-20 17 4-17H66a16 16 0 0 1-16-16V46a16 16 0 0 1 16-16z" fill="url(#g-bocadillo)"/>
-          <path d="M66 30h76a16 16 0 0 1 16 16v6c-30-8-70-9-108-2v-4a16 16 0 0 1 16-16z" fill="#fff" opacity=".12"/>
-        </g>
-        <circle cx="83" cy="65" r="7" fill="#fff"/><circle cx="104" cy="65" r="7" fill="#fff"/><circle cx="125" cy="65" r="7" fill="#fff"/>
-        <path d="M168 18l-8 13M180 34l-14 6" stroke="#2563eb" stroke-width="4" stroke-linecap="round"/>
-        <circle cx="36" cy="96" r="4.5" fill="#2563eb"/>
-      </svg>
     </div>
 
     <div class="rejilla">
@@ -342,50 +369,22 @@
             <input type="file" id="ficheros" multiple hidden accept="image/*,.pdf,.txt,.csv,.xls,.xlsx,.doc,.docx,.zip">
           </div>
           <div class="archivos" id="listaArchivos"></div>
-          <label class="urgente"><input type="checkbox" id="urgente"><span><b>Me impide trabajar</b><small>Lo marcamos como urgente y lo atendemos primero.</small></span></label>
-        </div>
-
-        <div class="bloque">
-          <div class="paso"><span class="n">3</span><div><h2>Tus datos de contacto</h2><p>Necesitamos algunos datos para poder comunicarnos contigo.</p></div></div>
-          <div class="dos">
-            <div><label class="et" for="empresa">Empresa o autónomo/a</label><div class="con-icono"><svg class="i"><use href="#i-empresa"/></svg><input class="texto" id="empresa" autocomplete="organization"></div></div>
-            <div><label class="et" for="contacto">Tu nombre</label><div class="con-icono"><svg class="i"><use href="#i-usuario"/></svg><input class="texto" id="contacto" autocomplete="name"></div></div>
-            <div><label class="et" for="email">Correo</label><div class="con-icono"><svg class="i"><use href="#i-correo"/></svg><input class="texto" id="email" type="email" autocomplete="email"></div></div>
-            <div><label class="et" for="tel">Teléfono <small>(opcional)</small></label><div class="con-icono"><svg class="i"><use href="#i-tel"/></svg><input class="texto" id="tel" type="tel" autocomplete="tel" placeholder="Ej.: 669 123 456"></div></div>
-          </div>
         </div>
 
         <div class="pie">
           <button class="boton" id="btnAlta"><svg class="i"><use href="#i-enviar"/></svg><span>Enviar incidencia</span></button>
           <button type="button" class="enlace" id="limpiar"><svg class="i" style="width:16px;height:16px"><use href="#i-recarga"/></svg>Limpiar formulario</button>
-          <span class="seguro"><svg class="i"><use href="#i-candado"/></svg>Tu información está segura con nosotros.</span>
+          <span class="seguro" id="comoQuien"></span>
         </div>
         <div class="error" id="errAlta" role="alert"></div>
       </form>
-
-      <aside class="lateral">
-        <section class="tarjeta contacto-t">
-          <div class="cab"><span class="bola"><svg class="i"><use href="#i-chat"/></svg></span><div><h3>Otras formas de contactar</h3><p>Si lo prefieres, también puedes escribirnos de otras formas.</p></div></div>
-          <div class="filas" id="canales"></div>
-        </section>
-        <section class="tarjeta">
-          <div class="cab"><span class="bola"><svg class="i"><use href="#i-doc"/></svg></span><div><h3>Tus incidencias</h3><p>Aquí puedes ver el estado de tus solicitudes.</p></div></div>
-          <div class="pestanas" id="filtroMias"></div>
-          <div class="lista" id="mias"></div>
-          <button class="boton-sec ver-todas oculto" id="verTodas">Ver todas mis incidencias →</button>
-          <div class="recuperar oculto" id="recuperar">
-            <p>¿Las abriste desde otro dispositivo? Te enviamos los enlaces al correo.</p>
-            <form id="formRecuperar"><input class="texto" type="email" id="emailRecuperar" placeholder="tu@correo.com" aria-label="Correo"><button class="boton-sec">Enviar</button></form>
-            <p id="recuperado" class="oculto" style="margin:8px 0 0;color:var(--ok)">Si hay incidencias con ese correo, te llegará un mensaje en unos minutos.</p>
-          </div>
-        </section>
-      </aside>
     </div>
+    <div class="otros" id="otrosNueva"></div>
   </section>
 
   <!-- Seguir una incidencia -->
   <section id="vistaTicket" class="ticket oculto">
-    <a class="volver" href="/">← Volver al soporte</a>
+    <a class="volver oculto" id="volver" href="/#mis">← Mis tickets</a>
     <div class="tarjeta">
       <div class="t-cab">
         <div><h1 id="tTitulo">Cargando…</h1><p id="tSub"></p></div>
@@ -451,8 +450,7 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const icono = (n, cls = 'i') => `<svg class="${cls}"><use href="#i-${n}"/></svg>`;
 const hora = iso => iso ? new Date(iso).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
-const leer = (k, def) => { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch { return def; } };
-const guardar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const fechaCorta = iso => iso ? new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '';
 const peso = b => b < 1048576 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1048576).toFixed(1).replace('.', ',')} MB`;
 const token = (location.pathname.match(/^\/t\/([a-f0-9]{32})$/) || [])[1];
 const MAX = 8 * 1024 * 1024;
@@ -466,7 +464,7 @@ let config = {};
 async function api(url, body) {
   const r = await fetch(url, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(d.error || 'No hemos podido conectar. Inténtalo de nuevo.');
+  if (!r.ok) throw Object.assign(new Error(d.error || 'No hemos podido conectar. Inténtalo de nuevo.'), { status: r.status, login: !!d.login });
   return d;
 }
 async function subir(tok, file) {
@@ -479,9 +477,121 @@ const validarArchivo = f => !EXT.test(f.name) ? `«${f.name}»: ese tipo de arch
 
 const cargaConfig = fetch('/api/portal').then(r => r.json()).then(c => { config = c; return c; }).catch(() => ({}));
 
+// ---------- Vistas ----------
+// El portal va con cuenta: quien entra ve «Abrir ticket» y «Mis tickets» (los de su empresa).
+const VISTAS = ['vistaEntrar', 'vistaMis', 'vistaNueva', 'vistaTicket'];
+let yo = null;
+function mostrar(v) {
+  VISTAS.forEach(x => $(x).classList.toggle('oculto', x !== v));
+  $('submenu').classList.toggle('oculto', !yo || v === 'vistaEntrar');
+  $('mNuevo').classList.toggle('on', v === 'vistaNueva');
+  $('mMis').classList.toggle('on', v === 'vistaMis' || v === 'vistaTicket');
+  scrollTo(0, 0);
+}
+
+// Otras formas de contactar, en una línea: al pie del formulario y para quien aún no tiene cuenta.
+function pintarOtros(id, titulo) {
+  cargaConfig.then(c => {
+    const [ini, fin] = (c.horario || '09:00-18:00').split('-');
+    const l = [
+      c.whatsapp && `<a href="https://wa.me/${esc(c.whatsapp)}" target="_blank" rel="noopener">${icono('whatsapp')}WhatsApp</a>`,
+      c.email && `<a href="mailto:${esc(c.email)}">${icono('correo')}${esc(c.email)}</a>`,
+      c.telefono && `<a href="tel:${esc(c.telefono.replace(/[^\d+]/g, ''))}">${icono('tel')}${esc(c.telefono)}</a>`,
+    ].filter(Boolean);
+    $(id).innerHTML = l.length ? `${titulo ? `<span>${titulo}</span>` : ''}${l.join('')}<small>Lunes a viernes de ${esc(ini)} a ${esc(fin)}</small>` : '';
+  });
+}
+
+// ---------- Entrar ----------
+const claveToken = new URLSearchParams(location.search).get('clave');
+let modo = 'entrar';
+const MODOS = {
+  entrar: ['Entra en tu soporte', 'Con el correo y la contraseña de tu cuenta.', 'Entrar', '¿Has olvidado tu contraseña?'],
+  olvido: ['¿Has olvidado tu contraseña?', 'Escribe tu correo y te enviamos un enlace para poner una nueva.', 'Enviarme el enlace', '← Volver a entrar'],
+  clave: ['Pon tu contraseña', 'Elige una contraseña de 8 caracteres o más. Con ella y tu correo entrarás siempre en tu soporte.', 'Guardar y entrar', 'Pedir un enlace nuevo'],
+};
+function modoEntrar(m) {
+  modo = m;
+  const [t, p, b, enlace] = MODOS[m];
+  $('eTitulo').textContent = t;
+  $('eTexto').textContent = m === 'entrar' && token ? 'Entra con tu cuenta para ver esta incidencia.' : p;
+  $('btnEntrar').querySelector('span').textContent = b;
+  $('olvido').textContent = enlace;
+  $('olvido').classList.toggle('oculto', !enlace);
+  $('campoEmail').classList.toggle('oculto', m === 'clave');
+  $('campoClave').classList.toggle('oculto', m === 'olvido');
+  $('campoClave2').classList.toggle('oculto', m !== 'clave');
+  $('etClave').textContent = m === 'clave' ? 'Nueva contraseña' : 'Contraseña';
+  $('eClave').autocomplete = m === 'clave' ? 'new-password' : 'current-password';
+  $('errEntrar').textContent = '';
+  $('okEntrar').classList.add('oculto');
+  $('btnEntrar').classList.remove('oculto');
+}
+function entrar(m = 'entrar') {
+  mostrar('vistaEntrar');
+  modoEntrar(m);
+  pintarOtros('otrosEntrar', 'O escríbenos:');
+  setTimeout(() => (m === 'clave' ? $('eClave') : $('eEmail')).focus(), 50);
+}
+$('olvido').onclick = () => modoEntrar(modo === 'olvido' ? 'entrar' : 'olvido');
+$('formEntrar').onsubmit = async e => {
+  e.preventDefault();
+  const email = $('eEmail').value.trim(), clave = $('eClave').value;
+  const err = t => { $('errEntrar').textContent = t; };
+  err('');
+  if (modo !== 'clave' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return err('Revisa el correo.'), $('eEmail').focus();
+  if (modo === 'entrar' && !clave) return err('Escribe tu contraseña.'), $('eClave').focus();
+  if (modo === 'clave' && clave.length < 8) return err('La contraseña tiene que tener 8 caracteres o más.'), $('eClave').focus();
+  if (modo === 'clave' && clave !== $('eClave2').value) return err('Las dos contraseñas no coinciden.'), $('eClave2').focus();
+  $('btnEntrar').disabled = true;
+  try {
+    if (modo === 'olvido') {
+      await api('/api/cuenta/olvido', { email });
+      $('okEntrar').textContent = `Si ${email} tiene cuenta, te llegará un correo en unos minutos con el enlace para poner una contraseña nueva.`;
+      $('okEntrar').classList.remove('oculto');
+      $('btnEntrar').classList.add('oculto');
+    } else {
+      await api(modo === 'clave' ? '/api/cuenta/clave' : '/api/cuenta/entrar', modo === 'clave' ? { token: claveToken, clave } : { email, clave });
+      // Dentro: vuelve a donde iba (la incidencia del enlace o el inicio), ya sin el enlace de la contraseña.
+      location.replace(token ? `/t/${token}` : '/' + (location.hash || ''));
+      return;
+    }
+  } catch (er) { err(er.message); }
+  $('btnEntrar').disabled = false;
+};
+$('salir').onclick = async () => {
+  try { await api('/api/cuenta/salir', {}); } catch {}
+  location.href = '/';
+};
+
+// ---------- Mis tickets ----------
+// Abiertos arriba (primero los que esperan tu respuesta) y los cerrados debajo, del más reciente al más antiguo.
+const CLASE = { 'Recibida': 'abierta', 'En curso': 'curso', 'Esperando tu respuesta': 'espera', 'Resuelta': 'resuelta' };
+async function cargarMis() {
+  const l = await api('/api/cuenta/tickets');
+  const abiertos = l.filter(t => t.abierta).sort((a, b) => (b.esperando - a.esperando) || b.actualizado.localeCompare(a.actualizado));
+  const cerrados = l.filter(t => !t.abierta);
+  const fila = t => `<a class="fila-t${t.esperando ? ' tuya' : ''}" href="/t/${esc(t.token)}"><span class="t"><b>${esc(t.titulo)}</b><small>${t.abierta
+      ? `Abierto el ${fechaCorta(t.fecha)} · último movimiento ${hora(t.actualizado)}`
+      : `Abierto el ${fechaCorta(t.fecha)} · cerrado el ${fechaCorta(t.cierre || t.actualizado)}`}</small></span><span class="est ${CLASE[t.estado] || ''}">${esc(t.estado)}</span>${icono('flecha')}</a>`;
+  $('misAbiertas').innerHTML = abiertos.map(fila).join('') || '<div class="vacio">No tienes ningún ticket abierto. <a href="#nuevo">Abre uno</a> si necesitas ayuda.</div>';
+  $('misCerradas').innerHTML = cerrados.map(fila).join('');
+  $('tCerradas').classList.toggle('oculto', !cerrados.length);
+  $('misCerradas').classList.toggle('oculto', !cerrados.length);
+  const esperan = abiertos.filter(t => t.esperando).length;
+  $('misSub').textContent = !abiertos.length ? 'Las incidencias de tu empresa.'
+    : esperan ? `${esperan === 1 ? 'Hay 1 ticket que espera' : `Hay ${esperan} tickets que esperan`} tu respuesta.`
+    : `${abiertos.length === 1 ? '1 ticket abierto' : `${abiertos.length} tickets abiertos`}: te avisamos cuando haya novedades.`;
+  $('mAbiertas').textContent = abiertos.length;
+  $('mAbiertas').classList.toggle('oculto', !abiertos.length);
+  return l;
+}
+
 // ---------- Abrir incidencia ----------
-if (!token) {
-  $('vistaNueva').classList.remove('oculto');
+// La empresa, el nombre y el correo salen de la cuenta: solo se pide qué pasa.
+function iniciarNueva() {
+  if (iniciarNueva.hecho) return;
+  iniciarNueva.hecho = true;
   let tipo = '', archivos = [];
   $('tipos').innerHTML = CATEGORIAS.map(([n, ic]) => `<button type="button" class="cat" aria-pressed="false" data-tipo="${esc(n)}">${icono(ic)}<span>${esc(n)}</span><span class="check">${icono('check')}</span></button>`).join('');
   $('tipos').onclick = e => {
@@ -513,38 +623,28 @@ if (!token) {
   ['dragenter', 'dragover'].forEach(ev => zona.addEventListener(ev, e => { e.preventDefault(); zona.classList.add('arrastrando'); }));
   ['dragleave', 'drop'].forEach(ev => zona.addEventListener(ev, e => { e.preventDefault(); zona.classList.remove('arrastrando'); }));
   zona.addEventListener('drop', e => anadir([...e.dataTransfer.files]));
-
-  const datos = leer('soporte-datos', {});
-  for (const k of ['empresa', 'contacto', 'email', 'tel']) if (datos[k]) $(k).value = datos[k];
+  $('comoQuien').textContent = `Te responderemos a ${yo.email}`;
 
   $('limpiar').onclick = () => {
     tipo = ''; archivos = [];
     [...$('tipos').children].forEach(x => x.setAttribute('aria-pressed', 'false'));
-    $('desc').value = ''; $('contador').textContent = '0/2000'; $('urgente').checked = false;
+    $('desc').value = ''; $('contador').textContent = '0/2000';
     pintarArchivos(); $('errAlta').textContent = '';
-    // También los datos de contacto, y los que este navegador recordaba de la última vez.
-    for (const k of ['empresa', 'contacto', 'email', 'tel']) $(k).value = '';
-    try { localStorage.removeItem('soporte-datos'); } catch {}
     $('desc').focus();
   };
 
   $('alta').onsubmit = async e => {
     e.preventDefault();
     $('errAlta').textContent = '';
-    const v = { empresa: $('empresa').value.trim(), contacto: $('contacto').value.trim(), email: $('email').value.trim(), tel: $('tel').value.trim() };
     const desc = $('desc').value.trim();
     const falta = !tipo ? ['Elige sobre qué es la incidencia.', $('tipos').firstElementChild]
-      : !desc ? ['Cuéntanos qué pasa.', $('desc')]
-      : !v.empresa ? ['Falta el nombre de la empresa.', $('empresa')]
-      : !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.email) ? ['Revisa el correo: lo necesitamos para responderte.', $('email')] : null;
+      : !desc ? ['Cuéntanos qué pasa.', $('desc')] : null;
     if (falta) { $('errAlta').textContent = falta[0]; falta[1].focus(); return; }
-    guardar('soporte-datos', v);
     const btn = $('btnAlta'), txt = btn.querySelector('span');
     btn.disabled = true;
     txt.textContent = 'Enviando…';
     try {
-      const r = await api('/api/soporte', { ...v, telefono: v.tel, tipo, descripcion: desc, urgente: $('urgente').checked });
-      guardar('soporte-mias', [{ token: r.token, id: r.id }, ...leer('soporte-mias', []).filter(m => m.token !== r.token)].slice(0, 40));
+      const r = await api('/api/cuenta/ticket', { tipo, descripcion: desc });
       const fallidos = [];
       for (const [i, f] of archivos.entries()) {
         txt.textContent = `Subiendo archivo ${i + 1} de ${archivos.length}…`;
@@ -552,59 +652,22 @@ if (!token) {
       }
       location.href = '/t/' + r.token + (fallidos.length ? '?fallidos=' + fallidos.length : '');
     } catch (err) {
+      if (err.login) return entrar();
       $('errAlta').textContent = err.message;
       btn.disabled = false;
       txt.textContent = 'Enviar incidencia';
     }
   };
-
-  // Otras formas de contactar
-  cargaConfig.then(c => {
-    const [ini, fin] = (c.horario || '09:00-18:00').split('-');
-    const fila = (url, ic, t, s, externo) => `<${url ? `a href="${esc(url)}"${externo ? ' target="_blank" rel="noopener"' : ''}` : 'div'} class="fila"><span class="bola">${icono(ic)}</span><span class="t"><b>${t}</b><small>${s}</small></span>${url ? icono('flecha', 'i flecha') : ''}</${url ? 'a' : 'div'}>`;
-    $('canales').innerHTML = [
-      `<button type="button" class="fila" id="irForm"><span class="bola">${icono('form')}</span><span class="t"><b>Formulario de contacto</b><small>Respuesta en menos de 1 hora laborable</small></span>${icono('flecha', 'i flecha')}</button>`,
-      fila('', 'reloj', 'Horario de atención', `Lunes a viernes de ${esc(ini)} a ${esc(fin)}`),
-      c.telefono && fila('tel:' + c.telefono.replace(/[^\d+]/g, ''), 'tel', 'Teléfono', esc(c.telefono)),
-      c.whatsapp && fila('https://wa.me/' + c.whatsapp, 'whatsapp', 'WhatsApp', 'Escríbenos y te contestamos por allí', true),
-      c.email && fila('mailto:' + c.email, 'correo', 'Correo', esc(c.email)),
-    ].filter(Boolean).join('');
-    $('irForm').onclick = () => { $('alta').scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(() => $('desc').focus({ preventScroll: true }), 400); };
-    $('recuperar').classList.toggle('oculto', !c.avisosCorreo);
-  });
-
-  // Tus incidencias (las que este navegador recuerda)
-  const FILTROS = [['todas', 'Todas', () => true], ['abiertas', 'Abiertas', m => m.estado === 'Abierta'], ['curso', 'En curso', m => m.estado === 'En curso' || m.estado === 'Te esperamos'], ['resueltas', 'Resueltas', m => m.estado === 'Resuelta']];
-  const CLASE = { 'Abierta': 'abierta', 'En curso': 'curso', 'Te esperamos': 'espera', 'Resuelta': 'resuelta' };
-  let mias = [], filtro = 'todas', todas = false;
-  const pintarMias = () => {
-    $('filtroMias').innerHTML = FILTROS.map(([k, n]) => `<button type="button" data-f="${k}" class="${k === filtro ? 'on' : ''}">${n}</button>`).join('');
-    const l = mias.filter(FILTROS.find(f => f[0] === filtro)[2]);
-    const vista = todas ? l : l.slice(0, 5);
-    $('mias').innerHTML = vista.map(m => `<a href="/t/${esc(m.token)}"><span class="tit">${esc(m.titulo)}</span><span class="est ${CLASE[m.estado] || ''}">${esc(m.estado)}</span><time>${hora(m.actualizado)}</time>${icono('flecha')}</a>`).join('')
-      || `<div class="vacio">${mias.length ? 'No hay incidencias en este estado.' : 'Aún no has abierto ninguna incidencia desde este dispositivo.'}</div>`;
-    $('verTodas').classList.toggle('oculto', l.length <= 5);
-    $('verTodas').textContent = todas ? 'Ver menos' : `Ver todas mis incidencias (${l.length}) →`;
-  };
-  $('filtroMias').onclick = e => { const b = e.target.closest('button[data-f]'); if (b) { filtro = b.dataset.f; pintarMias(); } };
-  $('verTodas').onclick = () => { todas = !todas; pintarMias(); };
-  const recordadas = leer('soporte-mias', []).map(m => m.token).filter(Boolean);
-  pintarMias();
-  if (recordadas.length) api('/api/soporte/estado', { tokens: recordadas }).then(l => { mias = l; pintarMias(); }).catch(() => {});
-  $('formRecuperar').onsubmit = async e => {
-    e.preventDefault();
-    const email = $('emailRecuperar').value.trim();
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return $('emailRecuperar').focus();
-    try { await api('/api/soporte/recuperar', { email }); $('recuperado').classList.remove('oculto'); }
-    catch (err) { $('recuperado').textContent = err.message; $('recuperado').style.color = 'var(--error)'; $('recuperado').classList.remove('oculto'); }
-  };
+  pintarOtros('otrosNueva', '¿Prefieres otro canal?');
 }
 
 const G_LOGO = '<svg viewBox="0 0 48 48" aria-label="Google" role="img"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
 
 // ---------- Seguir incidencia ----------
-if (token) {
-  $('vistaTicket').classList.remove('oculto');
+function iniciarTicket() {
+  mostrar('vistaTicket');
+  $('volver').classList.toggle('oculto', !yo);
+  let parado = false;
   const q = new URLSearchParams(location.search);
   // Las cinco caras de la valoración (1 Muy insatisfecho … 5 Muy satisfecho), como en el formulario
   // de valoraciones de siempre. Se guardan como 2, 4, 6, 8 y 10 en la escala del NPS: así la media
@@ -619,7 +682,6 @@ if (token) {
   ];
   const deEscala = n => Math.min(10, Math.max(2, Math.round(n / 2) * 2));
   let nota = /^(10|[0-9])$/.test(q.get('nps') || '') ? deEscala(Number(q.get('nps'))) : null, ultimo = '', enviado = false, desdeCorreo = nota != null;
-  const recordar = t => guardar('soporte-mias', [{ token }, ...leer('soporte-mias', []).filter(m => m.token !== token)].slice(0, 40));
   $('caras').innerHTML = CARAS.map(([n, cls, et, cara]) => `<button type="button" class="cara ${cls}" role="radio" aria-checked="${n === nota}" data-n="${n}">
     <span class="circulo"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/>${cara}</svg></span><span class="et">${et}</span></button>`).join('');
   $('caras').onclick = e => {
@@ -664,9 +726,17 @@ if (token) {
   const alerta = t => { const d = document.createElement('div'); d.className = 'msg sistema'; d.style.color = 'var(--error)'; d.textContent = t; $('chat').append(d); };
 
   async function cargar() {
-    if (document.hidden) return;
+    if (document.hidden || parado) return;
     try { pintar(await api(`/api/soporte/${token}`)); }
-    catch { $('tTitulo').textContent = 'No encontramos esta incidencia'; $('tSub').innerHTML = 'Revisa el enlace o <a href="/">abre una nueva</a>.'; $('escribir').classList.add('oculto'); }
+    catch (e) {
+      // Es de una empresa con cuenta: sin entrar no se ve (y con otra cuenta, tampoco).
+      if (e.login && !yo) { parado = true; return entrar(); }
+      if (e.status && e.status !== 404 && !e.login) return;
+      parado = true;
+      $('tTitulo').textContent = 'No encontramos esta incidencia';
+      $('tSub').innerHTML = yo ? 'No está entre los tickets de tu cuenta. <a href="/#mis">Ver mis tickets</a>.' : 'Revisa el enlace.';
+      $('escribir').classList.add('oculto');
+    }
   }
 
   const adjunto = a => {
@@ -728,7 +798,6 @@ if (token) {
   }
 
   function pintar(t) {
-    recordar(t);
     pintarCita(t);
     document.title = `${t.titulo} · Soporte Holded`;
     $('tTitulo').textContent = t.titulo;
@@ -770,6 +839,29 @@ if (token) {
   setInterval(cargar, 6000);
   document.addEventListener('visibilitychange', cargar);
 }
+
+// ---------- Arranque ----------
+// Con cuenta: si tiene algún ticket abierto, entra en «Mis tickets»; si no, en el formulario.
+async function irA() {
+  if (location.hash === '#nuevo') { iniciarNueva(); return mostrar('vistaNueva'); }
+  if (location.hash === '#mis') { mostrar('vistaMis'); return cargarMis().catch(e => e.login && entrar()); }
+  const l = await cargarMis().catch(() => []);
+  if (l.some(t => t.abierta)) mostrar('vistaMis');
+  else { iniciarNueva(); mostrar('vistaNueva'); }
+}
+(async () => {
+  try { yo = await api('/api/cuenta'); } catch { yo = null; }
+  if (yo) $('quien').textContent = `${yo.nombre || yo.email} · ${yo.cliente}`;
+  if (claveToken) return entrar('clave');
+  if (token) {
+    iniciarTicket();
+    if (yo) cargarMis().catch(() => {});
+    return;
+  }
+  if (!yo) return entrar();
+  addEventListener('hashchange', irA);
+  irA();
+})();
 // Visor de imágenes del chat: se cierra con la cruz, con Esc o pulsando fuera de la imagen.
 // Ctrl/Cmd + clic sigue abriéndola en otra pestaña.
 (() => {

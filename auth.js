@@ -1,7 +1,7 @@
 // Acceso al panel interno: un único usuario de administración (ADMIN_USUARIO y
 // ADMIN_CLAVE) o «Continuar con Google» con una cuenta de ADMIN_GOOGLE (correos o
 // dominios; por defecto, interactivos.net), y una cookie de sesión firmada. Los clientes
-// no tienen login: abren y siguen sus incidencias desde el portal con su enlace privado.
+// entran al portal con su propia cuenta (cuentas.js).
 const crypto = require('crypto');
 
 const COOKIE = 'sh_sesion';
