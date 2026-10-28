@@ -139,7 +139,6 @@ function ticket([cliente, tipo, canal, estado, dias, hora, resp, diasCierre, hor
     servicio: ficha[1],
     tipo_cliente: ficha[2],
     canal,
-    urgente: estado === 'Nuevo',
     estado,
     tecnico,
     entrada: local(entrada),

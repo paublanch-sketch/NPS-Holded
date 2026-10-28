@@ -2,7 +2,10 @@
 // lo heredan. También permite fusionar dos nombres que son el mismo cliente.
 const { tickets, clientes, ajustes } = require('./store');
 
-const SERVICIOS = ['Implementación', 'Premium', 'Kit Digital', 'Sin clasificar'];
+// 28/10/2026: «Kit Digital» se llama «Kit Digital 1» (vendrá el Kit Digital 2).
+const SERVICIOS = ['Implementación', 'Premium', 'Kit Digital 1', 'Sin clasificar'];
+const SERVICIO_ANTIGUO = { 'Kit Digital': 'Kit Digital 1' };
+const servicioNuevo = s => SERVICIO_ANTIGUO[s] || s;
 // «Asesoría» es la propia asesoría partner como cliente (con Premium gratis); «Referenciado por
 // asesoría», un cliente que nos ha traído una. La palabra «gestoría» no se usa (28/10/2026).
 const ORIGENES = ['Asesoría', 'Referenciado por asesoría', 'Directo', 'Antiguo cliente AKIRA', 'Sin clasificar'];
@@ -18,7 +21,7 @@ async function fichas() {
 function clasificar(t, mapa) {
   const c = mapa.get(t.cliente);
   return {
-    servicio: c?.servicio || (SERVICIOS.includes(t.servicio) ? t.servicio : 'Sin clasificar'),
+    servicio: servicioNuevo(c?.servicio) || (SERVICIOS.includes(servicioNuevo(t.servicio)) ? servicioNuevo(t.servicio) : 'Sin clasificar'),
     tipo_cliente: origenNuevo(c?.tipo_cliente) || (ORIGENES.includes(origenNuevo(t.tipo_cliente)) ? origenNuevo(t.tipo_cliente) : 'Sin clasificar'),
   };
 }
@@ -26,7 +29,7 @@ function clasificar(t, mapa) {
 async function guardarFicha(nombre, cambios) {
   const l = await clientes.todos();
   const c = l.find(x => x.nombre === nombre) || { nombre, servicio: 'Sin clasificar', tipo_cliente: 'Sin clasificar' };
-  if (SERVICIOS.includes(cambios.servicio)) c.servicio = cambios.servicio;
+  if (SERVICIOS.includes(servicioNuevo(cambios.servicio))) c.servicio = servicioNuevo(cambios.servicio);
   if (ORIGENES.includes(cambios.tipo_cliente)) c.tipo_cliente = cambios.tipo_cliente;
   if (typeof cambios.notas === 'string') c.notas = cambios.notas.slice(0, 2000);
   // Contacto de la ficha, para los clientes dados de alta a mano (los demás lo sacan de sus tickets).
@@ -47,7 +50,7 @@ const UNA_VEZ = [
     const nombres = new Set((await tickets.todos()).filter(t => !t.interno && !t.ejemplo).map(t => t.cliente));
     for (const f of await clientes.todos()) if (!f.ejemplo) nombres.add(f.nombre);
     nombres.delete('SHEILOR SLU');
-    for (const n of nombres) if (n) await guardarFicha(n, { servicio: 'Kit Digital', tipo_cliente: 'Antiguo cliente AKIRA' });
+    for (const n of nombres) if (n) await guardarFicha(n, { servicio: 'Kit Digital 1', tipo_cliente: 'Antiguo cliente AKIRA' });
   }],
   // 28/10/2026: fuera la palabra «gestoría» en los orígenes guardados.
   ['origen-asesoria', async () => {
@@ -89,6 +92,11 @@ const UNA_VEZ = [
     for (const [de, a] of [['Casa Alfaro', 'ALPARGATAS ALFARO S.L.'], ['AINHOA MARTÍN QUIROGA', 'AQ MODEL AGENCY SL']]) {
       if (conTickets.has(a) && (await clientes.todos()).some(f => f.nombre === de)) await fusionar(de, a);
     }
+  }],
+  // 28/10/2026: el servicio guardado «Kit Digital» pasa a «Kit Digital 1» en fichas y tickets.
+  ['kit-digital-1', async () => {
+    for (const f of await clientes.todos()) if (SERVICIO_ANTIGUO[f.servicio]) { f.servicio = SERVICIO_ANTIGUO[f.servicio]; await clientes.guardar(f); }
+    for (const t of await tickets.todos()) if (SERVICIO_ANTIGUO[t.servicio]) { t.servicio = SERVICIO_ANTIGUO[t.servicio]; await tickets.guardar(t); }
   }],
 ];
 async function aplicarUnaVez() {
@@ -166,7 +174,7 @@ async function importarKitDigital(lista) {
       usados.add(mejor.c);
       r.unidos.push({ oficial, cliente: mejor.c });
     } else {
-      await clientes.guardar({ nombre: oficial, servicio: 'Kit Digital', tipo_cliente: 'Antiguo cliente AKIRA', kitDigital: oficial });
+      await clientes.guardar({ nombre: oficial, servicio: 'Kit Digital 1', tipo_cliente: 'Antiguo cliente AKIRA', kitDigital: oficial });
       r.nuevos++;
       if (opciones.length) r.dudosos.push({ oficial, cliente: opciones[0].c });
     }

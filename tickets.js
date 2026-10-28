@@ -28,7 +28,7 @@ const tituloCliente = t => t.asunto || t.tipo_incidencia || 'Tu incidencia';
 const vistaCliente = t => ({
   titulo: tituloCliente(t), empresa: t.cliente, contacto: t.contacto || '', estado: t.estado, tecnico: t.tecnico, entrada: t.entrada,
   mensajes: t.mensajes.filter(m => m.de !== 'nota'),
-  pideValoracion: t.estado === 'Cerrado' && t.nps == null,
+  pideValoracion: t.estado === 'Cerrado' && t.nps == null && !t.cierreAuto,
   nps: t.nps,
   video: activa(t)?.tipo === 'video' ? t.video : null,
   citas: (t.citas || []).filter(c => c.estado === 'prevista' && c.origen !== 'ahora' && c.fin > ahora()).map(c => ({ inicio: c.inicio, fin: c.fin, enlace: c.enlace })),
@@ -190,7 +190,6 @@ async function crear(b) {
     servicio: 'Sin clasificar',
     tipo_cliente: 'Sin clasificar',
     canal: CANALES.includes(b.canal) ? b.canal : 'Portal',
-    urgente: b.urgente === true,
     estado: 'Nuevo',
     tecnico: '',
     entrada,
@@ -262,9 +261,9 @@ const ACCIONES = {
     c.estado = 'anulada';
     t.mensajes.push({ de: 'sistema', texto: `Se ha anulado la videollamada del ${cuando(c.inicio)}.`, fecha: ahora() });
   },
-  // Marca o quita la urgencia (el cliente la marca al abrir; el técnico puede corregirla).
-  urgencia(t, b) { t.urgente = b.urgente === true; },
   pendiente(t) { pararSesion(t); t.estado = 'Pendiente cliente'; },
+  // El stand-by también se quita a mano: vuelve a En curso.
+  reanudar(t) { if (t.estado === 'Pendiente cliente') t.estado = 'En curso'; },
   cerrar(t, b) {
     ACCIONES.datos(t, b);
     pararSesion(t);
@@ -275,7 +274,7 @@ const ACCIONES = {
     t.cierre = ahora();
     t.mensajes.push({ de: 'sistema', texto: 'Hemos cerrado tu incidencia. ¿Nos ayudas con una valoración de 10 segundos?', fecha: ahora() });
   },
-  reabrir(t) { t.estado = 'En curso'; t.cierre = ''; },
+  reabrir(t) { t.estado = 'En curso'; t.cierre = ''; delete t.cierreAuto; },
 };
 
 function leerCuerpo(req) {
@@ -448,6 +447,30 @@ async function contabilizarReuniones() {
     }
   } finally { contando = false; }
 }
+// Stand-by (28/10/2026): una incidencia que espera al cliente se cierra sola a los 14 días sin
+// noticias, con la etiqueta «Cierre automático por inactividad» y sin pedir valoración. Si el
+// cliente vuelve a escribir, se reabre y la etiqueta se quita.
+const DIAS_INACTIVIDAD = 14;
+const ultimaActividad = t => [...t.mensajes].reverse().find(m => m.de !== 'nota')?.fecha || t.entrada;
+async function cerrarInactivos() {
+  const d = new Date(Date.now() - DIAS_INACTIVIDAD * 864e5);
+  const limite = new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 19);
+  for (const t of await store.todos()) {
+    if (t.estado !== 'Pendiente cliente' || t.archivado || t.ejemplo || t.historico || ultimaActividad(t) > limite) continue;
+    pararSesion(t);
+    Object.assign(t, { estado: 'Cerrado', cierre: ahora(), cierreAuto: true });
+    t.mensajes.push({ de: 'sistema', texto: `Hemos cerrado tu incidencia porque llevaba ${DIAS_INACTIVIDAD} días esperando tu respuesta. Si aún lo necesitas, escríbenos aquí y la volvemos a abrir.`, fecha: ahora() });
+    t.mensajes.push({ de: 'nota', autor: 'Sistema', texto: `Cierre automático por inactividad: ${DIAS_INACTIVIDAD} días en stand-by sin respuesta del cliente.`, fecha: ahora() });
+    await store.guardar(t);
+    avisar(t, 'cierreAuto', { dias: DIAS_INACTIVIDAD });
+  }
+}
+function iniciarCierreAuto() {
+  const vez = () => cerrarInactivos().catch(e => console.error('Cierre automático:', e.message));
+  setTimeout(vez, 60000);
+  setInterval(vez, 3600000);
+}
+
 function iniciarReuniones() {
   if (!google.activo()) return;
   setInterval(() => contabilizarReuniones().catch(e => console.error('Meet:', e.message)), 10 * 60000);
@@ -503,4 +526,4 @@ async function paraDashboard() {
   }));
 }
 
-module.exports = { tituloCliente, abrirDesdePortal, importarHistorico, cuando, iniciarReuniones, contabilizarReuniones, porId, rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };
+module.exports = { tituloCliente, abrirDesdePortal, iniciarCierreAuto, cerrarInactivos, DIAS_INACTIVIDAD, importarHistorico, cuando, iniciarReuniones, contabilizarReuniones, porId, rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };

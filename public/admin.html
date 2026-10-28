@@ -417,6 +417,51 @@
   .mk-pq-nps.atencion { background: var(--mk-at-p); color: var(--mk-at-t); }
   .mk-pq-nps.critico { background: var(--mk-cr-p); color: var(--mk-cr-t); }
   .mk-pq-mas { padding: 8px; border: 0; background: none; font: inherit; font-size: 12px; font-weight: 600; color: var(--azul); cursor: pointer; }
+  /* KPI que abren su detalle por clientes */
+  .mk-tile.clic, .mk-aro.clic { cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+  .mk-tile.clic:hover { border-color: #c9d6f5; box-shadow: 0 4px 14px rgba(37, 99, 235, .10); }
+  .mk-aro.clic { border-radius: 12px; padding: 4px 2px; }
+  .mk-aro.clic:hover { background: #f5f8ff; }
+  .mk-tile.clic:focus-visible, .mk-aro.clic:focus-visible { outline: 3px solid #c7d7fb; outline-offset: 2px; }
+  .mk-desplegar { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 14px; padding: 10px; border: 1px dashed var(--linea2); border-radius: 10px; background: none; font: inherit; font-size: 13px; font-weight: 600; color: var(--azul); cursor: pointer; }
+  .mk-desplegar:hover { background: #f5f8ff; }
+  .mk-desplegar[aria-expanded="true"] .mk-flecha { transform: rotate(180deg); }
+  .mk-tipos-det { margin-top: 14px; padding: 16px; border: 1px solid var(--linea); border-radius: 12px; background: var(--blanco); }
+  .mk-premium { display: flex; gap: 8px; flex-wrap: wrap; margin: -4px 0 16px; }
+  .mk-premium span { background: var(--blanco); border: 1px solid var(--linea); border-radius: 99px; padding: 5px 12px; font-size: 13px; color: var(--bruma); }
+  .mk-premium b { color: var(--pizarra); }
+  .mk-premium .tot { background: var(--azul-f); border-color: var(--azul-f); color: var(--azul-h); }
+  .mk-premium .tot b { color: var(--azul-h); }
+  /* Detalle de un KPI, como en Super Gemas: el periodo, el total y cada cliente con su barra */
+  dialog.det-met { width: min(760px, 94vw); max-height: 88vh; overflow: auto; }
+  .dm { padding: 20px 24px 22px; }
+  .dm-cab { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .dm-cab small { font-size: 12px; font-weight: 600; color: var(--azul); }
+  .dm-cab h3 { margin: 2px 0 0; font-size: 19px; letter-spacing: -.01em; }
+  .dm-x { border: 0; background: var(--suave); width: 34px; height: 34px; border-radius: 50%; font-size: 22px; line-height: 1; cursor: pointer; color: var(--bruma); flex: none; }
+  .dm-x:hover { color: var(--pizarra); }
+  .dm-rango { margin-top: 10px; font-size: 13px; color: var(--bruma); }
+  .dm-total { font-size: 34px; font-weight: 800; letter-spacing: -.02em; margin: 6px 0 14px; }
+  .dm-fila { display: flex; gap: 16px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--linea); }
+  .dm-quien { flex: 1; min-width: 0; }
+  .dm-quien > a { color: var(--pizarra); text-decoration: none; font-weight: 600; font-size: 14px; }
+  .dm-quien > a:hover { color: var(--azul); }
+  .dm-quien > small { margin-left: 6px; font-size: 12px; color: var(--muted); }
+  .dm-barra { height: 8px; border-radius: 8px; background: #eef0f4; margin: 7px 0 4px; overflow: hidden; }
+  .dm-barra span { display: block; height: 100%; border-radius: 8px; background: var(--azul); }
+  .dm-barra span.ok { background: var(--mk-ok); } .dm-barra span.atencion { background: var(--mk-at); } .dm-barra span.critico { background: var(--mk-cr); }
+  .dm-items { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
+  .dm-items a { font-size: 12.5px; color: var(--bruma); text-decoration: none; overflow-wrap: anywhere; }
+  .dm-items a:hover { color: var(--azul); }
+  .dm-items small { color: var(--muted); }
+  .dm-val { flex: none; font-weight: 700; font-size: 15px; min-width: 70px; text-align: right; }
+  .dm-vacio { padding: 18px 0 4px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--linea); }
+  .bj-est.auto { background: var(--suave); color: var(--bruma); }
+  .bj-esperar[aria-pressed="true"] { background: var(--azul); color: #fff; border-color: var(--azul); }
+  .bj-esperar[aria-pressed="true"]:hover { background: var(--azul-h); border-color: var(--azul-h); }
+  .bj-espera-nota { font-size: 12px; color: var(--bruma); margin: -2px 0 4px; }
+  .nt-cli { margin: 10px 0 0; padding: 8px 12px; border-radius: 10px; font-size: 13px; background: var(--suave); color: var(--bruma); }
+  .nt-cli.si { background: #eaf7ee; color: #17803d; }
   .mk-tile-enlace { color: inherit; text-decoration: none; display: grid; }
   .mk-tile-enlace:hover .mk-tile { border-color: var(--azul-l); }
   .mk-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
@@ -637,7 +682,6 @@
   .bj-otro { border: 0; background: none; color: var(--bruma); font: inherit; font-size: 12px; margin-top: 8px; cursor: pointer; padding: 0; text-decoration: underline; }
   .bj-esperar { background: var(--azul-f); color: var(--azul-h); border-color: var(--azul-f); box-shadow: none; }
   .bj-esperar:hover { background: #e0e9fd; border-color: #e0e9fd; }
-  .bj-esperar:disabled { opacity: 1; cursor: default; }
   .bj .prop { grid-template-columns: 112px 1fr; gap: 9px 10px; }
   .bj .prop a { color: var(--azul); text-decoration: none; }
   .bj-sla-txt { display: inline-flex; gap: 5px; align-items: center; font-weight: 600; }
@@ -758,6 +802,7 @@
 <div id="vista"></div>
 <div id="avisos" aria-live="polite"></div>
 <dialog id="dlg"></dialog>
+<dialog id="detMet" class="det-met"></dialog>
 
 <script>
 // ================= Utilidades =================
@@ -857,7 +902,7 @@ const PESTANAS = [
 let pestana = leer('pestana', 'abiertos');
 if (!['abiertos', 'vencen', 'espera', 'cerrados'].includes(pestana)) pestana = 'abiertos';
 let busca = '', modoNota = false, selActual = null, firmaDet = '';
-const firmaDe = t => JSON.stringify([t?.id, t?.mensajes?.length, t?.estado, t?.tecnico, t?.sesiones?.length, t?.activa?.inicio, t?.tipo_incidencia, t?.urgente, t?.nps]);
+const firmaDe = t => JSON.stringify([t?.id, t?.mensajes?.length, t?.estado, t?.tecnico, t?.sesiones?.length, t?.activa?.inicio, t?.tipo_incidencia, t?.cierreAuto, t?.nps]);
 
 // Cambia el ticket abierto sin volver a montar la bandeja.
 function seleccionar(id) {
@@ -880,15 +925,18 @@ function slaDe(t) {
 }
 const segundos = t => (t.horas_previas || 0) * 3600 + (t.sesiones || []).reduce((s, x) => s + ((x.fin ? new Date(x.fin) : new Date()) - new Date(x.inicio)) / 1000, 0);
 
-// Prioridad (28/10/2026): 1) Premium, 2) asesorías partner, 3) Implementación, 4) Kit Digital.
-// Las asesorías partner tienen Premium gratis: van detrás de los que pagan.
+// Prioridad (28/10/2026): 1) Servicio Premium, 2) asesorías partner, 3) Implementación, 4) Kit Digital 1.
+// Las asesorías partner tienen Premium gratis: van detrás de los que pagan. Ya no hay urgencia.
 const GRUPO_BJ = t => t.servicio === 'Premium' ? (t.tipo_cliente === 'Asesoría' ? 1 : 0) : t.servicio === 'Implementación' ? 2 : 3;
-const ETIQ_BJ = t => [['premium', 'Premium'], ['asesoria', 'Asesoría'], ['impl', 'Implementación'], ['kit', 'Kit Digital']][GRUPO_BJ(t)];
+const ETIQ_BJ = t => [['premium', 'Servicio Premium'], ['asesoria', 'Asesoría partner'], ['impl', 'Implementación'], ['kit', 'Kit Digital 1']][GRUPO_BJ(t)];
 function ordenar(l) {
   if (pestana === 'cerrados') return l.sort((a, b) => (b.cierre || '').localeCompare(a.cierre || ''));
-  const peso = t => (t.urgente ? 0 : 2) + (t.primera_respuesta ? 1 : 0);
+  const peso = t => t.primera_respuesta ? 1 : 0;
   return l.sort((a, b) => GRUPO_BJ(a) - GRUPO_BJ(b) || peso(a) - peso(b) || a.entrada.localeCompare(b.entrada));
 }
+// Stand-by: a los 14 días sin noticias del cliente se cierra sola (tickets.js).
+const ultimaAct = t => [...t.mensajes].reverse().find(m => m.de !== 'nota')?.fecha || t.entrada;
+const cierraEl = t => fecha(new Date(new Date(ultimaAct(t)).getTime() + 14 * 864e5));
 // Número del ticket dentro del cliente: 1, 2, 3… por fecha de entrada.
 const numDelCliente = t => tickets.filter(x => x.cliente === t.cliente && !x.historico && x.entrada <= t.entrada).length;
 
@@ -984,9 +1032,9 @@ function pintarLista(sel) {
     const [ec, et] = ESTADO_BJ(t), sla = slaBj(t);
     const ultimoCliente = [...t.mensajes].reverse().find(m => m.de === 'cliente')?.texto || t.descripcion;
     return `<a class="item ${t.id === sel ? 'sel' : ''}" href="#/bandeja/${t.id}">
-      <div class="l1"><span class="bj-dot ${t.urgente && t.estado !== 'Cerrado' ? 'urg' : ec}" title="${t.urgente && t.estado !== 'Cerrado' ? 'Urgente' : esc(et)}"></span><b>${esc(t.cliente)}</b><span class="bj-est ${ec}">${et}</span><time>${hace(t.estado === 'Cerrado' ? t.cierre || t.entrada : t.entrada)}</time></div>
+      <div class="l1"><span class="bj-dot ${ec}" title="${esc(et)}"></span><b>${esc(t.cliente)}</b><span class="bj-est ${ec}">${et}</span><time>${hace(t.estado === 'Cerrado' ? t.cierre || t.entrada : t.entrada)}</time></div>
       <div class="l0"><span class="bj-serv ${ETIQ_BJ(t)[0]}">${ETIQ_BJ(t)[1]}</span><span class="bj-asunto">${esc(tituloBj(t))}</span></div>
-      <div class="l2">Cliente: ${esc(t.contacto || t.cliente)} · <b class="bj-origen">${esc(origenTxt(t))}</b> · ${esc(t.tipo_incidencia)}${t.tecnico ? ' · ' + esc(t.tecnico) : ''}${t.activa ? ' · <b style="color:var(--ok-t)">⏱ en marcha</b>' : ''}</div>
+      <div class="l2">Cliente: ${esc(t.contacto || t.cliente)} · <b class="bj-origen">${esc(origenTxt(t))}</b> · ${esc(t.tipo_incidencia)}${t.tecnico ? ' · ' + esc(t.tecnico) : ''}${t.activa ? ' · <b style="color:var(--ok-t)">⏱ en marcha</b>' : ''}${t.cierreAuto ? ' · <b>Cierre automático por inactividad</b>' : t.estado === 'Pendiente cliente' ? ` · se cierra sola el ${cierraEl(t)}` : ''}</div>
       ${sla ? `<div class="bj-sla ${sla[0]}">${ICO_BJ.aviso}${esc(sla[1])}</div>` : ''}
       <div class="l3">${esc(ultimoCliente)}</div></a>`;
   }).join('') + (l.length > vista.length ? `<div class="vacio">Se muestran los 150 más recientes. Usa el buscador para el resto.</div>` : '')
@@ -1032,12 +1080,12 @@ function pintarDetalle(t) {
       <div class="cab">
         <a class="volver-movil" href="#/bandeja">← Bandeja</a>
         <div class="bj-cab1">
-          <h2>${esc(t.cliente)} <span class="bj-est grande ${ec}">${et}</span>${t.urgente && !cerrado ? '<span class="bj-est grande urg">Urgente</span>' : ''}</h2>
+          <h2>${esc(t.cliente)} <span class="bj-est grande ${ec}">${et}</span>${t.cierreAuto ? '<span class="bj-est grande auto">Cierre automático por inactividad</span>' : ''}</h2>
           <details class="bj-mas"><summary class="boton sec peq">Más acciones ▾</summary><div class="bj-mas-menu">
             <a href="/t/${esc(t.token)}" target="_blank" rel="noopener">Ver como cliente ↗</a>
             ${wa.length >= 9 ? `<a href="https://wa.me/${esc(wa)}" target="_blank" rel="noopener">Abrir en WhatsApp</a>` : ''}
             ${tel ? `<a href="tel:${esc(tel)}">Llamar</a>` : ''}
-            ${t.email ? `<a href="mailto:${esc(t.email)}?subject=${encodeURIComponent('Incidencia #' + t.id)}">Escribir un correo</a>` : ''}
+            ${t.email ? `<a href="mailto:${esc(t.email)}?subject=${encodeURIComponent(tituloBj(t))}">Escribir un correo</a>` : ''}
             <a href="#/clientes/${encodeURIComponent(t.cliente)}">Ficha del cliente</a>
           </div></details>
         </div>
@@ -1081,7 +1129,9 @@ function pintarDetalle(t) {
           ${cerrado
             ? `<div style="font-size:13px;color:var(--bruma);margin-bottom:6px">Cerrado el ${fechaHora(t.cierre)}${t.nps != null ? ` · <b style="color:var(--pizarra)">NPS ${t.nps}</b>` : ' · valoración pendiente'}${t.mejora ? `<br>«${esc(t.mejora)}»` : ''}</div><button class="boton sec" data-a="reabrir">Reabrir</button>`
             : `${t.activa?.tipo === 'video' ? `<a class="boton sec" style="text-align:center;text-decoration:none" href="${esc(t.video)}" target="_blank" rel="noopener">${ICO_BJ.video}Volver a la sala ↗</a>` : `<button class="boton sec" data-a="video">${ICO_BJ.video}Videollamada</button>`}
-               <button class="boton bj-esperar" data-a="pendiente" ${t.estado === 'Pendiente cliente' ? 'disabled' : ''}>${ICO_BJ.espera}${t.estado === 'Pendiente cliente' ? 'En stand-by (esperando al cliente)' : 'Poner en stand-by'}</button>
+               ${t.estado === 'Pendiente cliente'
+                 ? `<button class="boton bj-esperar" data-a="reanudar" aria-pressed="true" title="Quitar el stand-by y volver a En curso">${ICO_BJ.espera}En stand-by · quitar</button><div class="bj-espera-nota">Si el cliente no contesta, se cierra sola el ${cierraEl(t)}.</div>`
+                 : `<button class="boton bj-esperar" data-a="pendiente" aria-pressed="false">${ICO_BJ.espera}Poner en stand-by</button>`}
                <button class="boton" data-a="cerrar">${ICO_BJ.cerrar}Cerrar ticket</button>`}
         </div>
       </div>
@@ -1091,7 +1141,6 @@ function pintarDetalle(t) {
         <div class="prop">
           ${fila('Ticket', `Nº ${numDelCliente(t)} del cliente`)}
           <span>Tipo</span><select class="campo" id="pTipo">${tiposOpc}</select>
-          <span>Urgencia</span><label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" id="pUrg" ${t.urgente ? 'checked' : ''}> ${t.urgente ? 'Urgente' : 'Normal'}</label>
           ${fila('Canal', esc(t.canal))}
           ${fila('Creado', `<span title="${esc(fechaHora(t.entrada))}">${hace(t.entrada)}</span>`)}
           ${fila('Última actualización', hace(ultimo))}
@@ -1167,7 +1216,6 @@ function pintarDetalle(t) {
     accion(t.id, a).catch(fallo);
   };
   $('pTipo').onchange = e => accion(t.id, 'datos', { tipo_incidencia: e.target.value }).catch(fallo);
-  $('pUrg').onchange = e => accion(t.id, 'urgencia', { urgente: e.target.checked }).catch(fallo);
 }
 
 // Videollamadas de Google Meet del ticket: previstas, hechas (con su duración real) y anuladas.
@@ -1283,8 +1331,26 @@ function cerrarTicket(t) {
     });
 }
 
-function nuevoTicket() {
+// Si la empresa, el correo o el teléfono ya son de un cliente, se rellena lo que falta con sus
+// datos (sin pisar lo escrito). Si no coincide con nadie, el ticket da de alta el contacto nuevo.
+// Sin mayúsculas, acentos ni espacios de más: «cafe nomada» es «Café Nòmada».
+const normal = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
+const nueveDigitos = s => String(s || '').replace(/\D/g, '').slice(-9);
+function contactoConocido({ empresa, email, tel }) {
+  const l = tickets.filter(t => !t.interno);
+  const fichas = clientesCache?.clientes || [];
+  const porEmail = email && l.find(t => normal(t.email) === normal(email));
+  const porTel = !porEmail && nueveDigitos(tel).length === 9 && l.find(t => nueveDigitos(t.telefono) === nueveDigitos(tel));
+  const ficha = fichas.find(c => (empresa && normal(c.nombre) === normal(empresa)) || (email && c.emails.includes(normal(email))) || (nueveDigitos(tel).length === 9 && c.telefonos.some(x => nueveDigitos(x) === nueveDigitos(tel))));
+  const cliente = porEmail?.cliente || porTel?.cliente || ficha?.nombre || (empresa && l.find(t => normal(t.cliente) === normal(empresa))?.cliente);
+  if (!cliente) return null;
+  const ultimo = porEmail || porTel || l.find(t => t.cliente === cliente && (t.contacto || t.email || t.telefono));
+  const f = fichas.find(c => c.nombre === cliente);
+  return { cliente, contacto: ultimo?.contacto || '', email: ultimo?.email || f?.emails[0] || '', tel: ultimo?.telefono || f?.telefonos[0] || '', servicio: f?.servicio, origen: f?.tipo_cliente };
+}
+async function nuevoTicket() {
   if (!exigirTecnico()) return;
+  try { await cargarClientes(); } catch {}
   const nombres = (clientesCache?.clientes || []).map(c => c.nombre);
   dialogo(`<h3>Nuevo ticket</h3><p class="sub">Para llamadas, WhatsApp o correos que te llegan a ti. El cronómetro arranca solo.</p>
     <div class="dos">
@@ -1296,17 +1362,31 @@ function nuevoTicket() {
       <div><label>Correo</label><input class="campo" name="email" type="email"></div>
     </div>
     <datalist id="dlClientes">${nombres.map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+    <p class="nt-cli oculto" id="ntCli"></p>
     <label>Qué necesita</label><textarea class="campo" name="desc" rows="4" required></textarea>
-    <label style="display:flex;gap:6px;align-items:center;font-weight:500"><input type="checkbox" name="urg"> Urgente: le impide trabajar</label>
     <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Crear y empezar</button></div>`,
     async f => {
       if (!f.empresa.value.trim() || !f.desc.value.trim() || !(f.tel.value.trim() || f.email.value.trim())) { aviso('Pon empresa, qué necesita y un teléfono o correo.', true); return false; }
-      const t = await api('/api/tickets', { canal: f.canal.value, tipo: f.tipo.value, empresa: f.empresa.value, contacto: f.contacto.value, telefono: f.tel.value, email: f.email.value, descripcion: f.desc.value, urgente: f.urg.checked, tecnico: yo() });
+      const t = await api('/api/tickets', { canal: f.canal.value, tipo: f.tipo.value, empresa: f.empresa.value, contacto: f.contacto.value, telefono: f.tel.value, email: f.email.value, descripcion: f.desc.value, tecnico: yo() });
       tickets.unshift(t);
+      clientesCache = null;
       location.hash = `#/bandeja/${t.id}`;
       await accion(t.id, 'iniciar');
       aviso(`Ticket #${t.id} creado.`);
     });
+  const fm = $('dlg').querySelector('form');
+  const completar = () => {
+    const c = contactoConocido({ empresa: fm.empresa.value, email: fm.email.value, tel: fm.tel.value });
+    const nota = $('ntCli');
+    if (!fm.empresa.value.trim() && !fm.email.value.trim() && !fm.tel.value.trim()) return nota.classList.add('oculto');
+    nota.classList.remove('oculto');
+    nota.classList.toggle('si', !!c);
+    if (!c) { nota.textContent = 'Cliente nuevo: se dará de alta con estos datos.'; return; }
+    fm.empresa.value = c.cliente;
+    for (const [campo, v] of [['contacto', c.contacto], ['email', c.email], ['tel', c.tel]]) if (!fm[campo].value.trim() && v) fm[campo].value = v;
+    nota.textContent = `✓ Cliente que ya existe: ${c.cliente}${c.servicio && c.servicio !== 'Sin clasificar' ? ` · ${c.servicio}` : ''}${c.origen && c.origen !== 'Sin clasificar' ? ` · ${c.origen}` : ''}. Datos rellenados.`;
+  };
+  ['empresa', 'email', 'tel'].forEach(k => fm[k].addEventListener('change', completar));
 }
 
 // ================= Métricas =================
@@ -1321,10 +1401,10 @@ const PERIODOS = {
 let fm = { ...leer('filtrosMetricas', { periodo: 'mes', servicio: '', tipo_cliente: '' }), tecnico: '' };
 if (!PERIODOS[fm.periodo] && fm.periodo !== 'custom') fm.periodo = 'mes';
 const DESC = {
-  'Implementación': 'Clientes fuera de Kit Digital: referenciados por una asesoría, o antiguos clientes de AKIRA sin Holded que lo solicitan.',
+  'Implementación': 'Clientes fuera de Kit Digital 1: referenciados por una asesoría, o antiguos clientes de AKIRA sin Holded que lo solicitan.',
   'Premium': 'Asesorías partner, los clientes que nos traen y cualquier cliente que lo contrate directamente.',
 };
-const TITULO = { 'Implementación': 'Implementación Holded', 'Premium': 'Servicio Premium Holded' };
+const TITULO = { 'Implementación': 'Implementación Holded', 'Premium': 'Servicio Soporte Premium Holded' };
 const PALABRA = { ok: 'OK', atencion: 'Atención', critico: 'Crítico' };
 // Lo que quiere decir cada color en cada indicador (28/10/2026): frases cortas y que se entiendan.
 const MOTIVO = {
@@ -1459,15 +1539,26 @@ async function cargarMetricas() {
   let r;
   try { r = await api('/api/resumen?' + q); } catch (e) { return fallo(e); }
   if (!$('met')) return;
-  // Tal cual el mockup: leyenda, Implementación y Premium, y los KPI por tipo de cliente.
+  resumenMet = r;
+  // Dos líneas (28/10/2026): Soporte Premium e Implementación, con todo sumado; al desplegar cada
+  // una salen sus tipos de cliente. Debajo, los clientes antiguos del Kit Digital 1.
   $('met').innerHTML = `
     <div class="mk-leyenda"><span class="tit">LEYENDA</span>
       <span><i class="mk-dot" style="background:var(--mk-ok)"></i><b>OK</b> — dentro de la hora</span>
       <span><i class="mk-dot" style="background:var(--mk-at)"></i><b>Atención</b> — requiere seguimiento</span>
       <span><i class="mk-dot" style="background:var(--mk-cr)"></i><b>Crítico</b> — SLA superado o NPS bajo</span></div>
-    ${r.servicios.map(bloqueServicio).join('')}
-    ${r.antiguos.vacio && !r.kitDigital?.activos ? '' : bloqueAntiguos(r.antiguos, r.kitDigital)}
-    ${bloqueTipos(r)}`;
+    ${r.servicios.map(b => bloqueServicio(b, r)).join('')}
+    ${r.antiguos.vacio && !r.kitDigital?.activos ? '' : bloqueAntiguos(r.antiguos, r.kitDigital)}`;
+  $('met').querySelectorAll('[data-det]').forEach(x => {
+    x.onclick = () => abrirDetalle(...x.dataset.det.split('|'));
+    x.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); x.click(); } };
+  });
+  $('met').querySelectorAll('[data-desplegar]').forEach(b => b.onclick = () => {
+    const caja = b.nextElementSibling, abrir = caja.classList.contains('oculto');
+    caja.classList.toggle('oculto', !abrir);
+    b.setAttribute('aria-expanded', abrir);
+    abrir ? desplegados.add(b.dataset.desplegar) : desplegados.delete(b.dataset.desplegar);
+  });
   $('met').querySelectorAll('tr[data-id]').forEach(tr => tr.onclick = () => { location.hash = `#/bandeja/${tr.dataset.id}`; });
   $('met').querySelectorAll('[data-porque]').forEach(b => b.onclick = () => {
     const caja = b.closest('.mk-sec').querySelector('.mk-porque');
@@ -1492,11 +1583,11 @@ async function cargarMetricas() {
 
 // Tarjeta de número grande, como las del mockup: icono y semáforo arriba, valor y etiqueta.
 // Con «aviso», en vez del semáforo lleva esa palabra en azul (cifras sin umbral, como las del periodo).
-function tile(icono, nivel, valor, sufijo, etiqueta, aviso, clave) {
+function tile(icono, nivel, valor, sufijo, etiqueta, aviso, clave, det) {
   const n = nivel || 'nada';
   const arriba = aviso ? `<span class="c-azul">${icono}</span><span class="mk-pill info">${aviso}</span>`
     : `<span class="c-${n}">${icono}</span><span class="mk-pill ${n}"${nivel && nivel !== 'ok' && REGLA[clave] ? ` title="${esc(REGLA[clave][nivel])}"` : ''}>${motivo(clave, nivel)}</span>`;
-  return `<div class="mk-tile"><div class="top">${arriba}</div>
+  return `<div class="mk-tile${det ? ' clic" data-det="' + esc(det) + '" role="button" tabindex="0" title="Ver el detalle por cliente' : ''}"><div class="top">${arriba}</div>
     <div class="v">${valor}${sufijo ? `<small>${sufijo}</small>` : ''}</div><div class="l">${etiqueta}</div></div>`;
 }
 
@@ -1507,7 +1598,7 @@ const horaEntrada = isoTxt => {
   return d.toDateString() === hoy.toDateString() ? hm : `${fecha(isoTxt)} · ${hm}`;
 };
 
-function bloqueServicio(b) {
+function bloqueServicio(b, r) {
   const estado = b.vacio ? null : b.estado;
   // El estado dice el motivo principal; al pulsarlo se abre el porqué completo.
   const crit = motivos(b, 'critico'), aten = motivos(b, 'atencion'), todos = [...crit, ...aten];
@@ -1520,29 +1611,34 @@ function bloqueServicio(b) {
       ${todos.map(m => `<div class="mk-porque-fila ${crit.includes(m) ? 'critico' : 'atencion'}"><span class="mk-dot"></span><div><b>${esc(m.texto[0].toUpperCase() + m.texto.slice(1))}</b><small>${esc(m.regla)}</small>${casosDelMotivo(b, m.clave)}</div></div>`).join('')}
     </div>` : '';
   const niveles = b.niveles || {};
+  const det = clave => `${b.nombre}||${clave}`;
+  const tipos = r.porTipo.find(s => s.servicio === b.nombre);
+  const p = b.nombre === 'Premium' && r.premium;
   return `<section class="mk-sec">
     <div class="mk-sec-cab"><span class="mk-ico">${ICONO_SERVICIO[b.nombre]}</span><div><h2>${esc(TITULO[b.nombre] || b.nombre)}</h2><p>${esc(DESC[b.nombre] || '')}</p></div>${chip}</div>
+    ${p && p.clientes ? `<div class="mk-premium"><span><b>${num(p.clientes)}</b> ${p.clientes === 1 ? 'cliente' : 'clientes'} Premium</span><span><b>${num(p.asesorias)}</b> ${p.asesorias === 1 ? 'asesoría partner' : 'asesorías partner'} · gratis</span><span><b>${num(p.pago)}</b> de pago · ${p.eurosMes} €/mes cada uno</span><span class="tot"><b>${num(p.pago * p.eurosMes)} €</b> al mes</span></div>` : ''}
     ${porque}
     <div class="mk-tiles">
-      ${tile(ICO.alerta, niveles.abiertas, num(b.abiertas || 0), '', 'Incidencias abiertas', null, 'abiertas')}
-      ${tile(ICO.reloj, niveles.excedido, exceso(b.excedidoMin || 0), '', 'Minutos excedidos sobre la 1 h de SLA', null, 'excedido')}
-      ${tile(ICO.estrella, niveles.valoracion, b.valoracion == null ? '—' : num(b.valoracion, 1), b.valoracion == null ? '' : '/5', `Valoración media (NPS / Google)${b.respuestasNps ? ` · ${b.respuestasNps} resp.` : ''}`, null, 'valoracion')}
-      ${tile(ICO.historial, null, num(b.horas || 0, 1), ' h', 'Tiempo dedicado', 'Tiempo')}
+      ${tile(ICO.alerta, niveles.abiertas, num(b.abiertas || 0), '', 'Incidencias abiertas', null, 'abiertas', det('abiertas'))}
+      ${tile(ICO.reloj, niveles.excedido, exceso(b.excedidoMin || 0), '', 'Minutos excedidos sobre la 1 h de SLA', null, 'excedido', det('excedido'))}
+      ${tile(ICO.estrella, niveles.valoracion, b.valoracion == null ? '—' : num(b.valoracion, 1), b.valoracion == null ? '' : '/5', `Valoración media (NPS / Google)${b.respuestasNps ? ` · ${b.respuestasNps} resp.` : ''}`, null, 'valoracion', det('valoracion'))}
+      ${tile(ICO.historial, null, num(b.horas || 0, 1), ' h', 'Tiempo dedicado', 'Tiempo', undefined, det('horas'))}
     </div>
-    ${tablaCasos(b, b.nombre === 'Premium')}
+    ${tipos ? `<button type="button" class="mk-desplegar" data-desplegar="${esc(b.nombre)}" aria-expanded="${desplegados.has(b.nombre)}">Ver por tipo de cliente · ${tipos.grupos.map(g => esc(g.nombre)).join(', ')} <span class="mk-flecha">▾</span></button>
+    <div class="mk-tipos-det${desplegados.has(b.nombre) ? '' : ' oculto'}">${gruposServicio(tipos)}</div>` : ''}
   </section>`;
 }
 
-// Clientes antiguos (Kit Digital), debajo de los dos bloques del mockup y con su mismo aspecto.
+// Clientes antiguos (Kit Digital 1), debajo de los dos bloques del mockup y con su mismo aspecto.
 function bloqueAntiguos(b, kit) {
   return `<section class="mk-sec">
-    <div class="mk-sec-cab"><span class="mk-ico">${ICO.historial}</span><div><h2>Cliente antiguo (Kit Digital)</h2><p>Clientes del Kit Digital y antiguos clientes, con el histórico del antiguo formulario. El formulario no medía la primera respuesta ni la valoración.</p></div><span class="mk-estado nada">Histórico</span></div>
+    <div class="mk-sec-cab"><span class="mk-ico">${ICO.historial}</span><div><h2>Cliente antiguo (Kit Digital 1)</h2><p>Clientes del Kit Digital 1 y antiguos clientes, con el histórico del antiguo formulario. El formulario no medía la primera respuesta ni la valoración.</p></div><span class="mk-estado nada">Histórico</span></div>
     <div class="mk-tiles">
-      ${tile(ICO.alerta, null, num(b.tickets || 0), '', 'Incidencias en el periodo', 'Periodo')}
-      ${tile(ICO.reloj, null, num(b.horas || 0, 1), ' h', 'Horas de soporte en el periodo', 'Periodo')}
+      ${tile(ICO.alerta, null, num(b.tickets || 0), '', 'Incidencias en el periodo', 'Periodo', undefined, 'Kit Digital 1||tickets')}
+      ${tile(ICO.reloj, null, num(b.horas || 0, 1), ' h', 'Horas de soporte en el periodo', 'Periodo', undefined, 'Kit Digital 1||horas')}
       ${tile(ICO.historial, null, num(b.horasTotales || 0, 1), ' h', `Horas sumadas de todo el histórico · ${num(b.ticketsTotales || 0)} incidencias`, 'Total')}
       ${tile(ICO.personas, null, num(b.clientes || 0), '', 'Clientes atendidos', 'Periodo')}
-      ${kit && kit.activos ? `<a class="mk-tile-enlace" href="#/clientes" data-kit>${tile(ICO.personas, null, num(kit.sinTickets), '', `Kit Digital activos sin incidencias · de ${num(kit.activos)} activos`, 'Ahora')}</a>` : ''}
+      ${kit && kit.activos ? `<a class="mk-tile-enlace" href="#/clientes" data-kit>${tile(ICO.personas, null, num(kit.sinTickets), '', `Kit Digital 1 activos sin incidencias · de ${num(kit.activos)} activos`, 'Ahora')}</a>` : ''}
     </div>
     ${tablaCasos(b, false)}
   </section>`;
@@ -1567,11 +1663,11 @@ function tablaCasos(b, conCanal) {
 
 // Aro de la página 2 del mockup: pista suave y arco del color del estado que arranca arriba,
 // con el máximo encima («| 20»), el número dentro y la palabra del estado debajo.
-function aro(valor, max, etiqueta, nivel, numero, pie, clave) {
+function aro(valor, max, etiqueta, nivel, numero, pie, clave, det) {
   const n = nivel || 'nada';
   const r = 52, c = 2 * Math.PI * r;
   const f = Math.max(0, Math.min(1, (numero || 0) / max));
-  return `<div class="mk-aro ${n}"><div class="max"><i></i>${max}</div>
+  return `<div class="mk-aro ${n}${det ? ' clic" data-det="' + esc(det) + '" role="button" tabindex="0" title="Ver el detalle por cliente' : ''}"><div class="max"><i></i>${max}</div>
     <svg viewBox="0 0 128 128" role="img" aria-label="${esc(etiqueta.replace('<br>', ' '))}: ${esc(valor)} de ${max}">
       <circle class="pista" cx="64" cy="64" r="${r}"/>
       ${f ? `<circle class="arco" cx="64" cy="64" r="${r}" stroke-dasharray="${(c * f).toFixed(1)} ${c.toFixed(1)}"/>` : ''}
@@ -1581,26 +1677,62 @@ function aro(valor, max, etiqueta, nivel, numero, pie, clave) {
 
 // Máximo redondo para el aro de horas (no tienen umbral: es la escala del dibujo).
 const maxHoras = h => [10, 20, 30, 50, 80, 100, 150, 200, 300, 500, 1000].find(m => m >= h) || Math.ceil(h / 500) * 500;
-function bloqueTipos(r) {
-  const tarjeta = s => {
-    const impl = s.servicio === 'Implementación';
-    return `<section class="mk-sec">
-      <div class="mk-sec-cab" style="margin-bottom:6px"><span class="mk-ico">${ICONO_SERVICIO[s.servicio]}</span><div><h2>${esc(TITULO[s.servicio])}</h2>${s.sinOrigen ? `<p>${s.sinOrigen} cliente${s.sinOrigen > 1 ? 's' : ''} sin origen asignado no entra${s.sinOrigen > 1 ? 'n' : ''} aquí.</p>` : ''}</div></div>
-      ${s.grupos.map(g => `<div class="mk-grupo"><div class="nom">${esc(g.nombre)}</div>
-        <div class="mk-aros">
-          ${aro(num(g.abiertas || 0), impl ? 10 : 20, impl ? 'Casos<br>activos' : 'Incidencias<br>abiertas', g.vacio ? null : g.niveles.abiertas, g.abiertas, undefined, 'abiertas')}
-          ${aro(num(g.fueraSla || 0), impl ? 5 : 10, 'Incidencias<br>fuera de SLA', g.vacio ? null : g.niveles.fueraSla, g.fueraSla, undefined, 'fueraSla')}
-          ${aro(g.valoracion == null ? '—' : num(g.valoracion, 1), 5, 'Valoración<br>NPS / Google', g.vacio ? null : g.niveles.valoracion, g.valoracion, undefined, 'valoracion')}
-          ${aro(num(g.horas || 0, g.horas >= 100 || Number.isInteger(g.horas || 0) ? 0 : 1), maxHoras(g.horas || 0), 'Tiempo<br>dedicado', g.vacio ? null : 'horas', g.horas, g.vacio ? 'Sin datos' : 'Tiempo')}
-        </div></div>`).join('')}
-    </section>`;
-  };
-  return `<div><div class="mk-cab" style="padding:8px 0 12px"><div class="mk-logo">${ICO.tendencia}</div><div><h1 style="font-size:19px">KPI por tipo de cliente</h1><p>Cada servicio separado por el origen del cliente.</p></div></div>
-    <div class="mk-tipos">${r.porTipo.map(tarjeta).join('')}</div>
-    <div class="mk-leyenda" style="margin-top:20px">
-      <span><i class="mk-dot" style="background:var(--mk-ok)"></i>OK</span>
-      <span><i class="mk-dot" style="background:var(--mk-at)"></i>Atención</span>
-      <span><i class="mk-dot" style="background:var(--mk-cr)"></i>Crítico</span></div></div>`;
+// Los tipos de cliente de un servicio (Premium: 3; Implementación: 2), con sus 4 KPI en aros.
+function gruposServicio(s) {
+  const impl = s.servicio === 'Implementación';
+  return `${s.sinOrigen ? `<p style="margin:0 0 10px;font-size:12px;color:var(--bruma)">${s.sinOrigen} cliente${s.sinOrigen > 1 ? 's' : ''} sin origen asignado no entra${s.sinOrigen > 1 ? 'n' : ''} en ningún tipo (sí en la suma de arriba).</p>` : ''}
+    ${s.grupos.map(g => {
+      const det = clave => `${s.servicio}|${g.nombre}|${clave}`;
+      return `<div class="mk-grupo"><div class="nom">${esc(g.nombre)}</div>
+      <div class="mk-aros">
+        ${aro(num(g.abiertas || 0), impl ? 10 : 20, impl ? 'Casos<br>activos' : 'Incidencias<br>abiertas', g.vacio ? null : g.niveles.abiertas, g.abiertas, undefined, 'abiertas', det('abiertas'))}
+        ${aro(num(g.fueraSla || 0), impl ? 5 : 10, 'Incidencias<br>fuera de SLA', g.vacio ? null : g.niveles.fueraSla, g.fueraSla, undefined, 'fueraSla', det('fueraSla'))}
+        ${aro(g.valoracion == null ? '—' : num(g.valoracion, 1), 5, 'Valoración<br>NPS / Google', g.vacio ? null : g.niveles.valoracion, g.valoracion, undefined, 'valoracion', det('valoracion'))}
+        ${aro(num(g.horas || 0, g.horas >= 100 || Number.isInteger(g.horas || 0) ? 0 : 1), maxHoras(g.horas || 0), 'Tiempo<br>dedicado', g.vacio ? null : 'horas', g.horas, g.vacio ? 'Sin datos' : 'Tiempo', undefined, det('horas'))}
+      </div></div>`;
+    }).join('')}`;
+}
+
+// ---------- Detalle de un KPI por clientes (como en Super Gemas) ----------
+let resumenMet = null;
+const desplegados = new Set();
+const mediaNps = l => l.length ? Math.round(l.reduce((s, v) => s + v.nps, 0) / l.length / 2 * 10) / 10 : null;
+const nivelVal = v => v >= 4.5 ? 'ok' : v >= 4 ? 'atencion' : 'critico';
+const KPI_DET = {
+  abiertas: { titulo: 'Incidencias abiertas', ahora: true, total: b => num(b.abiertas || 0), valor: c => c.abiertas.length, fmt: v => num(v), items: c => c.abiertas.map(t => [t.id, t.titulo]) },
+  excedido: { titulo: 'Tiempo excedido sobre la 1 h de SLA', ahora: true, total: b => exceso(b.excedidoMin || 0), valor: c => c.excedidoMin, fmt: exceso, items: c => c.excedidos.map(t => [t.id, t.titulo, exceso(t.excesoMin) + ' sin responder']) },
+  fueraSla: { titulo: 'Incidencias respondidas fuera de SLA', total: b => num(b.fueraSla || 0), valor: c => c.fueraSla.length, fmt: v => num(v), items: c => c.fueraSla.map(t => [t.id, t.titulo, 'respondida en ' + dur(t.esperaMin)]) },
+  valoracion: { titulo: 'Valoración media (NPS / Google)', total: b => b.valoracion == null ? '—' : num(b.valoracion, 1) + '/5', valor: c => mediaNps(c.valoraciones), fmt: v => num(v, 1) + '/5', max: 5, asc: true,
+    items: c => c.valoraciones.map(v => [v.id, `${v.contacto || 'Sin nombre'}: ${v.nps}/10 · ${v.titulo}`, v.mejora ? `«${v.mejora}»` : '']) },
+  horas: { titulo: 'Tiempo dedicado', total: b => num(b.horas || 0, 1) + ' h', valor: c => c.horas, fmt: v => num(v, 1) + ' h', items: c => c.tickets ? [[null, `${c.tickets} ${c.tickets === 1 ? 'incidencia' : 'incidencias'} en el periodo`]] : [] },
+  tickets: { titulo: 'Incidencias en el periodo', total: b => num(b.tickets || 0), valor: c => c.tickets, fmt: v => num(v), items: () => [] },
+};
+function bloqueDe(servicio, grupo) {
+  const r = resumenMet;
+  if (servicio === 'Kit Digital 1') return r.antiguos;
+  if (grupo) return r.porTipo.find(s => s.servicio === servicio)?.grupos.find(g => g.nombre === grupo);
+  return r.servicios.find(s => s.nombre === servicio);
+}
+function abrirDetalle(servicio, grupo, clave) {
+  const b = bloqueDe(servicio, grupo), k = KPI_DET[clave];
+  if (!b || !k) return;
+  const filas = (b.detalleClientes || []).map(c => ({ c, v: k.valor(c) })).filter(x => x.v != null && x.v > 0)
+    .sort((x, y) => k.asc ? x.v - y.v : y.v - x.v);
+  const max = k.max || Math.max(...filas.map(x => x.v), 1);
+  const { desde, hasta } = resumenMet.periodo;
+  const d = $('detMet');
+  d.innerHTML = `<div class="dm">
+    <div class="dm-cab"><div><small>${esc(TITULO[servicio] || servicio)}${grupo ? ' · ' + esc(grupo) : ''}</small><h3>${esc(k.titulo)}</h3></div><button type="button" class="dm-x" data-cerrar aria-label="Cerrar">×</button></div>
+    <div class="dm-rango">${k.ahora ? 'Ahora mismo' : `Del <b>${fechaLarga(desde)}</b> al <b>${fechaLarga(hasta)}</b>`} · ${filas.length} ${filas.length === 1 ? 'cliente' : 'clientes'}</div>
+    <div class="dm-total">${k.total(b)}</div>
+    ${filas.map(({ c, v }) => `<div class="dm-fila"><div class="dm-quien">
+        <a href="#/clientes/${encodeURIComponent(c.cliente)}">${esc(c.cliente)}</a>${grupo || servicio === 'Kit Digital 1' ? '' : `<small>${esc(c.origen)}</small>`}
+        <div class="dm-barra"><span class="${clave === 'valoracion' ? nivelVal(v) : ''}" style="width:${Math.max(3, v / max * 100).toFixed(1)}%"></span></div>
+        <div class="dm-items">${k.items(c).map(([id, t, extra]) => id ? `<a href="#/bandeja/${id}">${esc(t)}${extra ? ` <small>${esc(extra)}</small>` : ''}</a>` : `<span style="font-size:12.5px;color:var(--bruma)">${esc(t)}</span>`).join('')}</div>
+      </div><div class="dm-val">${k.fmt(v)}</div></div>`).join('') || `<div class="dm-vacio">${k.ahora ? 'Ningún cliente ahora mismo.' : 'Ningún cliente en este periodo.'}</div>`}
+  </div>`;
+  d.onclick = e => { if (e.target === d || e.target.closest('[data-cerrar], a')) d.close(); };
+  d.showModal();
 }
 
 // ================= Clientes =================
@@ -1632,9 +1764,9 @@ function ordenarClientes(l) {
   const [col, dir] = ordenCli(), o = ORDEN_CLI[col];
   return l.sort((a, b) => (o.vacio ? o.vacio(a) - o.vacio(b) : 0) || (o.vacio && o.vacio(a) ? 0 : dir * o.f(a, b)) || cmpNom(a, b));
 }
-// Clientes de la lista del Kit Digital activos que aún no han abierto ninguna incidencia.
+// Clientes de la lista del Kit Digital 1 activos que aún no han abierto ninguna incidencia.
 const kitSinTickets = x => x.kitDigital && !x.tickets;
-// Falta clasificar: sin servicio, o Implementación/Premium sin origen (en Kit Digital el origen no aplica).
+// Falta clasificar: sin servicio, o Implementación/Premium sin origen (en Kit Digital 1 el origen no aplica).
 const pendiente = x => x.servicio === 'Sin clasificar' || (['Implementación', 'Premium'].includes(x.servicio) && x.tipo_cliente === 'Sin clasificar');
 
 const ICO_CLI = {
@@ -1655,7 +1787,7 @@ function avatar(nombre) {
   const [bg, fg] = COLORES_AV[h % COLORES_AV.length];
   return `<span class="av" style="background:${bg};color:${fg}">${esc(ini)}</span>`;
 }
-const pildoraServ = s => `<span class="pl ${{ 'Kit Digital': 'kit', Premium: 'premium', 'Implementación': 'impl' }[s] || 'sin'}">${esc(s)}</span>`;
+const pildoraServ = s => `<span class="pl ${{ 'Kit Digital 1': 'kit', Premium: 'premium', 'Implementación': 'impl' }[s] || 'sin'}">${esc(s)}</span>`;
 const pildoraOrig = o => `<span class="pl ${{ 'Antiguo cliente AKIRA': 'o-akira', 'Asesoría': 'o-gest', 'Referenciado por asesoría': 'o-ref', Directo: 'o-dir' }[o] || 'sin'}">${esc(o)}</span>`;
 const fechaLarga = iso => iso ? new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 
@@ -1675,7 +1807,7 @@ function vistaClientes(arg) {
         <div class="cl-f"><label>Origen</label><select class="campo" data-f="orig"></select></div>
         <div class="cl-f" id="cliTick"><label>Tickets</label><select class="campo" data-f="tick">
           ${[['con', 'Todos'], ['abiertas', 'Con incidencias abiertas']].map(([k, t]) => `<option value="${k}" ${k === f.tick ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-        <div class="cl-f"><label>Estado</label><select class="campo" data-f="estado">${opc([['pend', 'Por clasificar'], ['clas', 'Clasificados'], ['kit', 'Kit Digital activo']], f.estado)}</select></div>
+        <div class="cl-f"><label>Estado</label><select class="campo" data-f="estado">${opc([['pend', 'Por clasificar'], ['clas', 'Clasificados'], ['kit', 'Kit Digital 1 activo']], f.estado)}</select></div>
         <button class="boton sec" id="cliMas" style="align-self:end">${ICO_CLI.filtro}Más filtros</button>
         <div class="cl-mas ${f.mas ? 'on' : ''}" id="cliMasCaja">
           <div class="cl-f"><label>Último contacto</label><select class="campo" data-f="contacto">${opc([['30', 'Últimos 30 días'], ['90', 'Últimos 90 días'], ['365', 'Último año'], ['viejo', 'Hace más de un año'], ['nunca', 'Sin contacto']], f.contacto, 'Cualquier fecha')}</select></div>
@@ -1723,7 +1855,7 @@ function pintarClientes() {
   const q = f.q.trim().toLowerCase();
   const hoy = Date.now(), dias = iso => iso ? (hoy - new Date(iso)) / 864e5 : Infinity;
   const l = c.clientes.filter(x =>
-    // Dos grupos que nunca se mezclan: los que tienen incidencias y los del Kit Digital que no han abierto ninguna.
+    // Dos grupos que nunca se mezclan: los que tienen incidencias y los del Kit Digital 1 que no han abierto ninguna.
     (f.tick === 'kit' ? kitSinTickets(x) : !kitSinTickets(x) && (f.tick !== 'abiertas' || x.abiertos > 0))
     && (!f.serv || x.servicio === f.serv) && (!f.orig || x.tipo_cliente === f.orig)
     && (!f.estado || (f.estado === 'pend' ? pendiente(x) : f.estado === 'clas' ? !pendiente(x) : !!x.kitDigital))
@@ -1735,10 +1867,10 @@ function pintarClientes() {
   f.pag = Math.min(f.pag, paginas);
   const ini = (f.pag - 1) * POR_PAGINA, pag = l.slice(ini, ini + POR_PAGINA);
   $('ccuenta').textContent = `${l.length} ${l.length === 1 ? 'cliente' : 'clientes'}`;
-  // Pestañas: con incidencias / Kit Digital activos que nunca han abierto ninguna / todos.
+  // Pestañas: con incidencias / Kit Digital 1 activos que nunca han abierto ninguna / todos.
   const cuantos = { con: c.clientes.filter(x => !kitSinTickets(x)).length, kit: c.clientes.filter(kitSinTickets).length };
   if ($('cliTick')) $('cliTick').style.visibility = f.tick === 'kit' ? 'hidden' : '';
-  $('cliTabs').innerHTML = [['con', 'Con incidencias'], ['kit', 'Kit Digital sin incidencias']]
+  $('cliTabs').innerHTML = [['con', 'Con incidencias'], ['kit', 'Kit Digital 1 sin incidencias']]
     .map(([k, t]) => `<button type="button" data-t="${k}" class="${(f.tick === k || (k === 'con' && f.tick === 'abiertas')) ? 'on' : ''}">${t} <span class="n">${num(cuantos[k])}</span></button>`).join('');
   $('cliTabs').onclick = e => {
     const b = e.target.closest('button[data-t]');
@@ -1752,7 +1884,7 @@ function pintarClientes() {
   const correo = x => x.emails[0] ? `<span class="cl-mail" title="${esc(x.emails.join(', '))}">${ICO_CLI.mail}${esc(x.emails[0])}${x.emails.length > 1 ? ` +${x.emails.length - 1}` : ''}</span>` : (x.telefonos[0] ? `<span class="cl-mail">${esc(x.telefonos[0])}</span>` : '<span style="color:var(--muted)">—</span>');
   // Toda la fila (o tarjeta) abre la ficha; «⋯» edita o fusiona.
   const acciones = () => `<div class="cl-acc"><button class="cl-menu-b" data-menu aria-label="Más acciones" title="Más acciones">⋯</button></div>`;
-  const sub = x => `<small>${esc(x.codigo || '')}${x.kitDigital ? `${x.codigo ? ' · ' : ''}Kit Digital activo${x.kitDigital !== x.nombre ? ` · ${esc(x.kitDigital)}` : ''}` : ''}</small>`;
+  const sub = x => `<small>${esc(x.codigo || '')}${x.kitDigital ? `${x.codigo ? ' · ' : ''}Kit Digital 1 activo${x.kitDigital !== x.nombre ? ` · ${esc(x.kitDigital)}` : ''}` : ''}</small>`;
   $('cltabla').innerHTML = !l.length ? '<div class="vacio">Ningún cliente coincide con los filtros.</div>'
     : (f.vista === 'grid' || TARJETAS_SOLO()) ? `<div class="cl-grid">${pag.map(x => `<div class="cl-card" data-nombre="${esc(x.nombre)}">
         <div class="cl-nom">${avatar(x.nombre)}<div style="min-width:0"><a href="${ficha(x)}">${esc(x.nombre)}</a>${sub(x)}</div></div>
@@ -1813,7 +1945,7 @@ function nuevoCliente() {
   const c = clientesCache;
   dialogo(`<h3>Nuevo cliente</h3><p class="sub">Para dar de alta un cliente que todavía no ha abierto ninguna incidencia.</p>
     <label>Nombre o razón social</label><input class="campo" name="nombre" required>
-    <div class="dos"><div><label>Servicio</label>${selCampo('servicio', c.servicios, 'Kit Digital')}</div><div><label>Origen</label>${selCampo('tipo_cliente', c.origenes, 'Antiguo cliente AKIRA')}</div>
+    <div class="dos"><div><label>Servicio</label>${selCampo('servicio', c.servicios, 'Kit Digital 1')}</div><div><label>Origen</label>${selCampo('tipo_cliente', c.origenes, 'Antiguo cliente AKIRA')}</div>
     <div><label>Correo <small>(opcional)</small></label><input class="campo" name="email" type="email"></div><div><label>Teléfono <small>(opcional)</small></label><input class="campo" name="telefono" type="tel"></div></div>
     <label>Notas <small>(opcional)</small></label><textarea class="campo" name="notas" rows="3"></textarea>
     <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Crear cliente</button></div>`,
@@ -1892,7 +2024,7 @@ async function vistaFicha(nombre) {
     <div class="contenido">
       <section class="tarjeta" style="padding:18px 20px">
         <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
-          <div style="flex:1;min-width:220px"><h1 style="margin:0 0 4px;font-size:22px">${esc(x.nombre)}</h1>${x.kitDigital ? `<div style="font-size:12px;color:var(--muted);margin-bottom:4px">Kit Digital activo${x.kitDigital !== x.nombre ? ` · ${esc(x.kitDigital)}` : ''}</div>` : ''}
+          <div style="flex:1;min-width:220px"><h1 style="margin:0 0 4px;font-size:22px">${esc(x.nombre)}</h1>${x.kitDigital ? `<div style="font-size:12px;color:var(--muted);margin-bottom:4px">Kit Digital 1 activo${x.kitDigital !== x.nombre ? ` · ${esc(x.kitDigital)}` : ''}</div>` : ''}
             <div style="font-size:13px;color:var(--bruma);overflow-wrap:anywhere">${[...x.emails, ...x.telefonos].map(esc).join(' · ') || 'Sin datos de contacto'}</div></div>
           <div id="fsel" style="display:flex;gap:10px;flex-wrap:wrap">
             <label style="font-size:12px;color:var(--bruma)">Servicio<br>${sel('servicio', c.servicios, x.servicio)}</label>

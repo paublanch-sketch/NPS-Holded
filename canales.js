@@ -81,6 +81,8 @@ function mensajeWhatsApp(t, evento, b, ventana) {
     case 'cerrar': return ventana
       ? libre(`Hemos cerrado tu incidencia «${tickets.tituloCliente(t)}». Del 0 al 10, ¿qué probabilidad hay de que nos recomiendes? Responde solo con el número.`)
       : plantilla('soporte_cierre', tickets.tituloCliente(t));
+    // Sin plantilla aprobada: solo si aún está abierta la ventana de 24 h.
+    case 'cierreAuto': return ventana ? libre(`Hemos cerrado tu incidencia «${tickets.tituloCliente(t)}» porque llevaba ${b.dias} días esperando tu respuesta. Si aún lo necesitas, escríbenos por aquí y la volvemos a abrir.`) : null;
     // Solo salen justo después de un mensaje del cliente: siempre dentro de la ventana.
     case 'pideMejora': return libre('¡Gracias! ¿Qué mejorarías? Puedes responder aquí mismo.');
     case 'gracias': return libre('Gracias por tu opinión, nos ayuda mucho.');

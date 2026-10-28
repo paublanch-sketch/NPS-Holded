@@ -93,7 +93,7 @@ const norma = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLo
   const conFicha = new Set((await clientes.todos()).map(c => c.nombre));
   const sinFicha = [...nombres].filter(n => !conFicha.has(n) && !n.includes('(interno)'));
   if (guardar) for (const nombre of sinFicha)
-    await clientes.guardar({ nombre, servicio: fueraKit.has(nombre) ? 'Sin clasificar' : 'Kit Digital', tipo_cliente: 'Sin clasificar' });
+    await clientes.guardar({ nombre, servicio: fueraKit.has(nombre) ? 'Sin clasificar' : 'Kit Digital 1', tipo_cliente: 'Sin clasificar' });
   console.log(`${filas.length} filas de Holded o Blanch (${fuera} fuera por alias null) · ${nombres.size} clientes · ${+horas.toFixed(2)} h`);
   console.log(`Fichas de cliente ${guardar ? 'creadas' : 'por crear'}: ${sinFicha.length} (fuera del Kit Digital, por clasificar: ${[...fueraKit].join(', ') || 'ninguno'})`);
   console.log(guardar ? `Importadas ${nuevas} (las demás ya estaban).` : `Se importarían ${nuevas}. Añade --guardar para hacerlo.`);

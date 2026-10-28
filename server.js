@@ -18,6 +18,8 @@ const google = require('./google');
 const cuentas = require('./cuentas');
 
 const PORT = process.env.PORT || 3000;
+// Soporte Premium (28/10/2026): 40 € al mes por cliente; las asesorías partner lo tienen gratis.
+const PREMIUM_EUROS_MES = 40;
 const { json, leerCuerpo } = tickets;
 
 // Tickets con el servicio y el origen de la ficha de su cliente.
@@ -160,6 +162,9 @@ http.createServer(async (req, res) => {
         const conTickets = new Set(todos.filter(t => !t.interno).map(t => t.cliente));
         const kit = [...(await clientes.fichas()).values()].filter(c => c.kitDigital && !c.ejemplo);
         r.kitDigital = { activos: kit.length, sinTickets: kit.filter(c => !conTickets.has(c.nombre)).length };
+        const premium = [...(await clientes.fichas()).values()].filter(c => c.servicio === 'Premium');
+        const asesorias = premium.filter(c => c.tipo_cliente === 'Asesoría').length;
+        r.premium = { clientes: premium.length, asesorias, pago: premium.length - asesorias, eurosMes: PREMIUM_EUROS_MES };
         return json(res, r);
       }
       res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="horas-${f.desde}-${f.hasta}.csv"` });
@@ -186,6 +191,7 @@ http.createServer(async (req, res) => {
 }).listen(PORT, () => {
   console.log(`Servicio Holded en http://localhost:${PORT}`);
   canales.iniciar();
+  tickets.iniciarCierreAuto();
   clientes.aplicarUnaVez().catch(e => console.error('Fichas:', e.message)).then(() => ejemplo.vigilar());
   google.cargar().then(() => { tickets.iniciarReuniones(); google.vigilar(); });
 });

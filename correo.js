@@ -171,6 +171,11 @@ function correoPara(t, evento, b) {
       boton: { texto: 'Unirme a la videollamada', url: b.cita.enlace },
     };
     case 'anularCita': return { titulo: 'Videollamada anulada', texto: `Hola${nombre}:\n\nHemos anulado la videollamada prevista para tu incidencia ${tituloDe(t)}. Si necesitas otra, responde a este correo.`, boton: ver };
+    case 'cierreAuto': return {
+      titulo: `Hemos cerrado tu incidencia ${tituloDe(t)}`,
+      texto: `Hola${nombre}:\n\nCerramos tu incidencia porque llevaba ${b.dias} días esperando tu respuesta. Si aún lo necesitas, responde a este correo y la volvemos a abrir.`,
+      boton: ver,
+    };
     case 'pideMejora': return { titulo: '¡Gracias por tu valoración!', texto: '¿Qué mejorarías? Puedes responder a este correo con lo que quieras contarnos.' };
   }
   return null;

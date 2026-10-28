@@ -99,6 +99,22 @@ function resumen(todos, { desde, hasta, tecnico }, ahora = new Date()) {
           id: t.id, cliente: t.cliente, contacto: t.contacto || '', titulo: t.titulo, nps: t.nps, cierre: t.cierre, mejora: t.mejora || '',
         })),
       },
+      // Cada KPI por cliente, para su detalle en el panel (como en Super Gemas): dentro del periodo,
+      // salvo abiertas y tiempo excedido, que son de ahora.
+      detalleClientes: [...new Set(lista.map(t => t.cliente))].map(cliente => {
+        const l = lista.filter(t => t.cliente === cliente);
+        const ab = l.filter(t => t.estado !== 'Cerrado');
+        const ex = ab.filter(t => conSla(t) && !t.primera_respuesta && espera(t) > SLA_MIN);
+        const fu = l.filter(enPeriodo).filter(juzgable).filter(t => espera(t) > SLA_MIN);
+        return {
+          cliente, origen: l[0].tipo_cliente, tickets: l.filter(enPeriodo).length, horas: horasDe(l),
+          abiertas: ab.map(t => ({ id: t.id, titulo: t.titulo })),
+          excedidoMin: ex.reduce((s, t) => s + espera(t) - SLA_MIN, 0),
+          excedidos: ex.map(t => ({ id: t.id, titulo: t.titulo, excesoMin: espera(t) - SLA_MIN })),
+          fueraSla: fu.map(t => ({ id: t.id, titulo: t.titulo, esperaMin: espera(t) })),
+          valoraciones: l.filter(cerradoEnPeriodo).filter(t => t.nps != null).map(t => ({ id: t.id, titulo: t.titulo, contacto: t.contacto || '', nps: t.nps, mejora: t.mejora || '' })),
+        };
+      }),
       casos: abiertas.sort((a, b) => a.entrada.localeCompare(b.entrada)).map(t => ({
         id: t.id, cliente: t.cliente, titulo: t.titulo, origen: t.tipo_cliente, canal: t.canal, tipo: t.tipo_incidencia,
         tecnico: t.tecnico, estado: t.estado, entrada: t.entrada, respondido: !!t.primera_respuesta,
@@ -113,19 +129,20 @@ function resumen(todos, { desde, hasta, tecnico }, ahora = new Date()) {
   return {
     actualizado: ahora.toISOString(),
     periodo: { desde, hasta },
-    servicios: ['Implementación', 'Premium'].map(s => bloque(filtrados.filter(t => t.servicio === s), s)),
+    // Soporte Premium primero e Implementación después (28/10/2026): cada uno con todo sumado.
+    servicios: ['Premium', 'Implementación'].map(s => bloque(filtrados.filter(t => t.servicio === s), s)),
     // Los clientes antiguos (Kit Digital) no están en el mockup, y el antiguo formulario no medía
     // ni la primera respuesta ni la valoración: de ellos se enseña lo que pidieron en el periodo.
     antiguos: (() => {
-      const l = filtrados.filter(t => t.servicio === 'Kit Digital'), periodo = l.filter(enPeriodo);
+      const l = filtrados.filter(t => t.servicio === 'Kit Digital 1'), periodo = l.filter(enPeriodo);
       // Horas de todo el histórico, además de las del periodo: casi todo es del antiguo formulario.
       const horasTotales = r1(l.reduce((s, t) => s + t.trabajo.filter(w => !tecnico || w.tecnico === tecnico).reduce((a, w) => a + w.horas, 0), 0));
-      return { ...bloque(l, 'Kit Digital'), tickets: periodo.length, horas: horasDe(l), horasTotales, ticketsTotales: l.length, clientes: new Set(periodo.map(t => t.cliente)).size };
+      return { ...bloque(l, 'Kit Digital 1'), tickets: periodo.length, horas: horasDe(l), horasTotales, ticketsTotales: l.length, clientes: new Set(periodo.map(t => t.cliente)).size };
     })(),
     // Los grupos de la página 2 del mockup. Los clientes sin origen no entran en ninguno.
     porTipo: [
       { servicio: 'Premium', grupos: [
-        { nombre: 'Asesoría', origenes: ['Asesoría'] },
+        { nombre: 'Asesoría partner', origenes: ['Asesoría'] },
         { nombre: 'Referenciado por asesoría', origenes: ['Referenciado por asesoría'] },
         { nombre: 'Cliente directo', origenes: ['Directo', 'Antiguo cliente AKIRA'] },
       ] },
