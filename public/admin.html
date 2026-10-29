@@ -361,16 +361,39 @@
   .desplegable.equipo { min-width: 230px; }
   .periodo { position: relative; }
   .periodo .desplegable { min-width: 280px; }
-  .periodo-panel { position: absolute; left: 0; top: calc(100% + 6px); z-index: 30; min-width: 260px; background: var(--blanco); border: 1px solid var(--linea); border-radius: 12px; box-shadow: 0 16px 40px rgba(16, 24, 40, .14); padding: 6px; display: flex; flex-direction: column; }
-  .periodo-panel > button { text-align: left; border: 0; background: none; padding: 10px 12px; border-radius: 8px; font: inherit; font-size: 14px; color: var(--pizarra); cursor: pointer; }
-  .periodo-panel > button:hover { background: var(--suave); }
-  .periodo-panel > button.on { background: var(--azul-f); color: var(--azul-h); font-weight: 600; }
-  .periodo-panel hr { border: 0; border-top: 1px solid var(--linea); margin: 4px 0; width: 100%; }
-  .periodo-fechas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px 6px 4px; }
-  .periodo-fechas label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--bruma); }
-  .periodo-fechas .campo { min-width: 0; }
-  .periodo-fechas .boton { grid-column: 1 / -1; }
-  .periodo-fechas.oculto { display: none; }
+  /* El periodo como en Super Gemas (29/10/2026): los atajos a la derecha y, en «Personalizado», dos
+     meses a la izquierda; se pulsa el primer día y el último. */
+  .periodo-panel { position: absolute; left: 0; top: calc(100% + 6px); z-index: 30; background: var(--blanco); border: 1px solid var(--linea); border-radius: 12px; box-shadow: 0 16px 40px rgba(16, 24, 40, .14); display: flex; max-width: calc(100vw - 32px); }
+  .per-atajos { display: flex; flex-direction: column; padding: 6px; min-width: 200px; }
+  .per-atajos > button { text-align: left; border: 0; background: none; padding: 10px 12px; border-radius: 8px; font: inherit; font-size: 14px; color: var(--pizarra); cursor: pointer; white-space: nowrap; }
+  .per-atajos > button:hover { background: var(--suave); }
+  .per-atajos > button.on { background: var(--azul-f); color: var(--azul-h); font-weight: 600; }
+  .per-atajos hr { border: 0; border-top: 1px solid var(--linea); margin: 4px 0; width: 100%; }
+  .per-cal { padding: 14px; border-right: 1px solid var(--linea); }
+  .per-cal.oculto { display: none; }
+  .per-entradas { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+  .per-entradas input { width: 130px; padding: 8px 10px; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .per-entradas span { color: var(--muted); }
+  .per-meses { display: flex; gap: 18px; }
+  .per-mes { width: 224px; }
+  .per-mes-cab { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .per-mes-cab select { padding: 4px 6px; border: 1px solid var(--linea); border-radius: 6px; font: inherit; font-size: 13px; background: var(--blanco); text-transform: capitalize; }
+  .per-mes-cab .hueco { flex: 1; }
+  .per-nav { background: none; border: 0; cursor: pointer; color: var(--bruma); font-size: 18px; padding: 0 6px; line-height: 1; border-radius: 6px; }
+  .per-nav:hover { color: var(--azul); background: var(--suave); }
+  .per-rejilla { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
+  .per-rejilla .dow { font-size: 11px; font-weight: 700; color: var(--muted); text-align: center; padding: 4px 0; }
+  .per-dia { background: none; border: 0; cursor: pointer; font: inherit; font-size: 13.5px; padding: 6px 0; border-radius: 6px; color: var(--pizarra); font-variant-numeric: tabular-nums; }
+  .per-dia:hover { background: var(--azul-f); }
+  .per-dia.hoy { font-weight: 800; box-shadow: inset 0 0 0 1px var(--azul); }
+  .per-dia.dentro { background: var(--azul-f); border-radius: 0; }
+  .per-dia.punta { background: var(--azul); color: #fff; font-weight: 700; }
+  .per-ayuda { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+  @media (max-width: 760px) {
+    .periodo-panel { flex-direction: column-reverse; overflow: auto; max-height: 75vh; }
+    .per-cal { border-right: 0; border-top: 1px solid var(--linea); }
+    .per-meses { flex-direction: column; } .per-mes { width: 100%; }
+  }
   .filtros .fechas { display: inline-flex; gap: 6px; align-items: center; }
   .filtros .der { margin-left: auto; }
   .contenido { padding: 20px 28px 48px; display: flex; flex-direction: column; gap: 20px; max-width: 1360px; }
@@ -1680,52 +1703,13 @@ function vistaMetricas() {
         <div class="mk-logo">${ICO.tendencia}</div>
         <div><h1>Servicio Holded</h1><p>Dashboard operativo — Implementación y Soporte Premium</p></div>
         <div class="mk-chips">
-        <div class="periodo" id="periodo">
-          <button type="button" class="desplegable" id="btnPeriodo" aria-haspopup="true" aria-expanded="false">${ICO.calendario}<span id="txtPeriodo"></span>${ICO.abajo}</button>
-          <div class="periodo-panel oculto" id="periodoPanel" role="menu">
-            ${Object.entries(PERIODOS).map(([k, [n]]) => `<button type="button" role="menuitem" data-p="${k}">${n}</button>`).join('')}
-            <hr>
-            <button type="button" role="menuitem" data-p="custom">Personalizado</button>
-            <div class="periodo-fechas oculto" id="periodoFechas">
-              <label>Desde<input type="date" class="campo" id="fDesde" value="${d}"></label>
-              <label>Hasta<input type="date" class="campo" id="fHasta" value="${h}"></label>
-              <button type="button" class="boton peq" id="fAplicar">Aplicar</button>
-            </div>
-          </div>
-        </div>
+        ${periodoHtml('met', d, h)}
         <a class="boton sec" id="csv">${ICO.descarga}Descargar horas (CSV)</a></div>
       </div>
       <div class="contenido" id="met"><div class="vacio">Cargando métricas…</div></div>
     </div>`;
-  const cambiar = () => { escribir('filtrosMetricas', { ...fm, tecnico: '' }); cargarMetricas(); };
-  // El botón dice qué periodo es y con qué fechas; el panel da a elegir.
-  const fechaCorta = s => new Date(s + 'T12:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-  const pintarPeriodo = () => {
-    const [a, b] = rango();
-    $('txtPeriodo').textContent = `${fm.periodo === 'custom' ? 'Personalizado' : PERIODOS[fm.periodo][0]} · ${fechaCorta(a)} – ${fechaCorta(b)}`;
-    $('periodoPanel').querySelectorAll('[data-p]').forEach(x => x.classList.toggle('on', x.dataset.p === fm.periodo));
-  };
-  const abrirPanel = si => { $('periodoPanel').classList.toggle('oculto', !si); $('btnPeriodo').setAttribute('aria-expanded', si); };
-  $('btnPeriodo').onclick = e => { e.stopPropagation(); abrirPanel($('periodoPanel').classList.contains('oculto')); };
-  $('periodoPanel').onclick = e => {
-    e.stopPropagation();
-    const b = e.target.closest('[data-p]');
-    if (!b) return;
-    if (b.dataset.p === 'custom') { $('periodoFechas').classList.remove('oculto'); $('fDesde').focus(); return; }
-    fm.periodo = b.dataset.p;
-    $('periodoFechas').classList.add('oculto');
-    abrirPanel(false); pintarPeriodo(); cambiar();
-  };
-  $('fAplicar').onclick = () => {
-    if (!$('fDesde').value || !$('fHasta').value || $('fDesde').value > $('fHasta').value) return aviso('Pon un «desde» anterior al «hasta».', true);
-    Object.assign(fm, { periodo: 'custom', desde: $('fDesde').value, hasta: $('fHasta').value });
-    abrirPanel(false); pintarPeriodo(); cambiar();
-  };
-  const cerrarFuera = e => { if (!e.target.closest('#periodo')) abrirPanel(false); };
-  document.addEventListener('click', cerrarFuera);
-  pintarPeriodo();
+  pararVista = montarPeriodo('met', fm, rango, () => { escribir('filtrosMetricas', { ...fm, tecnico: '' }); cargarMetricas(); });
   cargarMetricas();
-  pararVista = () => document.removeEventListener('click', cerrarFuera);
 }
 
 // Los aros se quedan fijos (29/10/2026: «se mueven solos, como que recalculan»): ya no se refrescan
@@ -2541,42 +2525,115 @@ function montarCom(x, c, recargar) {
 }
 
 // ---- Periodo (el mismo botón que Métricas, como Super Gemas) ----
-function periodoHtml(p, d, h) {
+function periodoHtml(p) {
   return `<div class="periodo">
     <button type="button" class="desplegable" id="${p}BtnPer" aria-haspopup="true" aria-expanded="false">${ICO.calendario}<span id="${p}TxtPer"></span>${ICO.abajo}</button>
-    <div class="periodo-panel oculto" id="${p}PanelPer" role="menu">
-      ${Object.entries(PERIODOS).map(([k, [n]]) => `<button type="button" role="menuitem" data-p="${k}">${n}</button>`).join('')}
-      <hr><button type="button" role="menuitem" data-p="custom">Personalizado</button>
-      <div class="periodo-fechas oculto" id="${p}FechasPer">
-        <label>Desde<input type="date" class="campo" id="${p}Desde" value="${d}"></label>
-        <label>Hasta<input type="date" class="campo" id="${p}Hasta" value="${h}"></label>
-        <button type="button" class="boton peq" id="${p}Aplicar">Aplicar</button>
+    <div class="periodo-panel oculto" id="${p}PanelPer">
+      <div class="per-cal oculto" id="${p}CalPer">
+        <div class="per-entradas"><input class="campo" id="${p}Desde" inputmode="numeric" placeholder="dd/mm/aaaa" aria-label="Desde"><span>–</span><input class="campo" id="${p}Hasta" inputmode="numeric" placeholder="dd/mm/aaaa" aria-label="Hasta"></div>
+        <div class="per-meses" id="${p}MesesPer"></div>
+        <p class="per-ayuda">Pulsa el primer día y luego el último.</p>
+      </div>
+      <div class="per-atajos" role="menu">
+        ${Object.entries(PERIODOS).map(([k, [n]]) => `<button type="button" role="menuitem" data-p="${k}">${n}</button>`).join('')}
+        <hr><button type="button" role="menuitem" data-p="custom">Personalizado</button>
       </div></div></div>`;
 }
+const MESES_PER = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 function montarPeriodo(p, est, rangoDe, alCambiar) {
   const corta = s => new Date(s + 'T12:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+  const dos = n => String(n).padStart(2, '0');
+  const ddmm = s => s ? s.split('-').reverse().join('/') : '';
+  // dd/mm/aaaa (o aaaa-mm-dd) a aaaa-mm-dd; vacío si no es una fecha.
+  const leerFecha = t => {
+    const s = String(t).trim();
+    let m = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/), d, mes, a;
+    if (m) [, d, mes, a] = m;
+    else if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) [, a, mes, d] = m;
+    else return '';
+    const f = `${a}-${dos(mes)}-${dos(d)}`;
+    return iso(new Date(f + 'T12:00')) === f ? f : '';
+  };
+  // Lo que se va eligiendo: el primer día pulsado queda de ancla hasta que se pulsa el segundo.
+  const cal = { desde: est.desde || '', hasta: est.hasta || '', ancla: null, mes: null };
+  const mesHtml = (f, i) => {
+    const a = f.getFullYear(), m = f.getMonth(), hoy = iso(new Date()), fin = cal.hasta || cal.desde;
+    let celdas = ['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => `<span class="dow">${d}</span>`).join('') + '<span></span>'.repeat((new Date(a, m, 1).getDay() + 6) % 7);
+    for (let dia = 1, n = new Date(a, m + 1, 0).getDate(); dia <= n; dia++) {
+      const x = `${a}-${dos(m + 1)}-${dos(dia)}`;
+      const cls = ['per-dia', x === hoy && 'hoy', cal.desde && fin && x > cal.desde && x < fin && 'dentro', (x === cal.desde || x === fin) && 'punta'].filter(Boolean).join(' ');
+      celdas += `<button type="button" class="${cls}" data-dia="${x}">${dia}</button>`;
+    }
+    const y0 = new Date().getFullYear(), anios = [];
+    for (let y = y0 - 6; y <= y0 + 1; y++) anios.push(y);
+    return `<div class="per-mes"><div class="per-mes-cab">
+      ${i === 0 ? '<button type="button" class="per-nav" data-nav="-1" aria-label="Mes anterior">‹</button>' : ''}
+      <select data-cal="mes" data-i="${i}" aria-label="Mes">${MESES_PER.map((n, k) => `<option value="${k}"${k === m ? ' selected' : ''}>${n}</option>`).join('')}</select>
+      <select data-cal="anio" data-i="${i}" aria-label="Año">${anios.map(y => `<option${y === a ? ' selected' : ''}>${y}</option>`).join('')}</select>
+      <span class="hueco"></span>
+      ${i === 1 ? '<button type="button" class="per-nav" data-nav="1" aria-label="Mes siguiente">›</button>' : ''}
+      </div><div class="per-rejilla">${celdas}</div></div>`;
+  };
+  const pintarCal = () => {
+    // Si no hay nada elegido, el mes pasado y este (hoy queda a la derecha).
+    if (!cal.mes) { const b = cal.desde ? new Date(cal.desde + 'T12:00') : new Date(); cal.mes = new Date(b.getFullYear(), b.getMonth() - (cal.desde ? 0 : 1), 1); }
+    $(p + 'MesesPer').innerHTML = mesHtml(cal.mes, 0) + mesHtml(new Date(cal.mes.getFullYear(), cal.mes.getMonth() + 1, 1), 1);
+    $(p + 'Desde').value = ddmm(cal.desde);
+    $(p + 'Hasta').value = ddmm(cal.hasta);
+  };
   const pintar = () => {
     const [a, b] = rangoDe();
     $(p + 'TxtPer').textContent = `${est.periodo === 'custom' ? 'Personalizado' : PERIODOS[est.periodo][0]} · ${corta(a)} – ${corta(b)}`;
     $(p + 'PanelPer').querySelectorAll('[data-p]').forEach(x => x.classList.toggle('on', x.dataset.p === est.periodo));
   };
-  const abrir = si => { $(p + 'PanelPer').classList.toggle('oculto', !si); $(p + 'BtnPer').setAttribute('aria-expanded', si); };
+  const verCal = si => { $(p + 'CalPer').classList.toggle('oculto', !si); if (si) pintarCal(); };
+  const abrir = si => {
+    $(p + 'PanelPer').classList.toggle('oculto', !si);
+    $(p + 'BtnPer').setAttribute('aria-expanded', si);
+    if (si) { Object.assign(cal, { desde: est.desde || '', hasta: est.hasta || '', ancla: null, mes: null }); verCal(est.periodo === 'custom'); }
+  };
+  const aplicar = () => { Object.assign(est, { periodo: 'custom', desde: cal.desde, hasta: cal.hasta }); abrir(false); pintar(); alCambiar(); };
   $(p + 'BtnPer').onclick = e => { e.stopPropagation(); abrir($(p + 'PanelPer').classList.contains('oculto')); };
   $(p + 'PanelPer').onclick = e => {
     e.stopPropagation();
-    const b = e.target.closest('[data-p]');
+    const nav = e.target.closest('[data-nav]'), dia = e.target.closest('[data-dia]'), b = e.target.closest('[data-p]');
+    if (nav) { cal.mes = new Date(cal.mes.getFullYear(), cal.mes.getMonth() + Number(nav.dataset.nav), 1); return pintarCal(); }
+    if (dia) {
+      const x = dia.dataset.dia;
+      if (!cal.ancla) { Object.assign(cal, { desde: x, hasta: '', ancla: x }); return pintarCal(); }
+      [cal.desde, cal.hasta] = x < cal.ancla ? [x, cal.ancla] : [cal.ancla, x];
+      cal.ancla = null;
+      pintarCal();
+      return aplicar();
+    }
     if (!b) return;
-    if (b.dataset.p === 'custom') { $(p + 'FechasPer').classList.remove('oculto'); $(p + 'Desde').focus(); return; }
+    if (b.dataset.p === 'custom') { verCal(true); $(p + 'PanelPer').querySelectorAll('[data-p]').forEach(x => x.classList.toggle('on', x === b)); return; }
     est.periodo = b.dataset.p;
-    $(p + 'FechasPer').classList.add('oculto');
     abrir(false); pintar(); alCambiar();
   };
-  $(p + 'Aplicar').onclick = () => {
-    const a = $(p + 'Desde').value, b = $(p + 'Hasta').value;
-    if (!a || !b || a > b) return aviso('Pon un «desde» anterior al «hasta».', true);
-    Object.assign(est, { periodo: 'custom', desde: a, hasta: b });
-    abrir(false); pintar(); alCambiar();
+  // Mes y año de cada calendario: el de la derecha siempre es el siguiente al de la izquierda.
+  $(p + 'PanelPer').onchange = e => {
+    const s = e.target.closest('[data-cal]');
+    if (!s) return;
+    const i = Number(s.dataset.i), actual = new Date(cal.mes.getFullYear(), cal.mes.getMonth() + i, 1);
+    const elegido = s.dataset.cal === 'mes' ? new Date(actual.getFullYear(), Number(s.value), 1) : new Date(Number(s.value), actual.getMonth(), 1);
+    cal.mes = new Date(elegido.getFullYear(), elegido.getMonth() - i, 1);
+    pintarCal();
   };
+  // Las fechas escritas a mano: con las dos bien puestas, se aplica.
+  [['Desde', 'desde'], ['Hasta', 'hasta']].forEach(([id, k]) => {
+    const inp = $(p + id);
+    const tomar = () => {
+      const f = leerFecha(inp.value);
+      if (!f) { if (inp.value.trim()) aviso('Escribe la fecha como dd/mm/aaaa.', true); return; }
+      cal[k] = f; cal.ancla = null; cal.mes = null;
+      if (cal.desde && cal.hasta && cal.desde > cal.hasta) [cal.desde, cal.hasta] = [cal.hasta, cal.desde];
+      pintarCal();
+      if (cal.desde && cal.hasta) aplicar();
+    };
+    inp.onchange = tomar;
+    inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); tomar(); } };
+  });
   const fuera = () => abrir(false);
   document.addEventListener('click', fuera);
   pintar();
