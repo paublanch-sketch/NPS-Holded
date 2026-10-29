@@ -208,9 +208,9 @@ async function importarHistorico(r) {
 }
 // Limpieza de la bandeja (correo.js): archiva sin avisar a nadie, con el motivo, y lo deshace.
 async function archivar(ids, motivo) {
-  const hechos = [];
+  const hechos = [], todos = new Map((await store.todos()).map(t => [t.id, t]));
   for (const id of ids) {
-    const t = await porId(id);
+    const t = todos.get(Number(id));
     if (!t || t.archivado) continue;
     pararSesion(t);
     t.archivado = `${motivo} (${ahora()})`;
@@ -220,9 +220,9 @@ async function archivar(ids, motivo) {
   return hechos;
 }
 async function desarchivar(ids, motivo) {
-  const hechos = [];
+  const hechos = [], todos = new Map((await store.todos()).map(t => [t.id, t]));
   for (const id of ids) {
-    const t = await porId(id);
+    const t = todos.get(Number(id));
     if (!t || !String(t.archivado || '').startsWith(motivo)) continue;
     delete t.archivado;
     await store.guardar(t);

@@ -123,6 +123,8 @@ http.createServer(async (req, res) => {
       const kit = fichas.filter(c => c.kitDigital);
       return json(res, { fichas: fichas.length, kitDigital: kit.length, kitSinTickets: kit.filter(c => !conTickets.has(c.nombre)).length });
     }
+    // Solo cifras: si la limpieza de los correos fuera de la etiqueta se ha hecho y cuántos archivó.
+    if (ruta === '/salud/limpieza') return json(res, canales.correo.limpiezaEstado());
     if (ruta === '/salud') { res.writeHead(200); return res.end(`ok ${(process.env.RENDER_GIT_COMMIT || '').slice(0, 7)}`.trim()); }
     if (/^\/img\/[a-z0-9-]+\.(png|svg|webp|jpg)$/.test(ruta)) return imagen(res, ruta.slice(5));
     if (ruta === '/' || /^\/t\/[a-f0-9]{32}$/.test(ruta)) return pagina(res, 'portal.html');

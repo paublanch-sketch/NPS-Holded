@@ -517,6 +517,8 @@ async function carpetasDe(b) {
 // abiertos por un correo de ese buzón que no tienen ningún correo en ella. Los del portal, WhatsApp
 // o a mano no se tocan. El panel los enseña antes y se archivan (no se borran) al confirmar.
 const FUERA = 'Fuera de la etiqueta';
+// Message-ID sin «mail:», sin < > y en minúsculas: el de Gmail (ENVELOPE) y el guardado casan siempre.
+const claveId = s => String(s || '').replace(/^mail:/, '').trim().replace(/^<|>$/g, '').toLowerCase();
 async function idsDeEtiqueta(b) {
   const { ImapFlow } = require('imapflow');
   const c = new ImapFlow({ host: b.imap, port: b.imapPuerto, secure: true, auth: { user: b.usuario, pass: b.clave }, logger: false });
@@ -527,21 +529,51 @@ async function idsDeEtiqueta(b) {
     const ids = new Set();
     const lock = await c.getMailboxLock(carpeta);
     try {
-      if (c.mailbox.exists) for await (const m of c.fetch('1:*', { envelope: true })) if (m.envelope?.messageId) ids.add('mail:' + m.envelope.messageId.trim());
+      if (c.mailbox.exists) for await (const m of c.fetch('1:*', { envelope: true })) if (m.envelope?.messageId) ids.add(claveId(m.envelope.messageId));
     } finally { lock.release(); }
     return ids;
   } finally { try { await c.logout(); } catch {} }
 }
+// La lista de los de fuera, cuántos correos hay en la etiqueta y cuántos tickets sí están en ella.
 async function fueraDeEtiqueta(b) {
   const ids = await idsDeEtiqueta(b);
   const delCorreo = m => String(m.idExterno || '').startsWith('mail:');
-  return (await require('./store').tickets.todos())
-    .filter(t => !t.archivado && !t.ejemplo && t.canal === 'Correo' && (t.buzon || principal()?.usuario) === b.usuario
-      && delCorreo(t.mensajes?.[0] || {}) && !t.mensajes.some(m => delCorreo(m) && ids.has(m.idExterno)))
+  const enEtiqueta = t => t.mensajes.some(m => delCorreo(m) && ids.has(claveId(m.idExterno)));
+  const deCorreo = (await require('./store').tickets.todos())
+    .filter(t => !t.archivado && !t.ejemplo && t.canal === 'Correo' && (t.buzon || principal()?.usuario) === b.usuario && delCorreo(t.mensajes?.[0] || {}));
+  const lista = deCorreo.filter(t => !enEtiqueta(t))
     .sort((x, y) => y.entrada.localeCompare(x.entrada))
     .map(t => ({ id: t.id, cliente: t.cliente, email: t.email, asunto: t.asunto, entrada: t.entrada, estado: t.estado,
       respondido: t.mensajes.some(m => m.de === 'tecnico'), historico: !!t.historico }));
+  return { lista, etiqueta: ids.size, dentro: deCorreo.length - lista.length };
 }
+
+// 29/10/2026, el usuario: «no vull els meus correus… només els de l'etiqueta». Una vez por buzón, sin
+// preguntar, se archivan todos los tickets de correo que no están en la etiqueta (como el botón).
+// Va después de revisar el correo; si Gmail falla, se reintenta en la siguiente revisión. Si la
+// etiqueta tiene correos y ningún ticket casa con ellos, algo no cuadra y no se toca nada.
+const LIMPIEZA = 'limpieza-etiqueta-1';
+async function limpiarUnaVez() {
+  for (const b of buzones.filter(x => listo(x) && x.imap && x.carpeta !== 'INBOX')) {
+    if (b.estado.limpieza?.cuando) continue;
+    const hecha = (await ajustes.donde('clave', LIMPIEZA)).find(x => x.usuario === b.usuario);
+    if (hecha) { b.estado.limpieza = hecha; continue; }
+    try {
+      const { lista, etiqueta, dentro } = await fueraDeEtiqueta(b);
+      if (etiqueta && !dentro && lista.length) throw new Error(`hay ${etiqueta} correos en «${b.carpeta}» pero ningún ticket casa con ellos`);
+      const ids = await tickets.archivar(lista.map(t => t.id), `${FUERA} «${b.carpeta}»`);
+      b.estado.limpieza = await ajustes.guardar({ clave: LIMPIEZA, usuario: b.usuario, carpeta: b.carpeta, cuando: new Date().toISOString(), ids, dentro });
+      console.log(`Correo ${b.usuario}: limpieza hecha, ${ids.length} tickets de correo fuera de «${b.carpeta}» archivados y ${dentro} que sí están en ella.`);
+    } catch (e) {
+      b.estado.limpieza = { error: e.responseText || e.message };
+      console.error(`Correo ${b.usuario}: limpieza no hecha:`, b.estado.limpieza.error);
+    }
+  }
+}
+const limpiezaEstado = () => buzones.filter(b => b.carpeta !== 'INBOX').map(b => {
+  const l = b.estado.limpieza || {};
+  return { hecha: !!l.cuando, cuando: l.cuando || null, archivados: l.ids?.length ?? null, enEtiqueta: l.dentro ?? null, error: l.error || null };
+});
 
 // Rutas del panel: estado de los buzones, añadir y quitar, revisar ahora y correo de prueba.
 async function rutas(req, res, ruta, { json, leerCuerpo }) {
@@ -595,12 +627,17 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
   }
   if (req.method === 'POST' && /^\/api\/canales\/limpiar(\/archivar|\/deshacer)?$/.test(ruta)) {
     const d = await leerCuerpo(req);
-    if (ruta.endsWith('/deshacer')) return json(res, { ids: await tickets.desarchivar((d.ids || []).map(Number), FUERA) }), true;
+    if (ruta.endsWith('/deshacer')) {
+      // Con «usuario», los de la limpieza sola de ese buzón; si no, los ids que manda el panel.
+      const l = d.usuario && buzones.find(x => x.usuario === d.usuario)?.estado.limpieza;
+      return json(res, { ids: await tickets.desarchivar(l ? l.ids || [] : (d.ids || []).map(Number), FUERA) }), true;
+    }
     const b = buzones.find(x => x.usuario === String(d.usuario || '').trim().toLowerCase());
     if (!b || !listo(b) || !b.imap) return json(res, { error: 'Ese buzón no está conectado' }, 400), true;
     if (b.carpeta === 'INBOX') return json(res, { error: 'Este buzón lee toda la bandeja de entrada: ponle antes una etiqueta' }, 400), true;
     let lista;
     try { lista = await fueraDeEtiqueta(b); } catch (e) { return json(res, { error: 'No se ha podido leer la etiqueta: ' + (e.responseText || e.message) }, 502), true; }
+    lista = lista.lista;
     if (!ruta.endsWith('/archivar')) return json(res, { carpeta: b.carpeta, tickets: lista }), true;
     // Solo los que se enseñaron y siguen fuera de la etiqueta.
     const pedidos = new Set((d.ids || []).map(Number));
@@ -643,6 +680,7 @@ function resumen() {
   const lista = buzones.map(b => ({
     usuario: b.usuario, origen: b.origen, carpeta: b.carpeta, imap: b.imap, smtp: b.smtp,
     historialDesde: b.historialDesde, deteccion: b.estado.deteccion, lectura: b.estado.imap, envio: b.estado.smtp,
+    limpieza: b.estado.limpieza ? { cuando: b.estado.limpieza.cuando || null, archivados: b.estado.limpieza.ids?.length || 0, error: b.estado.limpieza.error || null } : null,
   }));
   const p = principal();
   return {
@@ -674,8 +712,9 @@ async function iniciar() {
     if (b.imap) console.log(`Correo: revisando ${b.usuario} («${b.carpeta}» en ${b.imap}) cada ${INTERVALO} s`);
     else console.log(`Correo: ${b.usuario} sin servidor IMAP.`, b.estado.deteccion || '');
   }
-  revisarCorreo();
-  setInterval(revisarCorreo, INTERVALO * 1000);
+  const revisarYLimpiar = () => revisarCorreo().then(limpiarUnaVez).catch(e => console.error('Correo:', e.message));
+  revisarYLimpiar();
+  setInterval(revisarYLimpiar, INTERVALO * 1000);
   if (URL_PUBLICA && env.MANTENER_DESPIERTO !== '0') {
     despierto = setInterval(() => fetch(URL_PUBLICA + '/salud').catch(() => {}), 10 * 60000);
   }
@@ -684,4 +723,4 @@ async function iniciar() {
 // Para los correos de las cuentas del portal (cuentas.js).
 const hayCorreo = () => !!principal();
 
-module.exports = { cifrar, descifrar, respuestaDelEquipo, firmaHilo, iniciar, rutas, revisarCorreo, sinCita, resumen, plantilla, parrafos, enviar, enviarSinEsperar, envioCaido, hayCorreo, automatico, aTicket };
+module.exports = { limpiezaEstado, limpiarUnaVez, cifrar, descifrar, respuestaDelEquipo, firmaHilo, iniciar, rutas, revisarCorreo, sinCita, resumen, plantilla, parrafos, enviar, enviarSinEsperar, envioCaido, hayCorreo, automatico, aTicket };
