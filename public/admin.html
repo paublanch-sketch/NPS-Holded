@@ -1726,8 +1726,10 @@ function vistaMetricas() {
 }
 
 // Los aros se quedan fijos (29/10/2026: «se mueven solos, como que recalculan»): ya no se refrescan
-// solos cada minuto, solo al entrar o al cambiar el periodo, y se animan una vez; después, ni al
-// desplegar un grupo (lo que estaba oculto volvía a animarse al aparecer).
+// solos cada minuto, solo al entrar o al cambiar el periodo, y se animan una sola vez por pestaña.
+// Después salen ya quietos: al volver a Métricas, al cambiar el periodo, al desplegar un grupo y
+// cuando el navegador recarga la pestaña que llevaba un rato en segundo plano.
+const arosVistos = () => { try { return sessionStorage.getItem('aros-vistos') === '1'; } catch { return true; } };
 async function cargarMetricas() {
   const [d, h] = rango();
   const q = new URLSearchParams({ desde: d, hasta: h, tecnico: fm.tecnico });
@@ -1735,8 +1737,8 @@ async function cargarMetricas() {
   let r;
   try { r = await api('/api/resumen?' + q); } catch (e) { return fallo(e); }
   if (!$('met')) return;
-  $('met').classList.remove('quieto');
-  setTimeout(() => $('met')?.classList.add('quieto'), 1000);
+  $('met').classList.toggle('quieto', arosVistos());
+  if (!arosVistos()) setTimeout(() => { $('met')?.classList.add('quieto'); try { sessionStorage.setItem('aros-vistos', '1'); } catch {} }, 1000);
   resumenMet = r;
   // Dos líneas (28/10/2026): Soporte Premium e Implementación. En cada una, los aros con todo sumado,
   // «Desglosar» con los de cada tipo de cliente y, debajo, los KPI. Debajo, los clientes antiguos del Kit Digital 1.
