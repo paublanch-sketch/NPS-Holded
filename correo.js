@@ -512,6 +512,37 @@ async function carpetasDe(b) {
   } finally { try { await c.logout(); } catch {} }
 }
 
+// Limpieza (29/10/2026): antes de la etiqueta se leía toda la bandeja de entrada y entraron correos
+// que no son incidencias. Se miran los Message-ID que hay ahora en la etiqueta y salen los tickets
+// abiertos por un correo de ese buzón que no tienen ningún correo en ella. Los del portal, WhatsApp
+// o a mano no se tocan. El panel los enseña antes y se archivan (no se borran) al confirmar.
+const FUERA = 'Fuera de la etiqueta';
+async function idsDeEtiqueta(b) {
+  const { ImapFlow } = require('imapflow');
+  const c = new ImapFlow({ host: b.imap, port: b.imapPuerto, secure: true, auth: { user: b.usuario, pass: b.clave }, logger: false });
+  try {
+    await c.connect();
+    const carpeta = await carpetaReal(c, b.carpeta);
+    if (!carpeta) throw new Error(`No existe la etiqueta «${b.carpeta}» en ${b.usuario}`);
+    const ids = new Set();
+    const lock = await c.getMailboxLock(carpeta);
+    try {
+      if (c.mailbox.exists) for await (const m of c.fetch('1:*', { envelope: true })) if (m.envelope?.messageId) ids.add('mail:' + m.envelope.messageId.trim());
+    } finally { lock.release(); }
+    return ids;
+  } finally { try { await c.logout(); } catch {} }
+}
+async function fueraDeEtiqueta(b) {
+  const ids = await idsDeEtiqueta(b);
+  const delCorreo = m => String(m.idExterno || '').startsWith('mail:');
+  return (await require('./store').tickets.todos())
+    .filter(t => !t.archivado && !t.ejemplo && t.canal === 'Correo' && (t.buzon || principal()?.usuario) === b.usuario
+      && delCorreo(t.mensajes?.[0] || {}) && !t.mensajes.some(m => delCorreo(m) && ids.has(m.idExterno)))
+    .sort((x, y) => y.entrada.localeCompare(x.entrada))
+    .map(t => ({ id: t.id, cliente: t.cliente, email: t.email, asunto: t.asunto, entrada: t.entrada, estado: t.estado,
+      respondido: t.mensajes.some(m => m.de === 'tecnico'), historico: !!t.historico }));
+}
+
 // Rutas del panel: estado de los buzones, añadir y quitar, revisar ahora y correo de prueba.
 async function rutas(req, res, ruta, { json, leerCuerpo }) {
   if (req.method === 'GET' && ruta === '/api/canales') return json(res, resumen()), true;
@@ -561,6 +592,20 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
   if (req.method === 'POST' && ruta === '/api/canales/puente/quitar') {
     await guardarPuente({ url: '', cuenta: '' });
     return json(res, resumen()), true;
+  }
+  if (req.method === 'POST' && /^\/api\/canales\/limpiar(\/archivar|\/deshacer)?$/.test(ruta)) {
+    const d = await leerCuerpo(req);
+    if (ruta.endsWith('/deshacer')) return json(res, { ids: await tickets.desarchivar((d.ids || []).map(Number), FUERA) }), true;
+    const b = buzones.find(x => x.usuario === String(d.usuario || '').trim().toLowerCase());
+    if (!b || !listo(b) || !b.imap) return json(res, { error: 'Ese buzón no está conectado' }, 400), true;
+    if (b.carpeta === 'INBOX') return json(res, { error: 'Este buzón lee toda la bandeja de entrada: ponle antes una etiqueta' }, 400), true;
+    let lista;
+    try { lista = await fueraDeEtiqueta(b); } catch (e) { return json(res, { error: 'No se ha podido leer la etiqueta: ' + (e.responseText || e.message) }, 502), true; }
+    if (!ruta.endsWith('/archivar')) return json(res, { carpeta: b.carpeta, tickets: lista }), true;
+    // Solo los que se enseñaron y siguen fuera de la etiqueta.
+    const pedidos = new Set((d.ids || []).map(Number));
+    const ids = await tickets.archivar(lista.filter(t => pedidos.has(t.id)).map(t => t.id), `${FUERA} «${b.carpeta}»`);
+    return json(res, { ids }), true;
   }
   if (req.method === 'POST' && ruta === '/api/canales/carpetas') {
     const usuario = String((await leerCuerpo(req)).usuario || '').trim().toLowerCase();

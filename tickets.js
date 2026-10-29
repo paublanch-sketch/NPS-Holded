@@ -206,6 +206,30 @@ async function importarHistorico(r) {
   await adjuntar(t, r.adjuntos);
   return store.guardar(t);
 }
+// Limpieza de la bandeja (correo.js): archiva sin avisar a nadie, con el motivo, y lo deshace.
+async function archivar(ids, motivo) {
+  const hechos = [];
+  for (const id of ids) {
+    const t = await porId(id);
+    if (!t || t.archivado) continue;
+    pararSesion(t);
+    t.archivado = `${motivo} (${ahora()})`;
+    await store.guardar(t);
+    hechos.push(t.id);
+  }
+  return hechos;
+}
+async function desarchivar(ids, motivo) {
+  const hechos = [];
+  for (const id of ids) {
+    const t = await porId(id);
+    if (!t || !String(t.archivado || '').startsWith(motivo)) continue;
+    delete t.archivado;
+    await store.guardar(t);
+    hechos.push(t.id);
+  }
+  return hechos;
+}
 const ENTRADA_KEY = process.env.ENTRADA_KEY || '';
 
 async function crear(b) {
@@ -663,4 +687,4 @@ async function paraDashboard() {
   }));
 }
 
-module.exports = { avisosEquipo, respuestaEquipo, tituloCliente, abrirDesdePortal, iniciarCierreAuto, cerrarInactivos, DIAS_INACTIVIDAD, importarHistorico, cuando, iniciarReuniones, contabilizarReuniones, porId, rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };
+module.exports = { archivar, desarchivar, avisosEquipo, respuestaEquipo, tituloCliente, abrirDesdePortal, iniciarCierreAuto, cerrarInactivos, DIAS_INACTIVIDAD, importarHistorico, cuando, iniciarReuniones, contabilizarReuniones, porId, rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };

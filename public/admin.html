@@ -319,6 +319,16 @@
   .buzon-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
   .buzon-campos label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--bruma); }
   .buzon-ayuda { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+  .buzon .can-acc { margin-top: 8px; }
+  .limp-todos { display: flex !important; align-items: center; gap: 8px; margin: 14px 0 6px !important; }
+  .limp-lista { list-style: none; margin: 0; padding: 0; max-height: 52vh; overflow: auto; border: 1px solid var(--linea); border-radius: 10px; }
+  .limp-lista li + li { border-top: 1px solid var(--linea); }
+  .limp-lista label { display: flex !important; gap: 10px; align-items: flex-start; margin: 0 !important; padding: 9px 12px; font-weight: 400 !important; cursor: pointer; }
+  .limp-lista input { margin-top: 3px; flex: none; }
+  .limp-lista span { min-width: 0; }
+  .limp-lista b { display: block; font-size: 13.5px; overflow-wrap: anywhere; }
+  .limp-lista small { display: block; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+  .limp-lista em { color: var(--at-t); font-style: normal; font-weight: 600; }
   .buzon-nuevo.solo-etiqueta .no-render { display: none; }
   .puente-cod { width: 100%; font: 12px/1.45 ui-monospace, Consolas, monospace; margin: 4px 0 10px; resize: vertical; color: var(--bruma); }
   .wa-pasos { margin-top: 12px; }
@@ -1529,7 +1539,7 @@ function dialogo(html, alEnviar) {
     b.disabled = false;
   };
   f.querySelectorAll('[data-cerrar]').forEach(b => b.onclick = () => d.close());
-  d.showModal();
+  if (!d.open) d.showModal();
   f.querySelector('input, textarea, select')?.focus();
 }
 
@@ -3162,7 +3172,8 @@ async function cargarCanales(r) {
           ${fila('Saliente', `${b.envio.ok === false ? '<span class="can-mal">No se puede enviar</span>' : b.envio.ultimo ? `Último envío ${cuando(b.envio.ultimo)}` : b.smtp ? 'Listo para enviar' : 'Sin servidor de salida'}${b.envio.enviados ? ` · ${b.envio.enviados} enviados` : ''}${b.envio.error ? `<small class="can-mal">${esc(b.envio.error)}</small>` : ''}`)}
           ${b.historialDesde ? fila('Historial', b.lectura.historial ? `Desde el ${fecha(b.historialDesde)}: ${num(b.lectura.historial.correos)} correos revisados y ${num(b.lectura.historial.tickets)} incidencias` : `Desde el ${fecha(b.historialDesde)}: se lee en la próxima revisión`) : ''}
           ${b.carpeta === 'INBOX' ? '<p class="buzon-aviso">Lee toda la bandeja de entrada: cualquier persona que escriba a este correo abre una incidencia y recibe el acuse. Mejor con una etiqueta.</p>'
-            : `<p class="buzon-ayuda">Solo abre incidencia lo que tenga la etiqueta «${esc(b.carpeta)}» en Gmail (ponla a mano o con un filtro). De la bandeja de entrada entran únicamente las respuestas a incidencias que ya existen.</p>`}
+            : `<p class="buzon-ayuda">Solo abre incidencia lo que tenga la etiqueta «${esc(b.carpeta)}» en Gmail (ponla a mano o con un filtro). De la bandeja de entrada entran únicamente las respuestas a incidencias que ya existen.</p>
+              <div class="can-acc"><button type="button" class="boton sec peq" data-limpiar="${esc(b.usuario)}">Dejar solo los correos de la etiqueta</button></div>`}
         </div>`).join('') || '<p class="can-pend">Ningún buzón conectado.</p>'}
         ${c.configurado ? `<div class="buzon">
           <div class="buzon-cab"><b>Correo saliente por Google</b><span class="pl ${P.activo ? 'o-akira' : 'sin'}">${P.activo ? 'Conectado' : 'Sin conectar'}</span></div>
@@ -3330,6 +3341,7 @@ async function cargarCanales(r) {
     // Las etiquetas que ya hay en ese Gmail, para elegir sin escribirla.
     api('/api/canales/carpetas', { usuario: x.usuario }).then(r => { if ($('carpetasGmail')) $('carpetasGmail').innerHTML = r.carpetas.map(n => `<option value="${esc(n)}">`).join(''); }).catch(() => {});
   });
+  $('can').querySelectorAll('[data-limpiar]').forEach(b => b.onclick = () => limpiarFueraEtiqueta(b));
   $('can').querySelectorAll('[data-quitar]').forEach(b => b.onclick = async () => {
     if (!confirm(`¿Dejar de leer ${b.dataset.quitar}? Las incidencias que ya entraron se quedan.`)) return;
     try { cargarCanales(await api('/api/canales/buzon/quitar', { usuario: b.dataset.quitar })); aviso('Buzón quitado.'); } catch (err) { fallo(err); }
@@ -3340,6 +3352,43 @@ async function cargarCanales(r) {
     try { const r2 = await api('/api/canales/prueba', { buzon: $('pruebaBuzon').value, para: $('pruebaPara').value }); cargarCanales(r2); aviso('Correo de prueba enviado.'); }
     catch (e) { fallo(e); p.disabled = false; }
   };
+}
+// Tickets que entraron por correo y no están en la etiqueta (de cuando se leía toda la bandeja):
+// se enseñan, se desmarcan los que se quieran guardar y se archivan, con «Deshacer» al acabar.
+async function limpiarFueraEtiqueta(bt) {
+  const usuario = bt.dataset.limpiar, txt = bt.textContent;
+  bt.disabled = true; bt.textContent = 'Mirando la etiqueta…';
+  let r;
+  try { r = await api('/api/canales/limpiar', { usuario }); } catch (e) { fallo(e); return; } finally { bt.disabled = false; bt.textContent = txt; }
+  if (!r.tickets.length) return aviso(`En la bandeja ya solo hay correos con la etiqueta «${r.carpeta}».`);
+  const d = $('dlg');
+  dialogo(`<h3>Correos que no están en «${esc(r.carpeta)}»</h3>
+    <p class="sub">${r.tickets.length === 1 ? 'Este ticket entró' : `Estos ${r.tickets.length} tickets entraron`} por correo y no ${r.tickets.length === 1 ? 'tiene' : 'tienen'} ningún mensaje con la etiqueta. Se archivan: salen de la bandeja y de las métricas, sin avisar a nadie. Desmarca los que quieras dejar.</p>
+    <label class="limp-todos"><input type="checkbox" checked data-todos> Todos</label>
+    <ul class="limp-lista">${r.tickets.map(t => `<li><label><input type="checkbox" name="id" value="${t.id}" checked>
+      <span><b>${esc(t.asunto || '(sin asunto)')}</b><small>${esc(t.cliente)}${t.email && t.email !== t.cliente ? ` · ${esc(t.email)}` : ''} · ${fechaHora(t.entrada)} · ${esc(t.estado)}${t.respondido ? ' · <em>respondido</em>' : ''}</small></span></label></li>`).join('')}</ul>
+    <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Archivar ${r.tickets.length}</button></div>`,
+    async fm => {
+      const ids = [...fm.querySelectorAll('[name=id]:checked')].map(x => Number(x.value));
+      if (!ids.length) { aviso('No has marcado ninguno.', true); return false; }
+      const hecho = await api('/api/canales/limpiar/archivar', { usuario, ids });
+      tickets = tickets.filter(t => !hecho.ids.includes(t.id));
+      pintarLista(selActual);
+      dialogo(`<h3>${hecho.ids.length === 1 ? 'Archivado 1 ticket' : `Archivados ${hecho.ids.length} tickets`}</h3>
+        <p class="sub">Ya no salen en la bandeja ni en las métricas. Los del portal, WhatsApp o puestos a mano no se han tocado.</p>
+        <div class="pie"><button type="button" class="boton sec" id="limpDeshacer">Deshacer</button><button type="submit" class="boton">Hecho</button></div>`, () => {});
+      $('limpDeshacer').onclick = async () => {
+        try { const v = await api('/api/canales/limpiar/deshacer', { ids: hecho.ids }); d.close(); aviso(v.ids.length === 1 ? 'El ticket ha vuelto a la bandeja.' : `${v.ids.length} tickets han vuelto a la bandeja.`); tickets = await api('/api/tickets'); pintarLista(selActual); }
+        catch (e) { fallo(e); }
+      };
+      return false;
+    });
+  const todos = d.querySelector('[data-todos]'), marcas = [...d.querySelectorAll('[name=id]')], enviar = d.querySelector('button[type=submit]');
+  const contar = () => { const n = marcas.filter(x => x.checked).length; enviar.textContent = `Archivar ${n}`; todos.checked = n === marcas.length; todos.indeterminate = n > 0 && n < marcas.length; };
+  todos.onchange = () => { marcas.forEach(x => x.checked = todos.checked); contar(); };
+  marcas.forEach(x => x.onchange = contar);
+  d.classList.add('ancho');
+  d.addEventListener('close', () => d.classList.remove('ancho'), { once: true });
 }
 // Datos de ejemplo (ejemplo.js): fuera de Canales, en el menú de la cuenta. Quitarlos borra solo
 // los inventados y ya no vuelven solos.
