@@ -19,7 +19,7 @@ const cuentas = require('./cuentas');
 const comercial = require('./comercial');
 
 const PORT = process.env.PORT || 3000;
-// Soporte Premium (28/10/2026): 40 € al mes por cliente; las asesorías partner lo tienen gratis.
+// Soporte Premium: 42 € al mes por cliente (29/10/2026); las asesorías partner lo tienen gratis.
 const { PREMIUM_EUROS_MES } = comercial;
 const { json, leerCuerpo } = tickets;
 

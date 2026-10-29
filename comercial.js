@@ -1,7 +1,7 @@
 // Parte comercial (reunión con Pablo y Operaciones, 28/10/2026): solo Holded, y aparte del soporte.
 //   · Licencias de Holded de cada cliente (plan, alta, renovación e importe): renovaciones de los
 //     próximos 30 y 60 días, bajas con su motivo y churn. Se cargan pegando el Excel de licencias.
-//   · ARR: licencias de Holded + Soporte Premium (40 €/mes; las asesorías partner, gratis) + Super Gemas.
+//   · ARR: licencias de Holded + Soporte Premium (42 €/mes; las asesorías partner, gratis) + Super Gemas.
 //   · Seguimiento comercial de cada cliente: notas sin minutos (llamadas, correos, reuniones), que
 //     ve todo el equipo. Las llamadas de soporte siguen en el ticket, con sus minutos.
 //   · Asesorías partner: embudo, convenio enviado y firmado en línea (con aviso a Operaciones para
@@ -14,7 +14,7 @@ const { clientes, ajustes, tickets, cuentas } = require('./store');
 const adj = require('./adjuntos');
 const cli = require('./clientes');
 
-const PREMIUM_EUROS_MES = 40;
+const PREMIUM_EUROS_MES = 42; // 29/10/2026: eran 40
 const ETAPAS = ['Por contactar', 'Contactada', 'En negociación', 'Convenio enviado', 'Convenio firmado', 'Partner activa', 'Descartada'];
 const FIRMADAS = ['Convenio firmado', 'Partner activa'];
 const MOTIVOS_BAJA = ['Precio', 'No lo usa o no lo necesita', 'Le resulta difícil', 'Se va a otro programa', 'Cierra o vende el negocio', 'Lo decide su asesoría', 'No contesta', 'Otro'];

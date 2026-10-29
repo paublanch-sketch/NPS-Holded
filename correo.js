@@ -3,6 +3,8 @@
 // contraseña de aplicación cifrada en «ajustes». Con Google Workspace los servidores se deducen
 // del registro MX del dominio. Cada buzón lee su carpeta o etiqueta de Gmail (por defecto, la
 // bandeja de entrada) y cada ticket guarda en qué buzón entró.
+// Con etiqueta, solo abre incidencia lo que se pone en ella; de la bandeja de entrada entran
+// únicamente las respuestas a incidencias que ya existen y las del equipo.
 const crypto = require('crypto');
 const dns = require('dns').promises;
 const tickets = require('./tickets');
@@ -63,10 +65,17 @@ async function detectarServidores(b) {
 
 async function cargarBuzones() {
   buzones.length = 0;
-  if (env.MAIL_USER && env.MAIL_PASS) buzones.push(buzonDe({
-    usuario: env.MAIL_USER, clave: env.MAIL_PASS, imap: env.IMAP_HOST, smtp: env.SMTP_HOST,
-    imapPuerto: env.IMAP_PORT, smtpPuerto: env.SMTP_PORT, carpeta: env.IMAP_CARPETA, remitente: env.MAIL_FROM,
-  }, 'render'));
+  if (env.MAIL_USER && env.MAIL_PASS) {
+    // La etiqueta del buzón de Render se cambia desde Canales (ajuste «buzon-render»).
+    const usuario = env.MAIL_USER.trim().toLowerCase();
+    let aj = (await ajustes.donde('clave', 'buzon-render')).find(x => x.usuario === usuario);
+    // 29/10/2026: el usuario creó en Gmail la etiqueta «Tickets Soporte»: solo entra lo que ponga ahí.
+    if (!aj && !env.IMAP_CARPETA) aj = await ajustes.guardar({ clave: 'buzon-render', usuario, carpeta: 'Tickets Soporte', actualizado: new Date().toISOString() });
+    buzones.push(buzonDe({
+      usuario, clave: env.MAIL_PASS, imap: env.IMAP_HOST, smtp: env.SMTP_HOST,
+      imapPuerto: env.IMAP_PORT, smtpPuerto: env.SMTP_PORT, carpeta: aj?.carpeta || env.IMAP_CARPETA, remitente: env.MAIL_FROM,
+    }, 'render'));
+  }
   for (const d of await ajustes.donde('clave', 'buzon')) {
     if (buzones.some(b => b.usuario === d.usuario)) continue;
     try { buzones.push(Object.assign(buzonDe({ ...d, clave: descifrar(d.cifrada) }, 'panel'), { id: d.id })); }
@@ -287,65 +296,43 @@ function aTicket(b, p, uid) {
   };
 }
 
-// Revisa un buzón. Solo entra lo nuevo: se apunta el último UID visto de su carpeta y la primera
+// La etiqueta tal como está en Gmail, aunque se haya escrito con otras mayúsculas o espacios.
+async function carpetaReal(c, nombre) {
+  if (/^inbox$/i.test(nombre)) return 'INBOX';
+  const norma = s => String(s).normalize('NFC').trim().replace(/\s+/g, ' ').toLowerCase();
+  const l = await c.list();
+  return l.find(x => x.path === nombre)?.path || l.find(x => norma(x.path) === norma(nombre))?.path || null;
+}
+
+// ¿Responde a una incidencia que ya existe? Por su número (asunto o Message-ID nuestro) o porque
+// cita un correo que ya está en una. Si es así, deja puesto r.ticketId.
+async function deUnaIncidencia(p, r) {
+  const todos = (await require('./store').tickets.todos()).filter(t => !t.archivado);
+  if (r.ticketId && todos.some(t => t.id === r.ticketId)) return true;
+  const citados = new Set([p.inReplyTo, ...(Array.isArray(p.references) ? p.references : [p.references])].filter(Boolean).flatMap(x => String(x).match(/<[^>]+>/g) || []).map(x => 'mail:' + x));
+  const t = citados.size && todos.find(x => (x.mensajes || []).some(m => citados.has(m.idExterno)));
+  if (t) r.ticketId = t.id;
+  return !!t;
+}
+
+// Revisa un buzón. Solo entra lo nuevo: se apunta el último UID visto de cada carpeta y la primera
 // vez se empieza por el final. No se marca nada como leído ni se mueve nada.
-// Si se pidió el historial, los correos desde esa fecha entran una vez como tickets cerrados
-// «del historial»: sin avisos al cliente y fuera de las métricas.
+// Con etiqueta, primero se mira la bandeja de entrada (solo respuestas: el cliente responde al
+// correo y su respuesta no lleva la etiqueta) y luego la etiqueta, que abre las incidencias.
 async function revisar(b) {
   if (!listo(b) || !b.imap || b.revisando) return b.estado.imap;
   b.revisando = true;
   const { ImapFlow } = require('imapflow');
-  const { simpleParser } = require('mailparser');
   const c = new ImapFlow({ host: b.imap, port: b.imapPuerto, secure: true, auth: { user: b.usuario, pass: b.clave }, logger: false });
-  let n = 0;
+  let n = 0, falta = null;
   try {
     await c.connect();
-    const lock = await c.getMailboxLock(b.carpeta);
-    try {
-      const uidNext = Number(c.mailbox.uidNext) || Number((await c.status(b.carpeta, { uidNext: true })).uidNext);
-      if (!uidNext) throw new Error('El servidor de correo no da el UIDNEXT de la carpeta');
-      const validez = String(c.mailbox.uidValidity), ultimo = uidNext - 1;
-      // El buzón de Render conserva la marca de antes («correo-uid»).
-      const claveMarca = b.origen === 'render' ? 'correo-uid' : `correo-uid:${b.usuario}`;
-      let marca = (await ajustes.donde('clave', claveMarca))[0];
-      if (!marca || marca.validez !== validez || (marca.carpeta || 'INBOX') !== b.carpeta) {
-        marca = { ...(marca || { clave: claveMarca }), validez, carpeta: b.carpeta, uid: ultimo, desde: new Date().toISOString(), historial: null };
-        await ajustes.guardar(marca);
-        console.log(`Correo ${b.usuario}: se leen solo los correos nuevos de «${b.carpeta}» (desde el UID ${ultimo}).`);
-      }
-
-      // Historial pedido y todavía no leído (o pedido desde otra fecha).
-      if (b.historialDesde && marca.historial !== b.historialDesde) {
-        const uids = (await c.search({ since: new Date(b.historialDesde) }, { uid: true })).filter(u => u <= marca.uid).slice(-3000);
-        const ids = new Set();
-        for (let i = 0; i < uids.length; i += 50) {
-          for await (const m of c.fetch(uids.slice(i, i + 50).join(','), { uid: true, source: true }, { uid: true })) {
-            try {
-              const r = aTicket(b, await simpleParser(m.source), m.uid);
-              const t = r && !r.equipo && await tickets.importarHistorico(r);
-              if (t) ids.add(t.id);
-            } catch (e) { console.error(`Correo ${b.usuario} historial UID ${m.uid}:`, e.message); }
-          }
-        }
-        marca.historial = b.historialDesde;
-        await ajustes.guardar(marca);
-        b.estado.imap.historial = { desde: b.historialDesde, correos: uids.length, tickets: ids.size, cuando: new Date().toISOString() };
-        console.log(`Correo ${b.usuario}: historial desde ${b.historialDesde}, ${uids.length} correos revisados y ${ids.size} incidencias.`);
-      }
-
-      const nuevos = [];
-      if (ultimo > marca.uid) for await (const m of c.fetch(`${marca.uid + 1}:*`, { uid: true, source: true }, { uid: true })) if (m.uid > marca.uid) nuevos.push(m);
-      for (const m of nuevos) {
-        // Un correo que falla no bloquea los demás: se apunta en el log y se sigue.
-        try {
-          const r = aTicket(b, await simpleParser(m.source), m.uid);
-          if (r) { await (r.equipo ? tickets.respuestaEquipo(r) : tickets.recibir(r)); n++; }
-        } catch (e) { console.error(`Correo ${b.usuario} UID ${m.uid}:`, e.message); }
-        if (m.uid > marca.uid) { marca.uid = m.uid; await ajustes.guardar(marca); }
-      }
-    } finally { lock.release(); }
+    const carpeta = await carpetaReal(c, b.carpeta);
+    if (carpeta !== 'INBOX') n += await leerCarpeta(b, c, 'INBOX', true);
+    if (carpeta) n += await leerCarpeta(b, c, carpeta, false);
+    else falta = `No existe la etiqueta «${b.carpeta}» en ${b.usuario}: créala en Gmail o cámbiala aquí. Mientras, solo entran las respuestas a incidencias abiertas.`;
     await c.logout();
-    Object.assign(b.estado.imap, { ok: true, ultimo: new Date().toISOString(), error: null });
+    Object.assign(b.estado.imap, { ok: !falta, ultimo: new Date().toISOString(), error: falta });
     b.estado.imap.procesados += n;
   } catch (e) {
     console.error(`IMAP ${b.usuario}:`, e.message);
@@ -354,11 +341,73 @@ async function revisar(b) {
   } finally { b.revisando = false; }
   return b.estado.imap;
 }
+
+// Lee lo nuevo de una carpeta. Si se pidió el historial, los correos desde esa fecha entran una vez
+// como tickets cerrados «del historial»: sin avisos al cliente y fuera de las métricas.
+async function leerCarpeta(b, c, carpeta, soloRespuestas) {
+  const { simpleParser } = require('mailparser');
+  let n = 0;
+  const lock = await c.getMailboxLock(carpeta);
+  try {
+    const uidNext = Number(c.mailbox.uidNext) || Number((await c.status(carpeta, { uidNext: true })).uidNext);
+    if (!uidNext) throw new Error('El servidor de correo no da el UIDNEXT de la carpeta');
+    const validez = String(c.mailbox.uidValidity), ultimo = uidNext - 1;
+    // El buzón de Render conserva la marca de antes («correo-uid»); las respuestas llevan la suya.
+    const base = b.origen === 'render' ? 'correo-uid' : `correo-uid:${b.usuario}`;
+    const claveMarca = soloRespuestas ? base + ':respuestas' : base;
+    let marca = (await ajustes.donde('clave', claveMarca))[0], previos = [];
+    if (!marca || marca.validez !== validez || (marca.carpeta || 'INBOX') !== carpeta) {
+      // Al pasar de la bandeja de entrada a una etiqueta, las respuestas siguen desde donde se iba.
+      const antes = soloRespuestas && (await ajustes.donde('clave', base))[0];
+      const desde = antes && antes.carpeta === 'INBOX' && antes.validez === validez ? antes.uid : ultimo;
+      marca = { ...(marca || { clave: claveMarca }), validez, carpeta, uid: desde, desde: new Date().toISOString(), historial: null };
+      // Lo que ya se ha puesto esta semana en la etiqueta también entra: estar ahí es ser un ticket.
+      if (!soloRespuestas && carpeta !== 'INBOX') previos = (await c.search({ since: new Date(Date.now() - 7 * 864e5) }, { uid: true })) || [];
+      await ajustes.guardar(marca);
+      console.log(`Correo ${b.usuario}: ${soloRespuestas ? 'respuestas de' : 'se leen'} los correos nuevos de «${carpeta}» (desde el UID ${desde})${previos.length ? ` y ${previos.length} que ya estaban en la etiqueta` : ''}.`);
+    }
+
+    // Historial pedido y todavía no leído (o pedido desde otra fecha).
+    if (!soloRespuestas && b.historialDesde && marca.historial !== b.historialDesde) {
+      const uids = (await c.search({ since: new Date(b.historialDesde) }, { uid: true })).filter(u => u <= marca.uid).slice(-3000);
+      const ids = new Set();
+      for (let i = 0; i < uids.length; i += 50) {
+        for await (const m of c.fetch(uids.slice(i, i + 50).join(','), { uid: true, source: true }, { uid: true })) {
+          try {
+            const r = aTicket(b, await simpleParser(m.source), m.uid);
+            const t = r && !r.equipo && await tickets.importarHistorico(r);
+            if (t) ids.add(t.id);
+          } catch (e) { console.error(`Correo ${b.usuario} historial UID ${m.uid}:`, e.message); }
+        }
+      }
+      marca.historial = b.historialDesde;
+      await ajustes.guardar(marca);
+      b.estado.imap.historial = { desde: b.historialDesde, correos: uids.length, tickets: ids.size, cuando: new Date().toISOString() };
+      console.log(`Correo ${b.usuario}: historial desde ${b.historialDesde}, ${uids.length} correos revisados y ${ids.size} incidencias.`);
+    }
+
+    const nuevos = [];
+    const pendientes = previos.filter(u => u <= marca.uid);
+    if (pendientes.length) for await (const m of c.fetch(pendientes.join(','), { uid: true, source: true }, { uid: true })) nuevos.push(m);
+    if (ultimo > marca.uid) for await (const m of c.fetch(`${marca.uid + 1}:*`, { uid: true, source: true }, { uid: true })) if (m.uid > marca.uid) nuevos.push(m);
+    for (const m of nuevos) {
+      // Un correo que falla no bloquea los demás: se apunta en el log y se sigue.
+      try {
+        const p = await simpleParser(m.source);
+        const r = aTicket(b, p, m.uid);
+        if (r && (!soloRespuestas || r.equipo || await deUnaIncidencia(p, r))) { await (r.equipo ? tickets.respuestaEquipo(r) : tickets.recibir(r)); n++; }
+      } catch (e) { console.error(`Correo ${b.usuario} UID ${m.uid}:`, e.message); }
+      if (m.uid > marca.uid) { marca.uid = m.uid; await ajustes.guardar(marca); }
+    }
+  } finally { lock.release(); }
+  return n;
+}
 async function revisarCorreo() {
   for (const b of buzones) await revisar(b);
 }
 
-// Comprueba usuario, contraseña y carpeta antes de guardar un buzón.
+// Comprueba usuario, contraseña y carpeta antes de guardar un buzón. Si la etiqueta no existe en
+// Gmail, la crea (se ha pedido así al guardar) y se queda con el nombre exacto que tiene allí.
 async function probarBuzon(b) {
   await detectarServidores(b);
   if (!b.imap) throw new Error(b.estado.deteccion || 'No se encuentra el servidor IMAP');
@@ -366,10 +415,26 @@ async function probarBuzon(b) {
   const c = new ImapFlow({ host: b.imap, port: b.imapPuerto, secure: true, auth: { user: b.usuario, pass: b.clave }, logger: false });
   try {
     await c.connect();
-    const lock = await c.getMailboxLock(b.carpeta).catch(() => { throw new Error(`No existe la carpeta o etiqueta «${b.carpeta}» en ${b.usuario}`); });
+    let carpeta = await carpetaReal(c, b.carpeta);
+    if (!carpeta) {
+      await c.mailboxCreate(b.carpeta).catch(e => { throw new Error(`No existe la etiqueta «${b.carpeta}» en ${b.usuario} y no se ha podido crear: ${e.responseText || e.message}`); });
+      carpeta = b.carpeta; b.creada = true;
+    }
+    b.carpeta = carpeta;
+    const lock = await c.getMailboxLock(carpeta);
     lock.release();
   } catch (e) { throw new Error(e.responseText || e.message); }
   finally { try { await c.logout(); } catch {} }
+}
+
+// Etiquetas de Gmail del buzón, para elegirla en Canales (sin las del sistema: Enviados, Spam…).
+async function carpetasDe(b) {
+  const { ImapFlow } = require('imapflow');
+  const c = new ImapFlow({ host: b.imap, port: b.imapPuerto, secure: true, auth: { user: b.usuario, pass: b.clave }, logger: false });
+  try {
+    await c.connect();
+    return (await c.list()).filter(x => x.path !== 'INBOX' && !x.specialUse && !x.flags?.has('\\Noselect') && !/^\[Gmail\]/.test(x.path)).map(x => x.path).sort((x, y) => x.localeCompare(y, 'es'));
+  } finally { try { await c.logout(); } catch {} }
 }
 
 // Rutas del panel: estado de los buzones, añadir y quitar, revisar ahora y correo de prueba.
@@ -385,7 +450,16 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
     const usuario = String(d.usuario || '').trim().toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(usuario)) return json(res, { error: 'Pon un correo válido' }, 400), true;
     const existente = buzones.find(b => b.usuario === usuario);
-    if (existente?.origen === 'render') return json(res, { error: 'Ese buzón está en las variables de Render' }, 400), true;
+    // Del buzón de Render solo se cambia la etiqueta: la contraseña sigue en Render.
+    if (existente?.origen === 'render') {
+      const b = buzonDe({ ...existente, carpeta: d.carpeta }, 'render');
+      try { await probarBuzon(b); } catch (e) { return json(res, { error: 'No se pudo conectar: ' + e.message }, 400), true; }
+      const doc = (await ajustes.donde('clave', 'buzon-render')).find(x => x.usuario === usuario) || { clave: 'buzon-render', usuario };
+      await ajustes.guardar(Object.assign(doc, { carpeta: b.carpeta, actualizado: new Date().toISOString() }));
+      await cargarBuzones();
+      revisar(buzones.find(x => x.usuario === usuario)).catch(() => {});
+      return json(res, { ...resumen(), creada: b.creada ? b.carpeta : null }), true;
+    }
     const clave = String(d.clave || '').replace(/\s+/g, '') || existente?.clave;
     if (!clave) return json(res, { error: 'Falta la contraseña de aplicación' }, 400), true;
     const historialDesde = /^\d{4}-\d{2}-\d{2}$/.test(d.historialDesde || '') ? d.historialDesde : null;
@@ -396,7 +470,14 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
     await ajustes.guardar(doc);
     await cargarBuzones();
     revisar(buzones.find(x => x.usuario === usuario)).catch(() => {});
-    return json(res, resumen()), true;
+    return json(res, { ...resumen(), creada: b.creada ? b.carpeta : null }), true;
+  }
+  if (req.method === 'POST' && ruta === '/api/canales/carpetas') {
+    const usuario = String((await leerCuerpo(req)).usuario || '').trim().toLowerCase();
+    const b = buzones.find(x => x.usuario === usuario);
+    if (!b || !listo(b) || !b.imap) return json(res, { carpetas: [] }), true;
+    try { return json(res, { carpetas: await carpetasDe(b) }), true; }
+    catch (e) { return json(res, { carpetas: [], error: e.responseText || e.message }), true; }
   }
   if (req.method === 'POST' && ruta === '/api/canales/buzon/quitar') {
     const usuario = String((await leerCuerpo(req)).usuario || '').trim().toLowerCase();

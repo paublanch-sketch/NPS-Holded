@@ -333,6 +333,9 @@ const ACCIONES = {
     t.mensajes.push({ de: 'sistema', texto: 'Hemos cerrado tu incidencia. ¿Nos ayudas con una valoración de 10 segundos?', fecha: ahora() });
   },
   reabrir(t) { t.estado = 'En curso'; t.cierre = ''; delete t.cierreAuto; },
+  // Boletines o avisos que entraron por el correo: fuera de la bandeja, de clientes y de las
+  // métricas, sin avisar a nadie. Se archiva, no se borra.
+  descartar(t, b) { pararSesion(t); t.archivado = `No es una incidencia (${b.tecnico || 'panel'}, ${ahora()})`; },
 };
 
 function leerCuerpo(req) {
