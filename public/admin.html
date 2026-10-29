@@ -318,6 +318,7 @@
   .buzon-campos label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--bruma); }
   .buzon-ayuda { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
   .buzon-nuevo.solo-etiqueta .no-render { display: none; }
+  .puente-cod { width: 100%; font: 12px/1.45 ui-monospace, Consolas, monospace; margin: 4px 0 10px; resize: vertical; color: var(--bruma); }
   .wa-pasos { margin-top: 12px; }
   .wa-pasos summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--azul); padding: 6px 0; }
   .wa-pasos ol { margin: 6px 0 10px; padding-left: 20px; font-size: 13px; color: var(--bruma); display: flex; flex-direction: column; gap: 6px; }
@@ -3042,15 +3043,42 @@ function vistaCanales() {
     <div class="contenido" id="can"><div class="vacio">Cargando…</div></div>`;
   cargarCanales();
   // Cada 30 s, salvo mientras se rellena el formulario de buzón.
-  const ocupado = () => ['buzonNuevo', 'waForm'].some(id => { const f = $(id); return f && (f.contains(document.activeElement) || [...f.elements].some(e => e.value && e.type !== 'submit' && e.type !== 'button')); });
+  const ocupado = () => ['buzonNuevo', 'waForm', 'puenteForm'].some(id => { const f = $(id); return f && (f.contains(document.activeElement) || [...f.elements].some(e => e.value && e.type !== 'submit' && e.type !== 'button')); });
   const i = setInterval(() => !document.hidden && !ocupado() && cargarCanales(), 30000);
   pararVista = () => clearInterval(i);
 }
+// El script del puente de Google (29/10/2026): se pega en script.google.com con la cuenta del buzón.
+// Recibe cada correo ya hecho y lo envía con su Gmail; la clave, que pone el panel, lo protege.
+const codigoPuente = clave => `// Puente de correo del Soporte Holded (Interactivos).
+// Render, en el plan gratuito, no deja enviar correo por SMTP: el panel manda aquí cada correo
+// ya hecho y este script lo envía con tu Gmail. Necesita el servicio «Gmail API» (Servicios → +).
+const CLAVE = '${clave}';
+
+function doPost(e) {
+  try {
+    const d = JSON.parse(e.postData.contents);
+    if (d.clave !== CLAVE) return responder({ error: 'Clave incorrecta' });
+    if (d.prueba) return responder({ ok: true, cuenta: Session.getEffectiveUser().getEmail() });
+    const enviado = Gmail.Users.Messages.send({ raw: d.raw }, 'me');
+    // Gmail puede cambiar el Message-ID: se devuelve el que ha quedado para reconocer las respuestas.
+    const m = Gmail.Users.Messages.get('me', enviado.id, { format: 'metadata', metadataHeaders: ['Message-ID'] });
+    const h = (m.payload.headers || []).find(x => x.name.toLowerCase() === 'message-id');
+    return responder({ ok: true, id: enviado.id, messageId: h ? h.value : null });
+  } catch (err) {
+    return responder({ error: String((err && err.message) || err) });
+  }
+}
+
+function responder(o) {
+  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
+`;
+
 async function cargarCanales(r) {
   try { r = r || await api('/api/canales'); } catch (e) { return fallo(e); }
   marcarCanales(r);
   if (!$('can')) return;
-  const c = r.correo, g = r.google, w = r.whatsapp;
+  const c = r.correo, g = r.google, w = r.whatsapp, P = c.puente || {};
   // Estado de cada canal: activo, con fallo o pendiente.
   const correoOk = c.configurado && c.lectura.ok !== false && c.envio.ok !== false;
   const googleOk = g.activo && g.ok !== false;
@@ -3076,6 +3104,27 @@ async function cargarCanales(r) {
           ${b.carpeta === 'INBOX' ? '<p class="buzon-aviso">Lee toda la bandeja de entrada: cualquier persona que escriba a este correo abre una incidencia y recibe el acuse. Mejor con una etiqueta.</p>'
             : `<p class="buzon-ayuda">Solo abre incidencia lo que tenga la etiqueta «${esc(b.carpeta)}» en Gmail (ponla a mano o con un filtro). De la bandeja de entrada entran únicamente las respuestas a incidencias que ya existen.</p>`}
         </div>`).join('') || '<p class="can-pend">Ningún buzón conectado.</p>'}
+        ${c.configurado ? `<div class="buzon">
+          <div class="buzon-cab"><b>Correo saliente por Google</b><span class="pl ${P.activo ? 'o-akira' : 'sin'}">${P.activo ? 'Conectado' : 'Sin conectar'}</span></div>
+          ${P.activo ? `${fila('Sale con', `<b>${esc(P.cuenta || 'tu Gmail')}</b> · por el puente de Google Apps Script`)}
+            <div class="can-acc"><button type="button" class="boton sec peq" id="puenteQuitar">Quitar el puente</button></div>`
+          : `<p class="buzon-aviso">Render, en el plan gratuito, no deja enviar correo por SMTP: no salen los avisos, las respuestas por correo, los códigos para entrar ni los convenios. Con este puente, gratis, el correo sale con tu Gmail.</p>
+            <details class="wa-pasos" open><summary>Cómo crear el puente (unos 10 minutos)</summary>
+              <ol>
+                <li>Entra en <b>script.google.com</b> con la cuenta del buzón (${esc(c.buzones?.[0]?.usuario || 'la del soporte')}) y pulsa <b>Nuevo proyecto</b>.</li>
+                <li>Borra lo que hay y pega el código del puente: <button type="button" class="boton sec peq" id="puenteCopiar">Copiar el código</button></li>
+                <li>A la izquierda, en <b>Servicios</b>, pulsa <b>+</b>, elige <b>Gmail API</b> y pulsa <b>Añadir</b>. Guarda el proyecto.</li>
+                <li>Arriba, <b>Implementar → Nueva implementación</b>. En el engranaje, elige <b>Aplicación web</b>. Ejecutar como: <b>Yo</b>. Quién tiene acceso: <b>Cualquier usuario</b>. Pulsa <b>Implementar</b> y autoriza los permisos.</li>
+                <li>Copia la <b>URL de la aplicación web</b> (acaba en /exec), pégala aquí y pulsa «Conectar». Luego, «Enviar prueba».</li>
+              </ol>
+              <textarea class="campo puente-cod" readonly rows="5" aria-label="Código del puente">${esc(codigoPuente(P.clave || ''))}</textarea>
+              <form class="buzon-nuevo" id="puenteForm" autocomplete="off" style="margin-top:0;padding-top:0;border-top:0">
+                <div class="buzon-campos"><label>URL de la aplicación web<input class="campo" name="url" placeholder="https://script.google.com/macros/s/…/exec"></label></div>
+                <div class="can-acc" style="margin-top:10px"><button class="boton" id="puenteGuardar">Conectar</button></div>
+              </form>
+            </details>`}
+          ${P.error ? `<p class="buzon-aviso">${esc(P.error)}</p>` : ''}
+        </div>` : ''}
         <form class="buzon-nuevo" id="buzonNuevo" autocomplete="off">
           <h3 id="buzonTitulo">Conectar un buzón</h3>
           <div class="buzon-campos">
@@ -3143,6 +3192,23 @@ async function cargarCanales(r) {
         : '<p class="can-pend">Pendiente de publicar la dirección del portal.</p>'}
       </section>
     </div>`;
+  // Puente de Google: copiar el código del script, conectar su URL y quitarlo.
+  if ($('puenteCopiar')) $('puenteCopiar').onclick = async () => {
+    try { await navigator.clipboard.writeText(codigoPuente(P.clave)); aviso('Código copiado: pégalo en el proyecto de Apps Script.'); }
+    catch { const t = $('can').querySelector('.puente-cod'); t.focus(); t.select(); aviso('Está seleccionado: cópialo con Ctrl+C.', true); }
+  };
+  const pf = $('puenteForm');
+  if (pf) pf.onsubmit = async e => {
+    e.preventDefault();
+    const bt = $('puenteGuardar');
+    bt.disabled = true; bt.textContent = 'Comprobando el puente…';
+    try { const r2 = await api('/api/canales/puente', { url: pf.url.value.trim() }); cargarCanales(r2); aviso(`Puente conectado: el correo sale con ${r2.correo.puente.cuenta || 'tu Gmail'}. Prueba con «Enviar prueba».`); }
+    catch (err) { fallo(err); bt.disabled = false; bt.textContent = 'Conectar'; }
+  };
+  if ($('puenteQuitar')) $('puenteQuitar').onclick = async () => {
+    if (!confirm('¿Quitar el puente de Google? El correo volverá a salir por SMTP (en Render gratis, no sale).')) return;
+    try { cargarCanales(await api('/api/canales/puente/quitar', {})); aviso('Puente quitado.'); } catch (err) { fallo(err); }
+  };
   // WhatsApp: conectar desde aquí, copiar el webhook y el token de verificación.
   $('can').querySelectorAll('[data-copiar]').forEach(b => b.onclick = async () => {
     try { await navigator.clipboard.writeText(b.dataset.copiar); aviso('Copiado.'); } catch { aviso('No se ha podido copiar: selecciónalo a mano.', true); }

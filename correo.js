@@ -100,16 +100,70 @@ const sinConexion = e => /timeout|ETIMEDOUT|ECONNREFUSED|ENETUNREACH|EHOSTUNREAC
 const principal = () => buzones.find(b => smtp(b)) || null;
 const buzonPara = t => buzones.find(b => b.usuario === t?.buzon && smtp(b)) || principal();
 
+// ---------- Puente de Google (29/10/2026) ----------
+// Para no pagar Render: un script de Google Apps Script en la cuenta del buzón recibe por HTTPS cada
+// correo ya hecho (MIME) y lo envía con su Gmail. La URL del script y la clave que lo protege se
+// ponen en Canales (cifradas, como las contraseñas). Sin puente, se envía por SMTP como siempre.
+const puente = { url: '', clave: '', cuenta: '', error: null };
+async function cargarPuente() {
+  let d = (await ajustes.donde('clave', 'puente-correo'))[0];
+  // La clave existe desde el principio: va dentro del código del script que se copia en Canales.
+  if (!d) d = await ajustes.guardar({ clave: 'puente-correo', cifrado: cifrar(JSON.stringify({ clave: crypto.randomBytes(24).toString('hex'), url: '' })) });
+  try { Object.assign(puente, JSON.parse(descifrar(d.cifrado)), { cuenta: d.cuenta || '', error: null }); }
+  catch { Object.assign(puente, { url: '', error: 'No se puede descifrar el puente de Google (¿ha cambiado SESSION_SECRET?): vuelve a conectarlo.' }); }
+}
+async function guardarPuente(cambios) {
+  const d = (await ajustes.donde('clave', 'puente-correo'))[0] || { clave: 'puente-correo' };
+  const datos = { clave: puente.clave, url: puente.url, ...cambios };
+  Object.assign(d, { cifrado: cifrar(JSON.stringify({ clave: datos.clave, url: datos.url })), cuenta: cambios.cuenta ?? d.cuenta ?? '', actualizado: new Date().toISOString() });
+  await ajustes.guardar(d);
+  await cargarPuente();
+}
+async function llamarPuente(cuerpo, url = puente.url) {
+  let r;
+  try { r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clave: puente.clave, ...cuerpo }), redirect: 'follow', signal: AbortSignal.timeout(25000) }); }
+  catch (e) { throw new Error('No se puede conectar con el puente de Google: ' + e.message); }
+  const d = await r.json().catch(() => null);
+  if (!d) throw new Error('La dirección no responde como el puente: ¿está publicado como aplicación web para «Cualquier usuario»?');
+  if (d.error) throw new Error('Puente de Google: ' + d.error);
+  return d;
+}
+
+// Gmail puede cambiar el Message-ID de lo que sale por el puente: se apunta cuál era el nuestro para
+// seguir reconociendo las respuestas (de qué incidencia son y si son del equipo).
+const alias = new Map();
+async function cargarAlias() { for (const [real, nuestro] of (await ajustes.donde('clave', 'alias-correo'))[0]?.lista || []) alias.set(real, nuestro); }
+async function recordarAlias(real, nuestro) {
+  alias.set(real, nuestro);
+  while (alias.size > 3000) alias.delete(alias.keys().next().value);
+  const d = (await ajustes.donde('clave', 'alias-correo'))[0] || { clave: 'alias-correo' };
+  await ajustes.guardar(Object.assign(d, { lista: [...alias] }));
+}
+async function porPuente(mail) {
+  const MailComposer = require('nodemailer/lib/mail-composer');
+  const nodo = new MailComposer(mail).compile();
+  nodo.keepBcc = true; // Gmail envía a quien esté en Bcc y quita la cabecera
+  const raw = (await nodo.build()).toString('base64url');
+  const r = await llamarPuente({ raw });
+  const nuestro = nodo.messageId();
+  if (r.messageId && r.messageId !== nuestro) await recordarAlias(r.messageId, nuestro);
+  return { messageId: r.messageId || nuestro };
+}
+
 async function enviar(opciones, b = principal()) {
-  const s = smtp(b);
-  if (!s) throw new Error('El correo saliente no está configurado');
+  const s = puente.url ? null : smtp(b);
+  if (!s && !puente.url) throw new Error('El correo saliente no está configurado');
   try {
-    const r = await s.sendMail({ from: b.remitente, replyTo: b.usuario, ...opciones });
-    Object.assign(b.estado.smtp, { ok: true, ultimo: new Date().toISOString(), error: null });
-    b.estado.smtp.enviados++;
+    const mail = { from: b?.remitente || `Soporte Holded · Interactivos <${puente.cuenta}>`, replyTo: b?.usuario || puente.cuenta, ...opciones };
+    const r = puente.url ? await porPuente(mail) : await s.sendMail(mail);
+    if (b) {
+      Object.assign(b.estado.smtp, { ok: true, ultimo: new Date().toISOString(), error: null, bloqueado: false });
+      b.estado.smtp.enviados++;
+    }
     return r;
   } catch (e) {
-    const bloqueado = sinConexion(e);
+    if (!b) throw e;
+    const bloqueado = !puente.url && sinConexion(e);
     Object.assign(b.estado.smtp, { ok: false, ultimo: new Date().toISOString(), bloqueado,
       error: bloqueado ? `No se puede conectar con ${b.smtp}:${b.smtpPuerto} (${e.message}). En el plan gratuito, Render no deja enviar correo por SMTP.` : e.message });
     throw e;
@@ -117,7 +171,7 @@ async function enviar(opciones, b = principal()) {
 }
 
 // ¿Está cortado el correo saliente? (lo último que se intentó enviar no pudo ni conectar)
-const envioCaido = (b = principal()) => !!(b && b.estado.smtp.ok === false && b.estado.smtp.bloqueado);
+const envioCaido = (b = principal()) => !puente.url && !!(b && b.estado.smtp.ok === false && b.estado.smtp.bloqueado);
 
 // Para lo que el panel espera (invitaciones al portal, convenios): si el correo no ha salido en unos
 // segundos, se responde igual (con el enlace para pasarlo a mano) y el envío sigue por detrás.
@@ -290,6 +344,11 @@ const fechaLocal = d => { const x = new Date(d || Date.now()); return new Date(x
 
 // Lo que hay que convertir en ticket de un correo ya parseado (o null si no es una incidencia).
 function aTicket(b, p, uid) {
+  if (alias.size) {
+    const t = x => x && (alias.get(x) || x);
+    p.inReplyTo = t(p.inReplyTo);
+    p.references = Array.isArray(p.references) ? p.references.map(t) : t(p.references);
+  }
   const de = p.from?.value?.[0] || {};
   // Nuestros propios avisos (al cliente o al equipo) que vuelvan a entrar en el buzón: fuera.
   if (!de.address || p.headers.has('x-soporte-aviso') || automatico(p)) return null;
@@ -488,6 +547,21 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
     revisar(buzones.find(x => x.usuario === usuario)).catch(() => {});
     return json(res, { ...resumen(), creada: b.creada ? b.carpeta : null }), true;
   }
+  if (req.method === 'POST' && ruta === '/api/canales/puente') {
+    const url = String((await leerCuerpo(req)).url || '').trim();
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url) && !/^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(url))
+      return json(res, { error: 'Pega la «URL de la aplicación web» del script: empieza por https://script.google.com/macros/s/ y acaba en /exec' }, 400), true;
+    let r;
+    try { r = await llamarPuente({ prueba: true }, url); } catch (e) { return json(res, { error: e.message }, 400), true; }
+    await guardarPuente({ url, cuenta: r.cuenta || '' });
+    // El error del SMTP de antes ya no cuenta: ahora sale por el puente.
+    for (const x of buzones) Object.assign(x.estado.smtp, { ok: null, error: null, bloqueado: false });
+    return json(res, resumen()), true;
+  }
+  if (req.method === 'POST' && ruta === '/api/canales/puente/quitar') {
+    await guardarPuente({ url: '', cuenta: '' });
+    return json(res, resumen()), true;
+  }
   if (req.method === 'POST' && ruta === '/api/canales/carpetas') {
     const usuario = String((await leerCuerpo(req)).usuario || '').trim().toLowerCase();
     const b = buzones.find(x => x.usuario === usuario);
@@ -532,6 +606,7 @@ function resumen() {
       lectura: { ok: lista.length ? lista.every(x => x.lectura.ok !== false) && (lista.some(x => x.lectura.ok) || null) : null },
       envio: { ok: lista.length ? lista.every(x => x.envio.ok !== false) && (lista.some(x => x.envio.ok) || null) : null },
       buzones: lista,
+      puente: { activo: !!puente.url, cuenta: puente.cuenta, clave: puente.clave, error: puente.error },
     },
     publica: URL_PUBLICA || null,
     despierto: !!despierto,
@@ -547,6 +622,9 @@ function resumen() {
 let despierto = null;
 async function iniciar() {
   await cargarBuzones();
+  await cargarPuente().catch(e => console.error('Puente de Google:', e.message));
+  await cargarAlias().catch(() => {});
+  if (puente.url) console.log(`Correo: se envía por el puente de Google (${puente.cuenta || 'cuenta sin comprobar'})`);
   for (const b of buzones) {
     if (b.imap) console.log(`Correo: revisando ${b.usuario} («${b.carpeta}» en ${b.imap}) cada ${INTERVALO} s`);
     else console.log(`Correo: ${b.usuario} sin servidor IMAP.`, b.estado.deteccion || '');
