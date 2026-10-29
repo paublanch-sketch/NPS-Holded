@@ -107,6 +107,26 @@ async function darAcceso({ cliente, email, nombre }) {
   return { id: c.id, email, nueva, conClave: !nueva && !!c.hash, enviado, enlace: enviado ? null : url, correoCaido: !enviado && require('./correo').envioCaido() };
 }
 
+// Primera vez que entra (tiene acceso pero aún no contraseña): un código de 6 cifras al correo para
+// ponerla. Sin él, cualquiera que supiera el correo de un cliente podría quedarse con su cuenta.
+const MIN_CODIGO = 15;
+async function enviarCodigo(c) {
+  // Si se pide otra vez antes de un minuto, vale el que acaba de salir.
+  if (c.codigo?.enviado && Date.now() - c.codigo.creado < 60000) return { enviado: true };
+  const codigo = String(crypto.randomInt(0, 1e6)).padStart(6, '0');
+  c.codigo = { hash: sha(codigo), creado: Date.now(), caduca: Date.now() + MIN_CODIGO * 60000, intentos: 0, enviado: false };
+  await cuentas.guardar(c);
+  const correo = require('./correo');
+  if (!correo.hayCorreo()) return { enviado: false };
+  const texto = `Hola${c.nombre ? ' ' + c.nombre.split(' ')[0] : ''}:\n\nTu código para entrar por primera vez en el Soporte Holded es ${codigo}. Escríbelo en la página y elige tu contraseña. Vale ${MIN_CODIGO} minutos.\n\nSi no lo has pedido tú, no hagas nada.`;
+  try {
+    c.codigo.enviado = await correo.enviarSinEsperar({ to: c.email, subject: `${codigo} es tu código del Soporte Holded`, text: texto,
+      html: correo.plantilla({ titulo: `Tu código: ${codigo}`, cuerpo: correo.parrafos(texto), pie: 'Correo enviado desde el Soporte Holded de Interactivos.' }) });
+  } catch (e) { console.error('Cuentas (código):', e.message); }
+  await cuentas.guardar(c);
+  return { enviado: c.codigo.enviado };
+}
+
 const reciente = new Map();
 const ipDe = req => String(req.headers['x-forwarded-for'] || req.socket.remoteAddress).split(',')[0].trim();
 function frenar(req, clave, max, minutos) {
@@ -133,6 +153,34 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
     const c = (await cuentas.todos()).find(x => x.email === email && x.activa !== false && x.hash);
     if (!c || !claveBuena(String(b.clave || ''), c.hash)) return json(res, { error: 'El correo o la contraseña no son correctos.' }, 401), true;
     c.ultimoAcceso = new Date().toISOString();
+    await cuentas.guardar(c);
+    abrirSesion(req, res, c);
+    return json(res, { email: c.email, nombre: c.nombre, cliente: c.cliente }), true;
+  }
+  // Entrar en dos pasos (29/10/2026): primero solo el correo. Si ya tiene contraseña, se le pide;
+  // si es la primera vez, le llega el código para ponerla (también para pedir otro).
+  if (req.method === 'POST' && ruta === '/api/cuenta/inicio') {
+    const email = normal((await leerCuerpo(req)).email);
+    if (frenar(req, 'inicio', 20, 15)) return json(res, { error: 'Demasiados intentos. Prueba dentro de un rato.' }, 429), true;
+    const c = (await cuentas.todos()).find(x => x.email === email && x.activa !== false);
+    if (!c) return json(res, { error: 'Este correo no tiene acceso al portal. Pídeselo a tu técnico de Interactivos.' }, 404), true;
+    if (c.hash) return json(res, { paso: 'clave', nombre: c.nombre || '' }), true;
+    if (frenar(req, 'codigo:' + email, 5, 15)) return json(res, { error: 'Ya te hemos enviado varios códigos. Prueba dentro de un rato.' }, 429), true;
+    return json(res, { paso: 'codigo', nombre: c.nombre || '', minutos: MIN_CODIGO, ...(await enviarCodigo(c)) }), true;
+  }
+  if (req.method === 'POST' && ruta === '/api/cuenta/primera') {
+    const b = await leerCuerpo(req);
+    const email = normal(b.email), codigo = String(b.codigo || '').replace(/\D/g, ''), clave = String(b.clave || '');
+    if (frenar(req, 'primera:' + email, 10, 15)) return json(res, { error: 'Demasiados intentos. Prueba dentro de un rato.' }, 429), true;
+    if (clave.length < 8) return json(res, { error: 'La contraseña tiene que tener 8 caracteres o más.' }, 400), true;
+    const c = (await cuentas.todos()).find(x => x.email === email && x.activa !== false && !x.hash);
+    if (!c?.codigo || c.codigo.caduca < Date.now() || c.codigo.intentos >= 5) return json(res, { error: 'El código ha caducado. Pide otro.' }, 400), true;
+    if (sha(codigo) !== c.codigo.hash) {
+      c.codigo.intentos++;
+      await cuentas.guardar(c);
+      return json(res, { error: 'El código no es correcto. Revisa el último correo que te hemos enviado.' }, 400), true;
+    }
+    Object.assign(c, { hash: hashClave(clave), codigo: null, enlace: null, version: (c.version || 1) + 1, ultimoAcceso: new Date().toISOString() });
     await cuentas.guardar(c);
     abrirSesion(req, res, c);
     return json(res, { email: c.email, nombre: c.nombre, cliente: c.cliente }), true;

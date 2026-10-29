@@ -386,12 +386,14 @@
       <p id="eTexto">Con el correo y la contraseña de tu cuenta.</p>
       <form id="formEntrar" novalidate>
         <div class="campo" id="campoEmail"><label class="et" for="eEmail">Correo</label><div class="con-icono"><svg class="i"><use href="#i-correo"/></svg><input class="texto" id="eEmail" type="email" autocomplete="username"></div></div>
+        <div class="campo oculto" id="campoCodigo"><label class="et" for="eCodigo">Código del correo</label><div class="con-icono"><svg class="i"><use href="#i-correo"/></svg><input class="texto" id="eCodigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 cifras"></div></div>
         <div class="campo" id="campoClave"><label class="et" for="eClave" id="etClave">Contraseña</label><div class="con-icono"><svg class="i"><use href="#i-candado"/></svg><input class="texto" id="eClave" type="password" autocomplete="current-password"></div></div>
         <div class="campo oculto" id="campoClave2"><label class="et" for="eClave2">Repite la contraseña</label><div class="con-icono"><svg class="i"><use href="#i-candado"/></svg><input class="texto" id="eClave2" type="password" autocomplete="new-password"></div></div>
         <button class="boton ancho" id="btnEntrar"><span>Entrar</span></button>
         <div class="error" id="errEntrar" role="alert"></div>
         <div class="aviso-ok oculto" id="okEntrar" role="status"></div>
         <button type="button" class="enlace" id="olvido">¿Has olvidado tu contraseña?</button>
+        <button type="button" class="enlace oculto" id="otroCorreo">← Entrar con otro correo</button>
       </form>
     </div>
     <div class="sin-cuenta"><b>¿Aún no tienes cuenta?</b> Pídesela a tu técnico de Interactivos.<div class="otros" id="otrosEntrar"></div></div>
@@ -606,47 +608,88 @@ cargaConfig.then(c => $('mOtros').classList.toggle('oculto', !canalesDe(c).lengt
 
 // ---------- Entrar ----------
 const claveToken = new URLSearchParams(location.search).get('clave');
-let modo = 'entrar';
+// Se entra en dos pasos (29/10/2026): primero el correo; luego la contraseña o, la primera vez, el
+// código que le llega al correo y la contraseña nueva.
+let modo = 'correo', paso = {};
 const MODOS = {
-  entrar: ['Entra en tu soporte', 'Con el correo y la contraseña de tu cuenta.', 'Entrar', '¿Has olvidado tu contraseña?'],
+  correo: ['Entra en tu soporte', 'Escribe el correo con el que te dimos acceso.', 'Continuar', ''],
+  entrar: ['Entra en tu soporte', '', 'Entrar', '¿Has olvidado tu contraseña?'],
+  primera: ['Pon tu contraseña', '', 'Guardar y entrar', 'Enviarme otro código'],
   olvido: ['¿Has olvidado tu contraseña?', 'Escribe tu correo y te enviamos un enlace para poner una nueva.', 'Enviarme el enlace', '← Volver a entrar'],
   clave: ['Pon tu contraseña', 'Elige una contraseña de 8 caracteres o más. Con ella y tu correo entrarás siempre en tu soporte.', 'Guardar y entrar', 'Pedir un enlace nuevo'],
 };
 function modoEntrar(m) {
   modo = m;
   const [t, p, b, enlace] = MODOS[m];
+  const email = $('eEmail').value.trim(), hola = paso.nombre ? `Hola, ${paso.nombre.split(/\s+/)[0]}. ` : '';
+  const sinCodigo = m === 'primera' && paso.enviado === false;
   $('eTitulo').textContent = t;
-  $('eTexto').textContent = m === 'entrar' && token ? 'Entra con tu cuenta para ver esta incidencia.' : p;
+  $('eTexto').textContent = m === 'correo' && token ? 'Entra con tu cuenta para ver esta incidencia: escribe tu correo.'
+    : m === 'entrar' ? `${hola}Escribe tu contraseña.`
+    : m === 'primera' ? (sinCodigo ? `${hola}Es la primera vez que entras, pero ahora no hemos podido enviarte el código a ${email}. Pide a tu técnico de Interactivos el enlace para poner tu contraseña, o vuelve a intentarlo en un rato.`
+      : `${hola}Es la primera vez que entras: te hemos enviado un código de 6 cifras a ${email}. Escríbelo y elige tu contraseña (vale ${paso.minutos || 15} minutos).`)
+    : p;
   $('btnEntrar').querySelector('span').textContent = b;
   $('olvido').textContent = enlace;
   $('olvido').classList.toggle('oculto', !enlace);
+  $('otroCorreo').classList.toggle('oculto', !['entrar', 'primera'].includes(m));
   $('campoEmail').classList.toggle('oculto', m === 'clave');
-  $('campoClave').classList.toggle('oculto', m === 'olvido');
-  $('campoClave2').classList.toggle('oculto', m !== 'clave');
-  $('etClave').textContent = m === 'clave' ? 'Nueva contraseña' : 'Contraseña';
-  $('eClave').autocomplete = m === 'clave' ? 'new-password' : 'current-password';
+  $('eEmail').readOnly = ['entrar', 'primera'].includes(m);
+  $('campoCodigo').classList.toggle('oculto', m !== 'primera' || sinCodigo);
+  $('campoClave').classList.toggle('oculto', ['correo', 'olvido'].includes(m) || sinCodigo);
+  $('campoClave2').classList.toggle('oculto', !['clave', 'primera'].includes(m) || sinCodigo);
+  $('etClave').textContent = ['clave', 'primera'].includes(m) ? 'Nueva contraseña' : 'Contraseña';
+  $('eClave').autocomplete = ['clave', 'primera'].includes(m) ? 'new-password' : 'current-password';
   $('errEntrar').textContent = '';
   $('okEntrar').classList.add('oculto');
-  $('btnEntrar').classList.remove('oculto');
+  $('btnEntrar').classList.toggle('oculto', sinCodigo);
 }
-function entrar(m = 'entrar') {
+function entrar(m = 'correo') {
   mostrar('vistaEntrar');
   modoEntrar(m);
   pintarOtros('otrosEntrar', 'O escríbenos:');
   setTimeout(() => (m === 'clave' ? $('eClave') : $('eEmail')).focus(), 50);
 }
-$('olvido').onclick = () => modoEntrar(modo === 'olvido' ? 'entrar' : 'olvido');
+// Lo que toca después del correo: la contraseña o, la primera vez, el código.
+async function seguirCon(email) {
+  paso = await api('/api/cuenta/inicio', { email });
+  $('eClave').value = $('eClave2').value = $('eCodigo').value = '';
+  modoEntrar(paso.paso === 'clave' ? 'entrar' : 'primera');
+  setTimeout(() => (paso.paso === 'clave' ? $('eClave') : paso.enviado ? $('eCodigo') : $('olvido')).focus(), 50);
+}
+$('olvido').onclick = async () => {
+  if (modo === 'primera') {
+    $('olvido').disabled = true;
+    try { await seguirCon($('eEmail').value.trim()); if (paso.enviado) { $('okEntrar').textContent = 'Te hemos enviado otro código.'; $('okEntrar').classList.remove('oculto'); } }
+    catch (er) { $('errEntrar').textContent = er.message; }
+    $('olvido').disabled = false;
+    return;
+  }
+  modoEntrar(modo === 'olvido' ? 'correo' : 'olvido');
+};
+$('otroCorreo').onclick = () => { paso = {}; $('eClave').value = $('eClave2').value = $('eCodigo').value = ''; modoEntrar('correo'); $('eEmail').focus(); };
 $('formEntrar').onsubmit = async e => {
   e.preventDefault();
-  const email = $('eEmail').value.trim(), clave = $('eClave').value;
+  const email = $('eEmail').value.trim(), clave = $('eClave').value, codigo = $('eCodigo').value.replace(/\D/g, '');
   const err = t => { $('errEntrar').textContent = t; };
   err('');
   if (modo !== 'clave' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return err('Revisa el correo.'), $('eEmail').focus();
   if (modo === 'entrar' && !clave) return err('Escribe tu contraseña.'), $('eClave').focus();
-  if (modo === 'clave' && clave.length < 8) return err('La contraseña tiene que tener 8 caracteres o más.'), $('eClave').focus();
-  if (modo === 'clave' && clave !== $('eClave2').value) return err('Las dos contraseñas no coinciden.'), $('eClave2').focus();
+  if (modo === 'primera' && codigo.length !== 6) return err('Escribe el código de 6 cifras que te hemos enviado.'), $('eCodigo').focus();
+  if (['clave', 'primera'].includes(modo) && clave.length < 8) return err('La contraseña tiene que tener 8 caracteres o más.'), $('eClave').focus();
+  if (['clave', 'primera'].includes(modo) && clave !== $('eClave2').value) return err('Las dos contraseñas no coinciden.'), $('eClave2').focus();
   $('btnEntrar').disabled = true;
   try {
+    if (modo === 'correo') {
+      await seguirCon(email);
+      $('btnEntrar').disabled = false;
+      return;
+    }
+    if (modo === 'primera') {
+      await api('/api/cuenta/primera', { email, codigo, clave });
+      location.replace(token ? `/t/${token}` : '/' + (location.hash || ''));
+      return;
+    }
     if (modo === 'olvido') {
       await api('/api/cuenta/olvido', { email });
       $('okEntrar').textContent = `Si ${email} tiene cuenta, te llegará un correo en unos minutos con el enlace para poner una contraseña nueva.`;
