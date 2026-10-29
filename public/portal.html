@@ -826,7 +826,8 @@ function iniciarTicket() {
   const q = new URLSearchParams(location.search);
   // Las cinco caras de la valoración (1 Muy insatisfecho … 5 Muy satisfecho), como en el formulario
   // de valoraciones de siempre. Se guardan como 2, 4, 6, 8 y 10 en la escala del NPS: así la media
-  // sobre 5 de las métricas es la nota de las caras. Los enlaces del correo de cierre traen ?nps=0..10.
+  // sobre 5 de las métricas es la nota de las caras. Los enlaces del correo de cierre traen ?nps=2, 4, 6, 8 o 10
+  // (los de antes, 0..10: se pasan a la cara más cercana).
   const OJOS = '<circle cx="9" cy="9.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="15" cy="9.5" r="0.8" fill="currentColor" stroke="none"/>';
   const CARAS = [
     [2, 'f1', 'Muy<br>insatisfecho', '<path d="M8 16s1.5-2.5 4-2.5 4 2.5 4 2.5"/><path d="M9 9l-1.5-1"/><path d="M15 9l1.5-1"/>'],

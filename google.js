@@ -62,6 +62,8 @@ const estado = { ok: null, ultimo: null, error: null, meet: null };
 const marcar = (ok, error) => Object.assign(estado, { ok, error: error || null, ultimo: new Date().toISOString() });
 // Para el cliente: solo se ofrece reservar si Google está puesto y la última llamada no falló.
 const disponible = () => activo() && estado.ok !== false;
+// ¿Puede Meet decir quién hay en la sala? Con «Continuar con Google», si se dio el permiso de Meet.
+const veSala = () => activo() && (!modoOAuth() || !!conexion?.alcances?.some(a => a.includes('meetings')));
 
 // Comprobación al arrancar y cada 10 minutos, para que un fallo no deje al cliente
 // con un «Reservar» que no funciona, y para que se vea en Canales.
@@ -185,12 +187,21 @@ async function cargar() {
   }
 }
 
-async function api(url, opciones = {}) {
+// «tipo» es 'calendario' o 'meet'. 29/10/2026: que algo no exista (404) no es que Google falle, y lo de Meet
+// (un permiso opcional) no tumba el calendario. Antes, cualquiera de los dos dejaba al cliente diez minutos
+// sin reservas con enlace.
+async function api(url, opciones = {}, tipo = 'calendario') {
   const r = await fetch(url, { ...opciones, headers: { Authorization: `Bearer ${await accessToken()}`, 'Content-Type': 'application/json', ...(opciones.headers || {}) } });
   if (r.status === 204) return {};
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) { const e = d.error?.message || `Google respondió ${r.status}`; marcar(false, e); throw Object.assign(new Error(e), { status: r.status === 404 ? 404 : 502 }); }
-  marcar(true);
+  if (!r.ok) {
+    const e = d.error?.message || `Google respondió ${r.status}`;
+    if (tipo === 'meet') Object.assign(estado, { meet: false, errorMeet: e });
+    else if (r.status !== 404) marcar(false, e);
+    throw Object.assign(new Error(e), { status: [403, 404].includes(r.status) ? r.status : 502 });
+  }
+  if (tipo === 'meet') Object.assign(estado, { meet: true, errorMeet: null });
+  else marcar(true);
   return d;
 }
 
@@ -230,26 +241,27 @@ async function huecos({ dias = 7, minutos = Number(env.CITA_MIN || 30), antelaci
   const [hIni, hFin] = (env.HORARIO_LABORAL || '09:00-18:00').split('-').map(h => { const [a, b] = h.split(':').map(Number); return a * 60 + (b || 0); });
   const ahora = new Date();
   const desde = new Date(ahora.getTime() + antelacionH * 3600000);
-  const hasta = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + dias + 3);
+  // Primero los días laborables, y el calendario se mira hasta el último (29/10/2026: contando viernes o
+  // sábado se quedaba un día corto y ese día salían huecos sin mirar el calendario).
+  const laborables = [];
+  for (const d = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()); laborables.length < dias; d.setDate(d.getDate() + 1)) if (d.getDay() % 6) laborables.push(new Date(d));
+  if (!laborables.length) return [];
+  const hasta = new Date(laborables.at(-1));
+  hasta.setDate(hasta.getDate() + 1);
   const fb = sinCalendario ? {} : await api(`${URLS.calendar}/freeBusy`, {
     method: 'POST', body: JSON.stringify({ timeMin: desde.toISOString(), timeMax: hasta.toISOString(), timeZone: TZ, items: [{ id: 'primary' }] }),
   });
   const ocupado = (Object.values(fb.calendars || {})[0]?.busy || []).map(b => [new Date(b.start), new Date(b.end)])
     .concat(ocupadoExtra.map(([a, b]) => [new Date(a), new Date(b)]));
   const lista = [];
-  const d = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
-  let laborables = 0;
-  while (laborables < dias && lista.length < 200) {
-    if (d.getDay() % 6) {
-      laborables++;
-      for (let m = hIni; m + minutos <= hFin; m += minutos) {
-        const i = new Date(d.getTime() + m * 60000), f = new Date(i.getTime() + minutos * 60000);
-        if (i < desde) continue;
-        if (ocupado.some(([a, b]) => i < b && f > a)) continue;
-        lista.push({ inicio: local(i), fin: local(f) });
-      }
+  for (const d of laborables) {
+    if (lista.length >= 200) break;
+    for (let m = hIni; m + minutos <= hFin; m += minutos) {
+      const i = new Date(d.getTime() + m * 60000), f = new Date(i.getTime() + minutos * 60000);
+      if (i < desde) continue;
+      if (ocupado.some(([a, b]) => i < b && f > a)) continue;
+      lista.push({ inicio: local(i), fin: local(f) });
     }
-    d.setDate(d.getDate() + 1);
   }
   return lista;
 }
@@ -259,7 +271,7 @@ async function todas(url, campo) {
   const l = [];
   let pagina = '';
   do {
-    const d = await api(`${url}?pageSize=250${pagina ? '&pageToken=' + encodeURIComponent(pagina) : ''}`);
+    const d = await api(`${url}?pageSize=250${pagina ? '&pageToken=' + encodeURIComponent(pagina) : ''}`, {}, 'meet');
     l.push(...(d[campo] || []));
     pagina = d.nextPageToken;
   } while (pagina);
@@ -295,8 +307,7 @@ function tramosJuntos(personas) {
 // terminadas con ese código desde el inicio previsto. 0 minutos si nadie más entró.
 async function duracionReal(codigo, desdeLocal) {
   const filtro = encodeURIComponent(`space.meeting_code = "${codigo}"`);
-  const d = await api(`${URLS.meet}/conferenceRecords?filter=${filtro}`);
-  estado.meet = true;
+  const d = await api(`${URLS.meet}/conferenceRecords?filter=${filtro}`, {}, 'meet');
   const desde = new Date(desdeLocal).getTime() - 6 * 3600000;
   const terminadas = (d.conferenceRecords || []).filter(c => c.endTime && new Date(c.startTime).getTime() >= desde);
   if (!terminadas.length) return null;
@@ -309,8 +320,7 @@ async function duracionReal(codigo, desdeLocal) {
 
 // Quién está ahora en la sala, para que el cronómetro no corra mientras el técnico espera solo.
 async function sala(codigo) {
-  const d = await api(`${URLS.meet}/conferenceRecords?filter=${encodeURIComponent(`space.meeting_code = "${codigo}"`)}`);
-  estado.meet = true;
+  const d = await api(`${URLS.meet}/conferenceRecords?filter=${encodeURIComponent(`space.meeting_code = "${codigo}"`)}`, {}, 'meet');
   const abierta = (d.conferenceRecords || []).find(c => !c.endTime);
   if (!abierta) return { personas: 0, juntosDesde: null };
   const dentro = (await todas(`${URLS.meet}/${abierta.name}/participants`, 'participants')).filter(p => !p.latestEndTime);
@@ -351,6 +361,6 @@ const resumen = () => {
 };
 
 module.exports = {
-  activo, disponible, vigilar, crearReunion, anularReunion, huecos, duracionReal, sala, tramosJuntos, probar, resumen, local, organizador,
+  activo, disponible, veSala, vigilar, crearReunion, anularReunion, huecos, duracionReal, sala, tramosJuntos, probar, resumen, local, organizador,
   modoOAuth, urlConectar, intercambiar, conPermisoCalendario, guardarConexion, completarConexion, desconectar, cargar,
 };

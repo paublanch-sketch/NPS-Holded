@@ -188,24 +188,25 @@ function plantilla({ titulo, cuerpo, boton, extra = '', pie }) {
   return `<!doctype html><html lang="es"><body style="margin:0;padding:0;background:#F9F9F8">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F9F9F8;padding:28px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e6e5e1;border-radius:14px;font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;color:#1C1C1C;font-size:15px">
-<tr><td style="padding:20px 28px;border-bottom:1px solid #e6e5e1;font-weight:800;letter-spacing:3px;font-size:13px">INTERACTIVOS<span style="color:#C81D25">.</span> <span style="font-weight:500;letter-spacing:0;color:#5B616A;margin-left:8px">Soporte Holded</span></td></tr>
+<tr><td style="padding:20px 28px;border-bottom:1px solid #e6e5e1;font-weight:800;letter-spacing:3px;font-size:13px">INTERACTIVOS<span style="color:#2563eb">.</span> <span style="font-weight:500;letter-spacing:0;color:#5B616A;margin-left:8px">Soporte Holded</span></td></tr>
 <tr><td style="padding:26px 28px 8px">
 <h1 style="margin:0 0 16px;font-size:20px;line-height:1.3">${h(titulo)}</h1>
 ${cuerpo}
-${boton ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 18px"><tr><td style="background:#C81D25;border-radius:10px"><a href="${h(boton.url)}" style="display:inline-block;padding:12px 20px;color:#ffffff;text-decoration:none;font-weight:600">${h(boton.texto)}</a></td></tr></table>` : ''}
+${boton ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 18px"><tr><td style="background:#2563eb;border-radius:10px"><a href="${h(boton.url)}" style="display:inline-block;padding:12px 20px;color:#ffffff;text-decoration:none;font-weight:600">${h(boton.texto)}</a></td></tr></table>` : ''}
 ${extra}
 </td></tr>
 <tr><td style="padding:16px 28px 22px;border-top:1px solid #e6e5e1;color:#5B616A;font-size:12px;line-height:1.5">${pie || 'Puedes responder a este correo para añadir información a tu incidencia.'}<br>Interactivos · Holded Solution Partner Platinum</td></tr>
 </table></td></tr></table></body></html>`;
 }
 
-// Escala del 0 al 10 con enlaces: abre la incidencia con la nota ya marcada (no la guarda
-// al abrir el enlace, porque los antivirus del correo visitan los enlaces solos).
+// Las cinco caras del portal (29/10/2026; antes, del 0 al 10), con enlaces: abren la incidencia con la
+// cara ya marcada (no la guarda al abrir el enlace, porque los antivirus del correo visitan los enlaces
+// solos). Se guardan como 2, 4, 6, 8 y 10, igual que en el portal.
+const CARAS = [[2, '😞', 'Muy insatisfecho'], [4, '🙁', 'Insatisfecho'], [6, '😐', 'Neutral'], [8, '🙂', 'Satisfecho'], [10, '😄', 'Muy satisfecho']];
 function escalaNps(t) {
   if (!URL_PUBLICA) return '';
-  const celdas = Array.from({ length: 11 }, (_, n) => `<td style="padding:2px"><a href="${h(enlace(t))}?nps=${n}" style="display:block;width:34px;line-height:34px;text-align:center;border:1px solid #d9d8d3;border-radius:8px;color:#1C1C1C;text-decoration:none;font-weight:600">${n}</a></td>`).join('');
-  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:4px 0 6px"><tr>${celdas}</tr></table>
-<table role="presentation" width="100%" style="font-size:12px;color:#5B616A;margin-bottom:16px"><tr><td>Nada probable</td><td align="right">Muy probable</td></tr></table>`;
+  const celdas = CARAS.map(([n, cara, nombre]) => `<td align="center" width="20%" style="padding:2px"><a href="${h(enlace(t))}?nps=${n}" style="display:block;padding:8px 2px;border:1px solid #d9d8d3;border-radius:10px;color:#1C1C1C;text-decoration:none;font-size:12px;line-height:1.3"><span style="display:block;font-size:26px;line-height:1.2">${cara}</span>${nombre}</a></td>`).join('');
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 16px"><tr>${celdas}</tr></table>`;
 }
 
 // Sin número de ticket: las respuestas del cliente se enlazan por el Message-ID (In-Reply-To).
@@ -241,7 +242,7 @@ function correoPara(t, evento, b) {
     };
     case 'cerrar': return {
       titulo: `Hemos resuelto tu incidencia ${tituloDe(t)}`,
-      texto: `Hola${nombre}:\n\nDamos por resuelta tu incidencia. Si vuelve a pasar, responde a este correo y la retomamos.\n\n¿Nos ayudas con 10 segundos? Del 0 al 10, ¿qué probabilidad hay de que nos recomiendes?${URL_PUBLICA ? '' : ' Responde a este correo solo con el número.'}`,
+      texto: `Hola${nombre}:\n\nDamos por resuelta tu incidencia. Si vuelve a pasar, responde a este correo y la retomamos.\n\n¿Cómo valoras el último servicio que te hemos ofrecido?${URL_PUBLICA ? '' : ' Responde a este correo con un número del 1 (muy insatisfecho) al 5 (muy satisfecho).'}`,
       extra: escalaNps(t),
     };
     case 'cita': case 'confirmarCita': return {
@@ -417,6 +418,8 @@ async function revisar(b) {
   return b.estado.imap;
 }
 
+// Correos que han fallado al convertirse en ticket y cuántas veces (se reintentan hasta tres).
+const reintentos = new Map();
 // Lee lo nuevo de una carpeta. Si se pidió el historial, los correos desde esa fecha entran una vez
 // como tickets cerrados «del historial»: sin avisos al cliente y fuera de las métricas.
 async function leerCarpeta(b, c, carpeta, soloRespuestas) {
@@ -466,12 +469,18 @@ async function leerCarpeta(b, c, carpeta, soloRespuestas) {
     if (pendientes.length) for await (const m of c.fetch(pendientes.join(','), { uid: true, source: true }, { uid: true })) nuevos.push(m);
     if (ultimo > marca.uid) for await (const m of c.fetch(`${marca.uid + 1}:*`, { uid: true, source: true }, { uid: true })) if (m.uid > marca.uid) nuevos.push(m);
     for (const m of nuevos) {
-      // Un correo que falla no bloquea los demás: se apunta en el log y se sigue.
       try {
         const p = await simpleParser(m.source);
         const r = aTicket(b, p, m.uid);
         if (r && (!soloRespuestas || r.equipo || await deUnaIncidencia(p, r))) { await (r.equipo ? tickets.respuestaEquipo(r) : tickets.recibir(r)); n++; }
-      } catch (e) { console.error(`Correo ${b.usuario} UID ${m.uid}:`, e.message); }
+      } catch (e) {
+        // 29/10/2026: un fallo pasajero (la base de datos, la red) ya no pierde el correo: se para aquí y se
+        // vuelve a intentar en la siguiente revisión. A la tercera vez se salta, para no bloquear los demás.
+        const k = `${b.usuario}:${carpeta}:${validez}:${m.uid}`, vez = (reintentos.get(k) || 0) + 1;
+        reintentos.set(k, vez);
+        console.error(`Correo ${b.usuario} UID ${m.uid} (intento ${vez}):`, e.message);
+        if (vez < 3 && m.uid > marca.uid) break;
+      }
       if (m.uid > marca.uid) { marca.uid = m.uid; await ajustes.guardar(marca); }
     }
   } finally { lock.release(); }
@@ -560,7 +569,10 @@ async function limpiarUnaVez() {
     if (hecha) { b.estado.limpieza = hecha; continue; }
     try {
       const { lista, etiqueta, dentro } = await fueraDeEtiqueta(b);
-      if (etiqueta && !dentro && lista.length) throw new Error(`hay ${etiqueta} correos en «${b.carpeta}» pero ningún ticket casa con ellos`);
+      // Etiqueta vacía (recién creada, por ejemplo): no hay con qué comparar y se archivaría todo. Se espera
+      // a que tenga correos (29/10/2026).
+      if (!etiqueta) continue;
+      if (!dentro && lista.length) throw new Error(`hay ${etiqueta} correos en «${b.carpeta}» pero ningún ticket casa con ellos`);
       const ids = await tickets.archivar(lista.map(t => t.id), `${FUERA} «${b.carpeta}»`);
       b.estado.limpieza = await ajustes.guardar({ clave: LIMPIEZA, usuario: b.usuario, carpeta: b.carpeta, cuando: new Date().toISOString(), ids, dentro });
       console.log(`Correo ${b.usuario}: limpieza hecha, ${ids.length} tickets de correo fuera de «${b.carpeta}» archivados y ${dentro} que sí están en ella.`);

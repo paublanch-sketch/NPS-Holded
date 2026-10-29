@@ -153,8 +153,11 @@ async function recibir(r) {
     return cerrado;
   }
   // Un número solo es la nota si se le pidió: no tras un cierre automático ni una llamada apuntada.
+  // 29/10/2026: se pregunta del 1 al 5, como las caras del portal, y se guarda como 2, 4, 6, 8 o 10. Un 0 o
+  // del 6 al 10 es de la escala de antes (0–10) y se guarda tal cual.
   if (cerrado && recienCerrado(cerrado) && cerrado.nps == null && !cerrado.cierreAuto && !cerrado.llamada && /^\s*(10|[0-9])\s*$/.test(texto)) {
-    cerrado.nps = Number(texto);
+    const n = Number(texto);
+    cerrado.nps = n >= 1 && n <= 5 ? n * 2 : n;
     cerrado.esperaMejora = ahora(); // desde cuándo: vale MEJORA_H horas
     cerrado.mensajes.push(msg);
     await store.guardar(cerrado);
@@ -336,15 +339,12 @@ const ACCIONES = {
     if (t.estado === 'Nuevo' || t.estado === 'Pendiente cliente') t.estado = 'En curso';
   },
   parar(t) { pararSesion(t); },
-  // «Ya estamos los dos»: cuando Meet no puede decir quién hay en la sala, el técnico pone en marcha el tiempo.
-  juntos(t) {
-    const s = activa(t);
-    if (s?.tipo === 'video' && s.esperando) juntar(s, ahora());
-  },
   video(t, b) {
     pararSesion(t);
     t.video = b.enlace;
-    t.sesiones.push({ tipo: 'video', tecnico: b.tecnico, inicio: ahora(), fin: null, codigo: b.codigo || null, esperando: true });
+    // Espera a los dos solo si Meet puede decir quién hay en la sala: la sala la ha creado nuestro Google
+    // (eventoId) y hay permiso de Meet. Si no (enlace pegado, sin Google), cuenta desde que entra el técnico.
+    t.sesiones.push({ tipo: 'video', tecnico: b.tecnico, inicio: ahora(), fin: null, codigo: b.codigo || null, ...(b.eventoId && google.veSala() ? { esperando: true } : {}) });
     // También como cita, para que Meet diga después cuánto duró de verdad.
     if (b.codigo) (t.citas ||= []).push({ id: Date.now(), inicio: ahora(), fin: ahora(), enlace: b.enlace, codigo: b.codigo, eventoId: b.eventoId || null, tecnico: b.tecnico, origen: 'ahora', estado: 'prevista' });
     t.mensajes.push({ de: 'sistema', texto: `${b.tecnico || 'El técnico'} te invita a una videollamada de Google Meet.`, enlace: t.video, fecha: ahora() });
@@ -572,7 +572,9 @@ const PREVIOS = {
   },
   async anularCita(t, b) {
     const c = (t.citas || []).find(x => x.id === Number(b.cita));
-    if (c?.eventoId && google.activo()) await google.anularReunion(c.eventoId).catch(e => { if (e.status !== 404) throw e; });
+    // Una ya hecha o anulada no se toca en Google (antes se borraba el evento y luego daba el error).
+    if (!c || !['prevista', 'pedida'].includes(c.estado)) throw errorUso('Esa videollamada ya no está prevista');
+    if (c.eventoId && google.activo()) await google.anularReunion(c.eventoId).catch(e => { if (e.status !== 404) throw e; });
   },
 };
 
@@ -694,6 +696,8 @@ async function rutasConsola(req, res, ruta, equipo) {
   // teléfono, resuelta en la llamada (o abierta, si queda algo pendiente), sin avisos al cliente.
   if (req.method === 'POST' && ruta === '/api/llamadas') {
     const b = quien(await leerCuerpo(req));
+    // Se comprueba la llamada (minutos y texto) antes de crear nada: antes, con un error quedaba un ticket vacío.
+    ACCIONES.llamada({ sesiones: [], mensajes: [], estado: 'Nuevo' }, b);
     const t = await crear({ ...b, canal: 'Teléfono', descripcion: b.texto, asunto: 'Llamada de teléfono', llamada: true });
     t.llamada = true;
     ACCIONES.llamada(t, b);
@@ -709,7 +713,15 @@ async function rutasConsola(req, res, ruta, equipo) {
     const s = t && activa(t);
     if (!s || s.tipo !== 'video' || !s.codigo || !google.activo()) return json(res, { personas: null }), true;
     let r;
-    try { r = await google.sala(s.codigo); } catch (e) { return json(res, { personas: null, error: e.message }), true; }
+    try { r = await google.sala(s.codigo); } catch (e) {
+      // Meet no deja ver la sala (sin permiso): el tiempo cuenta desde que entró el técnico.
+      if (e.status === 403 && s.esperando) {
+        const f = await porId(m[1]) || t, s2 = activa(f);
+        if (s2?.codigo === s.codigo && s2.esperando) { juntar(s2, s2.inicio); await store.guardar(f); }
+        return json(res, { personas: null, error: e.message, ticket: await vistaPanel(f) }), true;
+      }
+      return json(res, { personas: null, error: e.message }), true;
+    }
     let f = t;
     // Hasta que Meet ve a los dos dentro, el tiempo no cuenta; desde entonces, cuenta desde que entró el segundo.
     if (s.esperando && r.juntosDesde) {

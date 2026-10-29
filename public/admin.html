@@ -1281,7 +1281,6 @@ function pintarDetalle(t) {
           : t.activa ? `${t.activa.tipo === 'video' ? 'Videollamada con el cliente' : 'Cronómetro en marcha'}${t.activa.tecnico ? ' · ' + esc(t.activa.tecnico) : ''}` : `Tiempo de atención del ticket · ${horasTxt(horasCliente)} con el cliente`}</div>
         ${cerrado ? '' : `<div class="botones tiempo">
           ${t.activa ? `<button class="boton rojo" data-a="parar">${ICO_BJ.pausa}${t.activa.esperando ? 'Terminar' : 'Pausar'}</button>` : `<button class="boton verde" data-a="iniciar">${ICO_BJ.play}Iniciar</button>`}
-          ${t.activa?.esperando ? `<button class="boton verde" data-a="juntos" title="Si Meet no avisa solo de que el cliente ha entrado">${ICO_BJ.play}Ya estamos los dos</button>` : ''}
           <button class="boton sec" data-t="15">+15m</button><button class="boton sec" data-t="30">+30m</button><button class="boton sec" data-t="60">+1h</button>
         </div>
         <button type="button" class="boton sec bj-llamada" data-t="llamada">${ICO_BJ.tel}Apuntar llamada</button>
@@ -1475,11 +1474,12 @@ function vigilarSala(t) {
   const mirar = async () => {
     let r;
     try { r = await api(`/api/tickets/${t.id}/sala`); } catch { return; }
-    if (r.personas == null || selActual !== t.id) return;
+    if (selActual !== t.id) return;
     if (r.ticket) {
       tickets = tickets.map(x => x.id === r.ticket.id ? r.ticket : x);
       if (firmaDe(r.ticket) !== firmaDet) { firmaDet = firmaDe(r.ticket); return pintarDetalle(r.ticket); }
     }
+    if (r.personas == null) return;
     const sub = document.querySelector('.reloj-sub');
     if (sub && !r.juntos) sub.textContent = r.personas ? 'Estás tú en la sala: el tiempo empieza cuando entre el cliente' : 'Esperando a que entréis los dos: el tiempo aún no cuenta';
   };

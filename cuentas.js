@@ -29,6 +29,8 @@ function claveBuena(clave, guardado) {
   const otra = crypto.scryptSync(String(clave), Buffer.from(sal, 'hex'), 32);
   return crypto.timingSafeEqual(otra, Buffer.from(hash, 'hex'));
 }
+// Para un correo sin cuenta se compara igual con esta: tarda lo mismo y no delata que no existe.
+const HASH_FALSO = hashClave(crypto.randomBytes(12).toString('hex'));
 
 // Sesión: id de la cuenta y su «versión» (sube al cambiar la contraseña o quitar el acceso,
 // y así se cierran las sesiones abiertas en otros dispositivos).
@@ -153,7 +155,7 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
     const email = normal(b.email);
     if (frenar(req, 'entrar:' + email, 8, 15) || frenar(req, 'entrar-cuenta:' + email, 30, 15, { porIp: false })) return json(res, { error: 'Demasiados intentos. Prueba dentro de un rato.' }, 429), true;
     const c = (await cuentas.todos()).find(x => x.email === email && x.activa !== false && x.hash);
-    if (!c || !claveBuena(String(b.clave || ''), c.hash)) return json(res, { error: 'El correo o la contraseña no son correctos.' }, 401), true;
+    if (!claveBuena(String(b.clave || ''), c?.hash || HASH_FALSO) || !c) return json(res, { error: 'El correo o la contraseña no son correctos. Si aún no tienes acceso al portal, pídeselo a tu técnico de Interactivos.' }, 401), true;
     c.ultimoAcceso = new Date().toISOString();
     await cuentas.guardar(c);
     abrirSesion(req, res, c);
@@ -165,10 +167,11 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
     const email = normal((await leerCuerpo(req)).email);
     if (frenar(req, 'inicio', 20, 15)) return json(res, { error: 'Demasiados intentos. Prueba dentro de un rato.' }, 429), true;
     const c = (await cuentas.todos()).find(x => x.email === email && x.activa !== false);
-    if (!c) return json(res, { error: 'Este correo no tiene acceso al portal. Pídeselo a tu técnico de Interactivos.' }, 404), true;
-    if (c.hash) return json(res, { paso: 'clave', nombre: c.nombre || '' }), true;
+    // 29/10/2026: sin decir si el correo tiene acceso ni de quién es (antes, «no tiene acceso» y el nombre):
+    // sin cuenta se pide la contraseña como a cualquiera, y al entrar sale «correo o contraseña incorrectos».
+    if (!c || c.hash) return json(res, { paso: 'clave' }), true;
     if (frenar(req, 'codigo:' + email, 5, 15, { porIp: false })) return json(res, { error: 'Ya te hemos enviado varios códigos. Prueba dentro de un rato.' }, 429), true;
-    return json(res, { paso: 'codigo', nombre: c.nombre || '', minutos: MIN_CODIGO, ...(await enviarCodigo(c)) }), true;
+    return json(res, { paso: 'codigo', minutos: MIN_CODIGO, ...(await enviarCodigo(c)) }), true;
   }
   if (req.method === 'POST' && ruta === '/api/cuenta/primera') {
     const b = await leerCuerpo(req);

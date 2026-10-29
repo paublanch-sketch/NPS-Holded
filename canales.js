@@ -117,7 +117,7 @@ const PLANTILLAS_WA = [
   { nombre: 'soporte_videollamada', cuerpo: 'Te invitamos a una videollamada de Google Meet por tu incidencia «{{1}}», con {{2}}.\n\nEnlace: {{3}}\n\nSe abre en el navegador o en la app de Meet.', ejemplo: ['No me deja cerrar el ejercicio', 'Blanch', 'https://meet.google.com/abc-defg-hij'] },
   { nombre: 'soporte_cita', cuerpo: 'Tu videollamada de Google Meet por la incidencia «{{1}}» queda agendada para el {{2}}.\n\nEnlace: {{3}}\n\nSi no puedes asistir, escríbenos por aquí.', ejemplo: ['No me deja cerrar el ejercicio', 'martes 28 de octubre a las 10:00', 'https://meet.google.com/abc-defg-hij'] },
   { nombre: 'soporte_cita_anulada', cuerpo: 'Hemos anulado la videollamada prevista por tu incidencia «{{1}}». Si necesitas otra, escríbenos por aquí.', ejemplo: ['No me deja cerrar el ejercicio'] },
-  { nombre: 'soporte_cierre', cuerpo: 'Hemos cerrado tu incidencia «{{1}}». Del 0 al 10, ¿qué probabilidad hay de que nos recomiendes? Responde solo con el número.', ejemplo: ['No me deja cerrar el ejercicio'] },
+  { nombre: 'soporte_cierre', cuerpo: 'Hemos cerrado tu incidencia «{{1}}». ¿Cómo valoras el último servicio que te hemos ofrecido? Responde con un número del 1 (muy insatisfecho) al 5 (muy satisfecho).', ejemplo: ['No me deja cerrar el ejercicio'] },
 ];
 
 // Meta no admite saltos de línea, tabuladores ni más de cuatro espacios seguidos
@@ -152,7 +152,7 @@ function mensajeWhatsApp(t, evento, b, ventana) {
       ? libre('Hemos anulado la videollamada prevista. Si necesitas otra, escríbenos por aquí.')
       : plantilla('soporte_cita_anulada', tickets.tituloCliente(t));
     case 'cerrar': return ventana
-      ? libre(`Hemos cerrado tu incidencia «${tickets.tituloCliente(t)}». Del 0 al 10, ¿qué probabilidad hay de que nos recomiendes? Responde solo con el número.`)
+      ? libre(`Hemos cerrado tu incidencia «${tickets.tituloCliente(t)}». ¿Cómo valoras el último servicio que te hemos ofrecido? Responde con un número del 1 (muy insatisfecho) al 5 (muy satisfecho).`)
       : plantilla('soporte_cierre', tickets.tituloCliente(t));
     // Sin plantilla aprobada: solo si aún está abierta la ventana de 24 h.
     case 'cierreAuto': return ventana ? libre(`Hemos cerrado tu incidencia «${tickets.tituloCliente(t)}» porque llevaba ${b.dias} días esperando tu respuesta. Si aún lo necesitas, escríbenos por aquí y la volvemos a abrir.`) : null;
