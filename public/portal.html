@@ -160,36 +160,109 @@
   .seguro svg { width: 16px; height: 16px; }
   .error { color: var(--error); font-size: 14px; margin-top: 12px; min-height: 1em; font-weight: 500; }
 
-  /* Seguimiento de una incidencia */
-  .est { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 99px; white-space: nowrap; text-align: center; }
-  .est.abierta { background: var(--acento-f); color: var(--acento); }
-  .est.curso { background: var(--azul-f); color: var(--azul); }
-  .est.espera { background: var(--acento); color: #fff; }
+  /* Seguimiento de una incidencia (29/10/2026, el diseño que mandó el usuario): cabecera con el
+     icono del tipo, el estado y tres pasos; el chat en su tarjeta, con la videollamada al lado de
+     donde se escribe para que el cliente también la pueda pedir. */
+  .ticket { max-width: 960px; margin: 0 auto; }
+  .volver { display: inline-flex; gap: 6px; align-items: center; margin-bottom: 14px; color: var(--bruma); text-decoration: none; font-size: 13px; font-weight: 500; }
+  .volver:hover { color: var(--acento); }
+  .ticket .tarjeta { padding: 22px 26px; }
+  .t-cab { display: flex; gap: 16px; align-items: center; }
+  .t-ico { width: 52px; height: 52px; border-radius: 14px; background: var(--acento-f); color: var(--acento); display: grid; place-items: center; flex: none; }
+  .t-ico svg { width: 24px; height: 24px; }
+  .t-tit { flex: 1; min-width: 0; }
+  .t-cab h1 { font-size: 21px; margin: 0 0 2px; letter-spacing: -.01em; line-height: 1.25; }
+  .t-cab p { margin: 0; color: var(--bruma); font-size: 13px; }
+  .est { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 99px; white-space: nowrap; border: 1px solid transparent; align-self: flex-start; }
+  .est svg { width: 14px; height: 14px; }
+  .est.abierta, .est.curso { background: var(--azul-f); color: var(--azul); }
+  .est.espera { background: var(--acento-f); color: var(--acento); border-color: var(--acento-l); }
   .est.resuelta { background: var(--ok-f); color: var(--ok); }
-  .ticket { max-width: 800px; margin: 0 auto; }
-  .volver { display: inline-flex; gap: 6px; align-items: center; margin-bottom: 16px; color: var(--bruma); text-decoration: none; font-size: 14px; }
-  .ticket .tarjeta { padding: 24px; }
-  .t-cab { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
-  .t-cab h1 { font-size: 24px; margin: 0 0 4px; letter-spacing: -.01em; }
-  .t-cab p { margin: 0; color: var(--bruma); }
-  .pasos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 22px 0 4px; }
-  .espera { margin-top: 18px; padding: 18px 20px; border-radius: 14px; background: var(--acento); color: #fff; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 10px 24px rgba(37, 99, 235, .25); }
-  .espera b { font-size: 20px; letter-spacing: -.01em; }
-  .espera span { font-size: 14px; opacity: .9; }
-  .pasos div { font-size: 12px; font-weight: 600; color: var(--muted); }
-  .pasos div::before { content: ""; display: block; height: 6px; border-radius: 6px; background: var(--linea); margin-bottom: 8px; }
-  .pasos div.on { color: var(--pizarra); }
-  .pasos div.on::before { background: var(--acento); }
-  .video { display: flex; gap: 14px; align-items: center; justify-content: space-between; background: var(--ok-f); border-radius: 12px; padding: 14px 16px; margin-top: 18px; flex-wrap: wrap; }
-  .chat { display: flex; flex-direction: column; gap: 12px; margin: 22px 0; }
-  .cita { margin-top: 16px; }
-  .cita .tarjeta { padding: 20px 22px; }
-  .cita h2 { font-size: 17px; margin: 0 0 4px; display: flex; gap: 10px; align-items: center; }
-  .cita h2 svg { color: var(--acento); }
-  .cita p { margin: 0; color: var(--bruma); font-size: 14px; }
-  .cita .fila-cita { display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-  .cita .cuando { font-size: 16px; font-weight: 700; margin-top: 6px; }
-  .dias { display: flex; gap: 6px; overflow-x: auto; margin: 14px 0 10px; padding-bottom: 4px; scrollbar-width: thin; }
+  .pasos { list-style: none; margin: 22px 4px 0; padding: 0; display: flex; justify-content: space-between; position: relative; --hecho: 0%; }
+  .pasos::before, .pasos::after { content: ""; position: absolute; top: 9px; left: 9px; height: 2px; border-radius: 2px; }
+  .pasos::before { right: 9px; background: var(--linea); }
+  .pasos::after { width: calc((100% - 18px) * var(--hecho)); background: var(--acento); transition: width .3s; }
+  .pasos li { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .pasos li:nth-child(2) { align-items: center; } .pasos li:last-child { align-items: flex-end; }
+  .pasos li i { width: 20px; height: 20px; border-radius: 50%; background: var(--blanco); border: 2px solid var(--linea2); display: grid; place-items: center; }
+  .pasos li i svg { width: 12px; height: 12px; stroke-width: 3; color: #fff; }
+  .pasos li.hecho, .pasos li.ahora { color: var(--pizarra); }
+  .pasos li.hecho i { background: var(--acento); border-color: var(--acento); }
+  .pasos li.ahora i { background: var(--acento); border-color: var(--acento); box-shadow: 0 0 0 4px var(--acento-f); }
+  .pasos li:not(.hecho) i svg { display: none; }
+  .pasos li.ahora i::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #fff; }
+
+  .conversa { margin-top: 16px; padding: 0 !important; overflow: hidden; }
+  .conv-cab { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--linea); }
+  .conv-av { width: 38px; height: 38px; border-radius: 50%; background: var(--acento-f); color: var(--acento); display: grid; place-items: center; flex: none; }
+  .conv-av svg { width: 19px; height: 19px; }
+  .conv-cab b { display: block; font-size: 14px; }
+  .conv-cab small { display: block; font-size: 12px; color: var(--bruma); }
+  .conv-menu { margin-left: auto; position: relative; }
+  .tres { border: 0; background: none; color: var(--bruma); padding: 6px 8px; border-radius: 8px; cursor: pointer; }
+  .tres:hover { background: var(--cal); color: var(--pizarra); }
+  .menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 210px; background: var(--blanco); border: 1px solid var(--linea); border-radius: 12px; box-shadow: var(--sombra); padding: 6px; display: flex; flex-direction: column; }
+  .menu button, .menu a { text-align: left; border: 0; background: none; padding: 9px 12px; border-radius: 8px; font-size: 14px; color: var(--pizarra); cursor: pointer; text-decoration: none; display: flex; gap: 10px; align-items: center; }
+  .menu button:hover, .menu a:hover { background: var(--cal); }
+  .menu svg { width: 17px; height: 17px; color: var(--bruma); }
+
+  .chat { display: flex; flex-direction: column; gap: 14px; padding: 20px; overflow-y: auto; max-height: max(280px, calc(100vh - 505px)); min-height: 220px; }
+  .fila { display: flex; gap: 10px; align-items: flex-start; max-width: 78%; }
+  .fila.yo { align-self: flex-end; }
+  .fila .col { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .fila.yo .col { align-items: flex-end; }
+  .fila .quien-m { font-size: 13px; font-weight: 700; }
+  .globo { padding: 10px 14px; border-radius: 12px; background: #f1f4f9; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+  .fila.yo .globo { background: #1f2b45; color: #fff; }
+  .fila.yo .globo a { color: #fff; }
+  .globo img { max-width: 240px; max-height: 180px; border-radius: 8px; display: block; margin-bottom: 4px; }
+  .fila .col > small { font-size: 11px; color: var(--muted); display: inline-flex; gap: 4px; align-items: center; }
+  .visto svg { width: 15px; height: 15px; color: var(--muted); }
+  .visto.si svg { color: var(--acento); }
+  .av { width: 34px; height: 34px; border-radius: 50%; flex: none; object-fit: cover; background: #e9ecf1; color: var(--bruma); display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+  .av.equipo { background: var(--acento-f); color: var(--acento); }
+  .av.equipo svg { width: 17px; height: 17px; }
+  .av.yo { background: #e9ecf1; color: #1f2b45; }
+  .dia { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 12px; font-weight: 500; text-transform: capitalize; }
+  .dia::before, .dia::after { content: ""; flex: 1; height: 1px; background: var(--linea); }
+  .msg.sistema { align-self: center; max-width: 92%; color: var(--bruma); font-size: 13px; text-align: center; padding: 2px 8px; white-space: pre-wrap; }
+  .msg.sistema a { font-weight: 600; }
+
+  .conv-pie { display: grid; grid-template-columns: minmax(220px, 300px) 1fr; gap: 14px; padding: 16px 20px 20px; border-top: 1px solid var(--linea); background: #fbfbfa; }
+  .conv-pie.sin-video { grid-template-columns: 1fr; }
+  .vcard { border-radius: 12px; background: var(--acento-f); border: 1px solid #dde7fb; display: flex; align-items: center; gap: 12px; padding: 14px; min-width: 0; }
+  .vcard.en-curso { background: var(--ok-f); border-color: #cde9d6; }
+  .vcard-btn { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%; height: 100%; }
+  .vcard:has(.vcard-btn):hover { border-color: var(--acento-l); background: #e6eefd; }
+  .vcard-btn:focus-visible { outline: 2px solid var(--acento); outline-offset: 4px; border-radius: 8px; }
+  .vcard-ico { width: 38px; height: 38px; border-radius: 10px; background: var(--blanco); color: var(--acento); display: grid; place-items: center; flex: none; }
+  .vcard.en-curso .vcard-ico { color: var(--ok); }
+  .vcard-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .vcard-txt b { font-size: 13.5px; line-height: 1.3; }
+  .vcard-txt span { font-size: 12px; color: var(--bruma); line-height: 1.4; }
+  .vcard .flecha { color: var(--acento); width: 18px; height: 18px; flex: none; }
+  .vcard .boton { padding: 9px 14px; font-size: 13px; border-radius: 10px; }
+  .redactar { display: flex; flex-direction: column; background: var(--blanco); border: 1px solid var(--linea2); border-radius: 12px; min-width: 0; }
+  .redactar:focus-within { border-color: var(--acento); box-shadow: 0 0 0 3px var(--acento-f); }
+  .redactar textarea { border: 0; min-height: 52px; max-height: 180px; padding: 12px 14px 4px; box-shadow: none; resize: none; background: none; }
+  .redactar textarea:focus { box-shadow: none; outline: none; }
+  .redactar-pie { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 8px 8px 10px; }
+  .r-adjuntar { border: 0; background: none; color: var(--bruma); font-size: 13px; display: inline-flex; gap: 6px; align-items: center; cursor: pointer; padding: 6px; border-radius: 8px; }
+  .r-adjuntar:hover { color: var(--pizarra); background: var(--cal); }
+  .r-adjuntar svg { width: 16px; height: 16px; }
+  .redactar .boton { padding: 10px 18px; font-size: 14px; border-radius: 10px; gap: 8px; }
+  .redactar .boton svg { width: 16px; height: 16px; }
+
+  .cita-dlg { border: 0; border-radius: 16px; padding: 0; width: min(540px, calc(100vw - 32px)); box-shadow: 0 24px 60px rgba(16, 24, 40, .25); color: var(--pizarra); }
+  #cita { padding: 24px; }
+  .cita-dlg::backdrop { background: rgba(15, 23, 42, .4); }
+  .cita-dlg h2 { font-size: 18px; margin: 0 0 4px; display: flex; gap: 10px; align-items: center; padding-right: 30px; }
+  .cita-dlg h2 svg { color: var(--acento); }
+  .cita-dlg p { margin: 0; color: var(--bruma); font-size: 14px; }
+  .cita-dlg .err { color: var(--error); font-weight: 500; margin-top: 10px; }
+  .dlg-x { position: absolute; top: 14px; right: 14px; border: 0; background: none; font-size: 24px; line-height: 1; color: var(--bruma); cursor: pointer; padding: 4px 8px; border-radius: 8px; }
+  .dlg-x:hover { background: var(--cal); color: var(--pizarra); }
+  .dias { display: flex; gap: 6px; overflow-x: auto; margin: 16px 0 10px; padding-bottom: 4px; scrollbar-width: thin; }
   .dias button { flex: none; border: 1px solid var(--linea2); background: var(--blanco); border-radius: 12px; padding: 8px 12px; cursor: pointer; text-align: center; line-height: 1.25; }
   .dias button small { display: block; color: var(--muted); font-size: 11px; text-transform: capitalize; }
   .dias button b { font-size: 15px; }
@@ -198,24 +271,6 @@
   .horas button { border: 1px solid var(--linea2); background: var(--blanco); border-radius: 10px; padding: 9px 0; font-weight: 600; cursor: pointer; }
   .horas button:hover { border-color: var(--pizarra); }
   .horas button[aria-pressed="true"] { background: var(--acento); border-color: var(--acento); color: #fff; }
-  .msg { max-width: 84%; padding: 11px 14px; border-radius: 16px; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .msg small { display: block; font-size: 11px; opacity: .7; margin-top: 4px; }
-  .msg.cliente { align-self: flex-end; background: var(--pizarra); color: #fff; border-bottom-right-radius: 4px; }
-  .msg.cliente a { color: #fff; }
-  .msg.tecnico { align-self: flex-start; background: var(--blanco); border: 1px solid var(--linea); border-bottom-left-radius: 4px; }
-  /* El técnico con su cara al lado (como el soporte de Holded): foto si la hay, si no sus iniciales */
-  .fila-tec { align-self: flex-start; display: flex; align-items: flex-end; gap: 8px; max-width: 88%; }
-  .fila-tec .msg { max-width: none; }
-  .av-tec { width: 34px; height: 34px; border-radius: 50%; flex: none; object-fit: cover; background: var(--acento); color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 700; }
-  .msg.sistema { align-self: center; max-width: 92%; color: var(--bruma); font-size: 13px; text-align: center; padding: 4px 8px; }
-  .msg.sistema a { font-weight: 600; }
-  .msg img { max-width: 240px; max-height: 180px; border-radius: 10px; display: block; margin-bottom: 4px; }
-  .escribir { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--cal) 18px); padding-top: 18px; }
-  .escribir form { display: flex; gap: 8px; align-items: flex-end; background: var(--blanco); border: 1px solid var(--linea2); border-radius: 16px; padding: 8px; box-shadow: var(--sombra); }
-  .escribir textarea { border: 0; min-height: 44px; max-height: 180px; padding: 10px; box-shadow: none; resize: none; }
-  .escribir textarea:focus { box-shadow: none; }
-  .clip { border: 0; background: none; color: var(--bruma); padding: 10px; cursor: pointer; border-radius: 10px; }
-  .clip:hover { background: var(--cal); color: var(--pizarra); }
   /* Valoración al cerrar: tal cual el diseño «valoracion-interactivos» (mismos tamaños, colores y
      márgenes), con INTERACTIVOS subrayado, la pregunta nueva y el logo de Google en la reseña. */
   .val { max-width: 560px; width: 100%; margin: 8px auto; background: #FFFFFF; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 3px rgba(28, 28, 28, .08); font-family: Inter, sans-serif; color: #1C1C1C; line-height: normal; }
@@ -267,7 +322,10 @@
     .entrar .tarjeta { padding: 24px 20px 18px; }
     .fila-t { flex-wrap: wrap; gap: 6px 12px; padding: 14px 16px; } .fila-t .t { flex: 1 1 100%; } .fila-t > svg { display: none; } .fila-t .t b { white-space: normal; }
     .val-cab, .val-cuerpo, .val-pie { padding-left: 24px; padding-right: 24px; } .val-cab h2 { font-size: 23px; }
-    .caras { gap: 4px; } .cara .circulo { width: 46px; height: 46px; } .cara .circulo svg { width: 22px; height: 22px; } .cara .et { font-size: 10.5px; } .msg { max-width: 92%; }
+    .caras { gap: 4px; } .cara .circulo { width: 46px; height: 46px; } .cara .circulo svg { width: 22px; height: 22px; } .cara .et { font-size: 10.5px; }
+    .ticket .tarjeta { padding: 18px; } .t-cab { flex-wrap: wrap; gap: 12px; } .t-ico { width: 44px; height: 44px; } .t-cab h1 { font-size: 18px; }
+    .t-tit { flex: 1 1 200px; } .est { order: 3; margin-left: 56px; } .chat { padding: 16px 14px; max-height: max(280px, calc(100vh - 470px)); } .fila { max-width: 92%; }
+    .conv-cab { padding: 12px 14px; } .conv-pie { grid-template-columns: 1fr; padding: 12px 14px 14px; gap: 10px; } .vcard { padding: 10px 12px; }
   }
   @media (max-width: 370px) { .insignia { display: none; } }
   /* Visor de imágenes del chat: se cierra con la cruz, con Esc o pulsando fuera */
@@ -289,6 +347,7 @@
   <symbol id="i-formacion" viewBox="0 0 24 24"><path d="m2 9 10-5 10 5-10 5z"/><path d="M6 11v5c2 2 10 2 12 0v-5M22 9v6"/></symbol>
   <symbol id="i-mas" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="19" cy="12" r="1.3" fill="currentColor"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-visto" viewBox="0 0 24 24"><path d="m2 12.5 4.5 4.5L16 7.5M11 16.5l.5.5L21 7.5"/></symbol>
   <symbol id="i-clip" viewBox="0 0 24 24"><path d="m21 11.5-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/></symbol>
   <symbol id="i-subir" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></symbol>
   <symbol id="i-empresa" viewBox="0 0 24 24"><rect x="4" y="3" width="11" height="18" rx="1"/><path d="M15 9h4a1 1 0 0 1 1 1v11H4M8 7h3M8 11h3M8 15h3"/></symbol>
@@ -402,23 +461,17 @@
 
   <!-- Seguir una incidencia -->
   <section id="vistaTicket" class="ticket oculto">
-    <a class="volver oculto" id="volver" href="/#mis">← Mis tickets</a>
+    <a class="volver oculto" id="volver" href="/#mis">← Volver a mis incidencias</a>
     <div class="tarjeta">
       <div class="t-cab">
-        <div><h1 id="tTitulo">Cargando…</h1><p id="tSub"></p></div>
+        <span class="t-ico" id="tIco"><svg class="i"><use href="#i-doc"/></svg></span>
+        <div class="t-tit"><h1 id="tTitulo">Cargando…</h1><p id="tSub"></p></div>
         <span class="est" id="tEstado"></span>
       </div>
-      <div class="pasos" id="pasos"><div>Recibida</div><div>En curso</div><div>Resuelta</div></div>
-      <div class="espera oculto" id="esperaAviso" role="status"><b>Estamos esperando tu respuesta</b><span>Escríbenos abajo para que podamos seguir con tu incidencia.</span></div>
-      <div class="video oculto" id="video">
-        <div><b>Videollamada en curso</b><div style="font-size:14px;color:var(--bruma)">Con Google Meet: se abre en el navegador o en la app.</div></div>
-        <a class="boton" id="videoLink" target="_blank" rel="noopener">Unirme</a>
-      </div>
+      <ol class="pasos" id="pasos" aria-label="Cómo va tu incidencia">
+        <li><i><svg class="i"><use href="#i-check"/></svg></i>Recibida</li><li><i><svg class="i"><use href="#i-check"/></svg></i>En curso</li><li><i><svg class="i"><use href="#i-check"/></svg></i>Resuelta</li>
+      </ol>
     </div>
-
-    <div class="cita oculto" id="citaBox"><div class="tarjeta" id="cita"></div></div>
-
-    <div class="chat" id="chat" aria-live="polite"></div>
 
     <div class="val valorar oculto" id="valorar">
       <div class="val-cab">
@@ -452,14 +505,33 @@
       <div class="val-pie" data-pie></div>
     </div>
 
-    <div class="escribir" id="escribir">
-      <form id="formMsg">
-        <button type="button" class="clip" id="clip" title="Adjuntar archivo" aria-label="Adjuntar archivo"><svg class="i"><use href="#i-clip"/></svg></button>
-        <input type="file" id="ficheroChat" hidden accept="image/*,.pdf,.txt,.csv,.xls,.xlsx,.doc,.docx,.zip">
-        <textarea id="msg" placeholder="Escribe un mensaje…" aria-label="Mensaje"></textarea>
-        <button class="boton" style="padding:12px 18px">Enviar</button>
-      </form>
+    <div class="tarjeta conversa">
+      <div class="conv-cab">
+        <span class="conv-av"><svg class="i"><use href="#i-auri"/></svg></span>
+        <div><b>Equipo de soporte</b><small id="convSub">Atención de tu incidencia</small></div>
+        <div class="conv-menu">
+          <button type="button" class="tres" id="convMas" aria-label="Más opciones" aria-haspopup="true" aria-expanded="false"><svg class="i"><use href="#i-mas"/></svg></button>
+          <div class="menu oculto" id="convMenu" role="menu">
+            <button type="button" role="menuitem" data-m="video" id="mVideo"><svg class="i"><use href="#i-video"/></svg>Pedir una videollamada</button>
+            <button type="button" role="menuitem" data-m="adjuntar"><svg class="i"><use href="#i-clip"/></svg>Adjuntar archivo</button>
+            <a role="menuitem" href="/#mis" class="oculto" id="mMisInc"><svg class="i"><use href="#i-doc"/></svg>Mis incidencias</a>
+          </div>
+        </div>
+      </div>
+      <div class="chat" id="chat" aria-live="polite"></div>
+      <div class="conv-pie" id="escribir">
+        <div class="vcard oculto" id="vcard"></div>
+        <form id="formMsg" class="redactar">
+          <textarea id="msg" placeholder="Escribe tu respuesta…" aria-label="Tu respuesta"></textarea>
+          <div class="redactar-pie">
+            <button type="button" class="r-adjuntar" id="clip"><svg class="i"><use href="#i-clip"/></svg>Adjuntar archivo</button>
+            <input type="file" id="ficheroChat" hidden accept="image/*,.pdf,.txt,.csv,.xls,.xlsx,.doc,.docx,.zip">
+            <button class="boton"><svg class="i"><use href="#i-enviar"/></svg>Enviar</button>
+          </div>
+        </form>
+      </div>
     </div>
+    <dialog class="cita-dlg" id="citaDlg" aria-labelledby="citaTit"><div id="cita"></div></dialog>
   </section>
 </main>
 
@@ -696,6 +768,17 @@ const G_LOGO = '<svg viewBox="0 0 48 48" aria-label="Google" role="img"><path fi
 function iniciarTicket() {
   mostrar('vistaTicket');
   $('volver').classList.toggle('oculto', !yo);
+  $('mMisInc').classList.toggle('oculto', !yo);
+  const menu = abrir => { $('convMenu').classList.toggle('oculto', !abrir); $('convMas').setAttribute('aria-expanded', abrir); };
+  $('convMas').onclick = e => { e.stopPropagation(); menu($('convMenu').classList.contains('oculto')); };
+  $('convMenu').onclick = e => {
+    const b = e.target.closest('[data-m]');
+    if (!b) return;
+    menu(false);
+    if (b.dataset.m === 'video') abrirReserva();
+    if (b.dataset.m === 'adjuntar') $('ficheroChat').click();
+  };
+  document.addEventListener('click', e => { if (!e.target.closest('.conv-menu')) menu(false); });
   let parado = false;
   const q = new URLSearchParams(location.search);
   // Las cinco caras de la valoración (1 Muy insatisfecho … 5 Muy satisfecho), como en el formulario
@@ -752,7 +835,7 @@ function iniciarTicket() {
   };
   if (q.get('fallidos')) setTimeout(() => alerta(`No se ${q.get('fallidos') === '1' ? 'ha' : 'han'} podido subir ${q.get('fallidos')} archivo(s). Puedes adjuntarlos con el clip.`), 800);
 
-  const alerta = t => { const d = document.createElement('div'); d.className = 'msg sistema'; d.style.color = 'var(--error)'; d.textContent = t; $('chat').append(d); };
+  const alerta = t => { const d = document.createElement('div'); d.className = 'msg sistema'; d.style.color = 'var(--error)'; d.textContent = t; $('chat').append(d); $('chat').scrollTop = $('chat').scrollHeight; };
 
   async function cargar() {
     if (document.hidden || parado) return;
@@ -775,74 +858,90 @@ function iniciarTicket() {
       : `📎 <a href="${url}" target="_blank" rel="noopener">${esc(a.nombre)}</a> · ${peso(a.tamano)}`;
   };
 
-  // Videollamada: la prevista con su enlace, o reservar un hueco libre del calendario de soporte.
-  let reservando = false, huecos = null, diaSel = null, horaSel = null, firmaCita = '';
+  // Videollamada (29/10/2026: «que el cliente también la pueda pedir, eso es lo importante»): va al
+  // lado de donde se escribe. En curso, prevista o pedida; si no hay ninguna, el cliente reserva un
+  // hueco libre en una ventana (con Google, del calendario; sin él, del horario y la confirma el equipo).
+  let huecos = null, diaSel = null, horaSel = null, firmaV = '';
   const diaLargo = iso => new Date(iso).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-  function pintarCita(t) {
-    const firma = JSON.stringify([t.citas, t.reservar, reservando, huecos && huecos.length, diaSel, horaSel]);
-    if (firma === firmaCita) return;
-    firmaCita = firma;
-    const box = $('citaBox'), c = t.citas?.[0];
-    box.classList.toggle('oculto', !c && !t.reservar);
-    if (c?.pedida) {
-      $('cita').innerHTML = `<div class="fila-cita"><div><h2>${icono('video')}Videollamada pedida</h2><div class="cuando">${esc(diaLargo(c.inicio))} · ${esc(c.inicio.slice(11, 16))}–${esc(c.fin.slice(11, 16))}</div><p>Te enviaremos el enlace de Google Meet en cuanto la confirmemos.</p></div></div>`;
-      return;
-    }
-    if (c) {
-      $('cita').innerHTML = `<div class="fila-cita"><div><h2>${icono('video')}Tu videollamada</h2><div class="cuando">${esc(diaLargo(c.inicio))} · ${esc(c.inicio.slice(11, 16))}–${esc(c.fin.slice(11, 16))}</div><p>Con Google Meet: se abre en el navegador o en la app.</p></div><a class="boton" href="${esc(c.enlace)}" target="_blank" rel="noopener">Unirme</a></div>`;
-      return;
-    }
-    if (!t.reservar) return;
-    if (!reservando) {
-      $('cita').innerHTML = `<div class="fila-cita"><div><h2>${icono('video')}¿Lo vemos por videollamada?</h2><p>Reserva un hueco con un técnico. Te llega el enlace de Google Meet.</p></div><button class="boton-sec" id="abrirReserva">Reservar videollamada</button></div>`;
-      $('abrirReserva').onclick = async () => {
-        reservando = true; firmaCita = '';
-        $('cita').innerHTML = '<p>Buscando huecos libres…</p>';
-        try { huecos = (await api(`/api/soporte/${token}/huecos`)).huecos; } catch { huecos = []; }
-        diaSel = huecos[0]?.inicio.slice(0, 10) || null;
-        pintarCita(t);
-      };
-      return;
-    }
-    if (!huecos?.length) {
-      $('cita').innerHTML = `<h2>${icono('video')}Reservar videollamada</h2><p>No quedan horas libres en los próximos días. Escríbenos por el chat y te proponemos una.</p>`;
-      return;
-    }
+  const franja = c => `${diaLargo(c.inicio)} · ${c.inicio.slice(11, 16)}–${c.fin.slice(11, 16)}`;
+  function pintarVideo(t) {
+    const c = t.citas?.[0], v = $('vcard');
+    const firma = JSON.stringify([t.video, c, t.reservar]);
+    if (firma === firmaV) return;
+    firmaV = firma;
+    const tarjeta = (tit, sub, fin = '') => `<span class="vcard-ico">${icono('video')}</span><span class="vcard-txt"><b>${tit}</b><span>${sub}</span></span>${fin}`;
+    let html = '';
+    if (t.video) html = tarjeta('Videollamada en curso', 'Con Google Meet, en el navegador o en la app.', `<a class="boton" href="${esc(t.video)}" target="_blank" rel="noopener">Unirme</a>`);
+    else if (c && !c.pedida) html = tarjeta('Tu videollamada', esc(franja(c)), c.enlace ? `<a class="boton" href="${esc(c.enlace)}" target="_blank" rel="noopener">Unirme</a>` : '');
+    else if (c) html = tarjeta('Videollamada pedida', `${esc(franja(c))}. Te enviaremos el enlace de Google Meet al confirmarla.`);
+    else if (t.reservar) html = `<button type="button" class="vcard-btn" id="vReservar">${tarjeta('¿Prefieres hablar con un técnico?', 'Reserva una videollamada por Google Meet.', icono('flecha', 'i flecha'))}</button>`;
+    v.className = 'vcard' + (t.video ? ' en-curso' : '') + (html ? '' : ' oculto');
+    v.innerHTML = html;
+    $('escribir').classList.toggle('sin-video', !html);
+    $('mVideo').classList.toggle('oculto', !(t.reservar && !c && !t.video));
+    if ($('vReservar')) $('vReservar').onclick = abrirReserva;
+  }
+  async function abrirReserva() {
+    horaSel = null; huecos = null;
+    pintarReserva('Buscando horas libres…');
+    if (!$('citaDlg').open) $('citaDlg').showModal();
+    try { huecos = (await api(`/api/soporte/${token}/huecos`)).huecos; } catch { huecos = []; }
+    diaSel = huecos[0]?.inicio.slice(0, 10) || null;
+    pintarReserva();
+  }
+  function pintarReserva(espera = '', error = '') {
+    const cab = `<button type="button" class="dlg-x" data-cerrar aria-label="Cerrar">×</button><h2 id="citaTit">${icono('video')}Pedir una videollamada</h2>`;
+    if (espera) return void ($('cita').innerHTML = `${cab}<p>${esc(espera)}</p>`);
+    if (!huecos?.length) return void ($('cita').innerHTML = `${cab}<p>No quedan horas libres en los próximos días. Escríbenos por el chat y te proponemos una.</p>`);
     const dias = [...new Set(huecos.map(h => h.inicio.slice(0, 10)))];
     const delDia = huecos.filter(h => h.inicio.startsWith(diaSel));
-    $('cita').innerHTML = `<h2>${icono('video')}Elige día y hora</h2><p>Videollamadas de ${Math.round((new Date(huecos[0].fin) - new Date(huecos[0].inicio)) / 60000)} minutos con un técnico de Holded.</p>
+    $('cita').innerHTML = `${cab}<p>Elige día y hora: ${Math.round((new Date(huecos[0].fin) - new Date(huecos[0].inicio)) / 60000)} minutos con un técnico de Holded por Google Meet.</p>
       <div class="dias" id="dias">${dias.map(d => { const x = new Date(d + 'T12:00'); return `<button type="button" data-d="${d}" aria-pressed="${d === diaSel}"><small>${x.toLocaleDateString('es-ES', { weekday: 'short' })}</small><b>${x.getDate()}</b> <small>${x.toLocaleDateString('es-ES', { month: 'short' })}</small></button>`; }).join('')}</div>
       <div class="horas" id="horas">${delDia.map(h => `<button type="button" data-h="${h.inicio}" aria-pressed="${h.inicio === horaSel}">${h.inicio.slice(11, 16)}</button>`).join('')}</div>
-      <div class="pie" style="margin-top:16px"><button class="boton" id="confirmarCita" ${horaSel ? '' : 'disabled'}>${horaSel ? `Reservar el ${esc(diaLargo(horaSel))} a las ${horaSel.slice(11, 16)}` : 'Elige una hora'}</button><button type="button" class="enlace" id="cancelarReserva">Cancelar</button></div>`;
-    $('dias').onclick = e => { const b = e.target.closest('button[data-d]'); if (b) { diaSel = b.dataset.d; horaSel = null; pintarCita(t); } };
-    $('horas').onclick = e => { const b = e.target.closest('button[data-h]'); if (b) { horaSel = b.dataset.h; pintarCita(t); } };
-    $('cancelarReserva').onclick = () => { reservando = false; horaSel = null; pintarCita(t); };
+      ${error ? `<p class="err" role="alert">${esc(error)}</p>` : ''}
+      <div class="pie" style="margin-top:18px"><button type="button" class="boton" id="confirmarCita" ${horaSel ? '' : 'disabled'}>${horaSel ? `Pedirla el ${esc(diaLargo(horaSel))} a las ${horaSel.slice(11, 16)}` : 'Elige una hora'}</button><button type="button" class="enlace" data-cerrar>Cancelar</button></div>`;
+    $('dias').onclick = e => { const b = e.target.closest('button[data-d]'); if (b) { diaSel = b.dataset.d; horaSel = null; pintarReserva(); } };
+    $('horas').onclick = e => { const b = e.target.closest('button[data-h]'); if (b) { horaSel = b.dataset.h; pintarReserva(); } };
     $('confirmarCita').onclick = async () => {
       const elegido = horaSel;
       $('confirmarCita').disabled = true;
-      try { const r = await api(`/api/soporte/${token}/reservar`, { inicio: elegido }); reservando = false; horaSel = null; enviado = true; pintar(r); }
+      try { const r = await api(`/api/soporte/${token}/reservar`, { inicio: elegido }); horaSel = null; enviado = true; $('citaDlg').close(); pintar(r); }
       catch (e) {
-        // Si el hueco se ha ocupado mientras tanto, se recargan los libres.
-        alerta(e.message); horaSel = null;
+        // Si la hora se ha ocupado mientras tanto, se recargan las libres.
+        horaSel = null;
         try { huecos = (await api(`/api/soporte/${token}/huecos`)).huecos; } catch {}
-        firmaCita = ''; pintarCita(t);
+        pintarReserva('', e.message);
       }
     };
   }
+  // Se cierra con la cruz, «Cancelar», Esc o pulsando fuera (solo si el clic empezó fuera).
+  let pulsadoEn = null;
+  $('citaDlg').addEventListener('pointerdown', e => { pulsadoEn = e.target; });
+  $('citaDlg').addEventListener('click', e => { if ((e.target === $('citaDlg') && pulsadoEn === $('citaDlg')) || e.target.closest('[data-cerrar]')) $('citaDlg').close(); });
+
+  const iniciales = n => String(n || '').split(/\s+/).filter(Boolean).map(p => p[0]).join('').slice(0, 2).toUpperCase() || '?';
+  const hm = iso => iso ? new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '';
+  const diaEt = iso => {
+    const d = new Date(iso).toDateString();
+    if (d === new Date().toDateString()) return 'Hoy';
+    if (d === new Date(Date.now() - 864e5).toDateString()) return 'Ayer';
+    return new Date(iso).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+  };
 
   function pintar(t) {
-    pintarCita(t);
+    pintarVideo(t);
     document.title = `${t.titulo} · Soporte Holded`;
     $('tTitulo').textContent = t.titulo;
-    $('tSub').textContent = `${t.empresa} · ${t.tecnico ? 'Te atiende ' + t.tecnico : 'Asignando técnico…'}`;
+    $('tSub').textContent = [t.empresa, t.contacto && `Usuario: ${t.contacto}`].filter(Boolean).join(' · ');
+    $('convSub').textContent = t.tecnico ? `Te atiende ${t.tecnico}` : 'Atención de tu incidencia';
+    $('tIco').innerHTML = icono((CATEGORIAS.find(([n]) => n === t.tipo) || [])[1] || 'doc');
     const [cls, txt] = { 'Cerrado': ['resuelta', 'Resuelta'], 'En curso': ['curso', 'En curso'], 'Pendiente cliente': ['espera', 'Esperando tu respuesta'], 'Nuevo': ['abierta', 'Recibida'] }[t.estado] || ['', t.estado];
-    $('esperaAviso').classList.toggle('oculto', t.estado !== 'Pendiente cliente');
     $('tEstado').className = 'est ' + cls;
-    $('tEstado').textContent = txt;
+    $('tEstado').innerHTML = `${icono(cls === 'resuelta' ? 'check' : 'reloj')}${esc(txt)}`;
+    // Paso en el que está (1, 2 o 3): los anteriores con su marca y la línea azul hasta él.
     const n = t.estado === 'Cerrado' ? 3 : t.estado === 'Nuevo' ? 1 : 2;
-    [...$('pasos').children].forEach((p, i) => p.classList.toggle('on', i < n));
-    $('video').classList.toggle('oculto', !t.video);
-    if (t.video) $('videoLink').href = t.video;
+    [...$('pasos').children].forEach((p, i) => { p.classList.toggle('hecho', i < n - 1 || n === 3); p.classList.toggle('ahora', i === n - 1 && n < 3); });
+    $('pasos').style.setProperty('--hecho', (n - 1) / 2);
     $('valorar').classList.toggle('oculto', !t.pideValoracion);
     $('gracias').classList.toggle('oculto', t.nps == null);
     $('saludo').textContent = t.contacto ? `Hola, ${t.contacto.split(/\s+/)[0]}.` : 'Hola.';
@@ -859,20 +958,35 @@ function iniciarTicket() {
         <p class="contacto">${esc(config.email || 'holded@interactivos.net')} &nbsp;·&nbsp; ${esc(config.telefono || '665 405 148')} &nbsp;·&nbsp; www.interactivos.net</p>
         <p class="copy">© ${new Date().getFullYear()} Interactivos. Todos los derechos reservados.</p>`;
     });
-    const burbuja = m => `<div class="msg ${m.de}">${m.adjunto ? adjunto(m.adjunto) : esc(m.texto)}${m.enlace ? `<br><a href="${esc(m.enlace)}" target="_blank" rel="noopener">Unirme a la videollamada</a>` : ''}${m.de === 'sistema' ? '' : `<small>${m.de === 'tecnico' ? esc(m.autor || 'Soporte') + ' · ' : ''}${hora(m.fecha)}</small>`}</div>`;
-    // El técnico con su cara: la foto si la hay (y el mensaje es suyo); si no, sus iniciales.
-    const cara = m => {
-      const n = m.autor || config.tecnico || 'Soporte';
-      return config.foto && (!m.autor || m.autor === config.tecnico) ? `<img class="av-tec" src="${esc(config.foto)}" alt="${esc(n)}">`
-        : `<span class="av-tec" aria-hidden="true">${esc(n.split(/\s+/).map(p => p[0]).join('').slice(0, 2).toUpperCase())}</span>`;
-    };
-    const html = t.mensajes.map(m => m.de === 'tecnico' ? `<div class="fila-tec">${cara(m)}${burbuja(m)}</div>` : burbuja(m)).join('');
+    // El chat como en el diseño: el equipo a la izquierda (con su cara y su nombre), el cliente a la
+    // derecha con sus iniciales y el doble visto en azul cuando el equipo ya ha respondido después.
+    const contenido = m => `${m.adjunto ? adjunto(m.adjunto) : esc(m.texto)}${m.enlace ? `<br><a href="${esc(m.enlace)}" target="_blank" rel="noopener">Unirme a la videollamada</a>` : ''}`;
+    const cara = m => config.foto && (!m.autor || m.autor === config.tecnico) ? `<img class="av" src="${esc(config.foto)}" alt="">`
+      : `<span class="av" aria-hidden="true">${esc(iniciales(m.autor || config.tecnico || 'Soporte'))}</span>`;
+    // La bienvenida del equipo, justo después de lo primero que escribió el cliente (no se guarda).
+    const lista = [...t.mensajes], primero = lista.findIndex(m => m.de === 'cliente');
+    lista.splice(primero + 1, 0, { de: 'equipo', texto: '¡Hola! Hemos recibido tu incidencia y la estamos revisando. Te responderemos en menos de 1 hora laborable.', fecha: lista[primero]?.fecha || t.entrada });
+    const vistoHasta = lista.map(m => m.de).lastIndexOf('tecnico');
+    let dia = '';
+    const html = lista.map((m, i) => {
+      const d = String(m.fecha || '').slice(0, 10);
+      const sep = d && d !== dia ? `<div class="dia">${esc(diaEt(m.fecha))}</div>` : '';
+      if (d) dia = d;
+      if (m.de === 'cliente') return `${sep}<div class="fila yo"><div class="col"><div class="globo">${contenido(m)}</div><small>${hm(m.fecha)}<span class="visto${i < vistoHasta ? ' si' : ''}" title="${i < vistoHasta ? 'El equipo ya lo ha visto' : 'Enviado'}">${icono('visto')}</span></small></div><span class="av yo" aria-hidden="true">${esc(iniciales(t.contacto || t.empresa))}</span></div>`;
+      if (m.de === 'tecnico') return `${sep}<div class="fila">${cara(m)}<div class="col"><b class="quien-m">${esc(m.autor || config.tecnico || 'Soporte')}</b><div class="globo">${contenido(m)}</div><small>${hm(m.fecha)}</small></div></div>`;
+      if (m.de === 'equipo') return `${sep}<div class="fila"><span class="av equipo" aria-hidden="true">${icono('auri')}</span><div class="col"><div class="globo">${esc(m.texto)}</div><small>${hm(m.fecha)}</small></div></div>`;
+      return `${sep}<div class="msg sistema">${contenido(m)}</div>`;
+    }).join('');
     if (html !== ultimo) {
-      const abajo = innerHeight + scrollY >= document.body.scrollHeight - 120 || !ultimo;
-      $('chat').innerHTML = html;
+      const c = $('chat');
+      const primeraVez = !ultimo, abajo = primeraVez || c.scrollTop + c.clientHeight >= c.scrollHeight - 100;
+      c.innerHTML = html;
       ultimo = html;
+      const bajar = () => c.scrollTo({ top: c.scrollHeight, behavior: enviado ? 'smooth' : 'instant' });
       if (desdeCorreo && t.pideValoracion) { desdeCorreo = false; $('valorar').scrollIntoView({ block: 'center' }); }
-      else if (abajo && !t.pideValoracion) scrollTo({ top: document.body.scrollHeight, behavior: enviado ? 'smooth' : 'auto' });
+      if (abajo) { bajar(); c.querySelectorAll('img').forEach(im => im.addEventListener('load', bajar, { once: true })); }
+      // La primera vez, que se vea dónde escribir (en el móvil queda por debajo de la cabecera).
+      if (primeraVez && !t.pideValoracion && $('escribir').getBoundingClientRect().bottom > innerHeight) $('escribir').scrollIntoView({ block: 'end' });
     }
   }
   cargaConfig.then(cargar);

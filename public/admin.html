@@ -2645,7 +2645,7 @@ function pintarComercial(r, c) {
       <div class="co-serv">
         ${tile(ICO_COM.licencia, 'Licencias de Holded', euros(a.holded), `${num(L.activas)} activas · ${num(L.bajas)} de baja`, L.sinImporte ? `<span class="co-avisito">${L.sinImporte} sin importe: pon el ingreso por plan</span>` : '')}
         ${tile(ICO.estrella, 'Soporte Premium', euros(a.premium), `${num(r.premium.pago)} de pago a ${r.premium.eurosMes} € al mes`, `${num(r.premium.asesorias)} asesorías partner, gratis`)}
-        ${tile(ICO_COM.gema, 'Super Gemas', euros(a.gemas), `${num(G.pago)} de pago · ${num(G.gratis)} gratis`, G.sinDecir ? `<span class="co-avisito">${G.sinDecir} sin decir si pagan</span>` : `${num(G.activas)} cuentas activas`)}
+        ${tile(ICO_COM.gema, 'Super Gemas', euros(a.gemas), `${num(G.activas)} cuentas activas`, G.pago || G.gratis ? `${num(G.pago)} de pago · ${num(G.gratis)} gratis` : '')}
       </div></div>
     <div class="co-activos"><span class="tit">Clientes activos</span>${[['Licencia Holded', r.activos.holded], ['Soporte Premium', r.activos.premium], ['Super Gemas', r.activos.gemas], ['Implementación', r.activos.implementacion], ['Kit Digital 1', r.activos.kitDigital1]].map(([t, n]) => `<span>${t} <b>${num(n)}</b></span>`).join('')}</div>
     ${r.ejemplo ? '<p class="co-nota" style="margin:12px 0 0">Incluye los datos de ejemplo; se quitan en Canales → Datos de ejemplo.</p>' : ''}</section>`;
@@ -2668,9 +2668,9 @@ function pintarComercial(r, c) {
     <div class="co-cifra"><div><b class="${ch.tasa >= 10 ? 'co-cr' : ''}">${ch.tasa == null ? '—' : num(ch.tasa, 1) + ' %'}</b><span>Churn</span></div><div><b>${num(ch.bajas)}</b><span>Bajas</span></div><div><b>${num(ch.alInicio)}</b><span>Activas al empezar</span></div></div>
     ${ch.motivos.map(m => `<details class="co-motivo"><summary><span>${esc(m.motivo)}</span><span>${m.n}</span></summary>${m.clientes.map(x => `<p>${enlace(x.cliente)}<small>${diaTxt(x.fecha)}${x.plan ? ' · ' + esc(x.plan) : ''}${x.detalle ? ` — ${esc(x.detalle)}` : ''}</small></p>`).join('')}</details>`).join('') || '<p class="co-nota">Ninguna baja en el periodo.</p>'}</section>`;
 
-  const gemas = `<section class="mk-sec"><div class="mk-sec-cab"><div class="mk-ico">${ICO_COM.gema}</div><div><h2>Super Gemas</h2><p>Las cuentas de Super Gemas, unidas a su cliente. Super Gemas no sabe quién paga: se marca en la ficha.</p></div>
+  const gemas = `<section class="mk-sec"><div class="mk-sec-cab"><div class="mk-ico">${ICO_COM.gema}</div><div><h2>Super Gemas</h2><p>Las cuentas de Super Gemas, unidas a su cliente.</p></div>
       ${sg.configurado ? '<button type="button" class="boton sec peq" id="coTraer" style="margin-left:auto">Traer de Super Gemas</button>' : ''}</div>
-    <div class="co-cifra"><div><b>${num(G.activas)}</b><span>Activas</span></div><div><b>${num(G.pago)}</b><span>De pago</span></div><div><b>${num(G.gratis)}</b><span>Gratis</span></div><div><b class="${G.sinDecir ? 'co-at' : ''}">${num(G.sinDecir)}</b><span>Sin decir</span></div><div><b>${euros(G.eurosMes)}</b><span>Al mes</span></div></div>
+    <div class="co-cifra"><div><b>${num(G.activas)}</b><span>Activas</span></div><div><b>${num(G.pago)}</b><span>De pago</span></div><div><b>${num(G.gratis)}</b><span>Gratis</span></div><div><b>${euros(G.eurosMes)}</b><span>Al mes</span></div></div>
     <p class="co-nota">${sg.configurado ? (sg.cuando ? `Última lectura ${haceTxt(sg.cuando)}.` : 'Aún no se ha leído: pulsa «Traer de Super Gemas».') : 'Para traer las cuentas solas falta subir api/soporte_cuentas.php a Super Gemas y poner SUPERGEMAS_CLAVE en Render. Mientras, se marcan a mano en la ficha de cada cliente.'}</p>
     ${sg.sinUnir.length ? `<details class="co-motivo"><summary><span>Cuentas sin unir a ningún cliente</span><span>${sg.sinUnir.length}</span></summary>${sg.sinUnir.map(x => `<p><b>${esc(x.organizacion || x.nombre || x.email)}</b><small>${esc(x.email)}${x.baja ? ' · de baja' : ''}</small><button type="button" class="boton sec peq" data-unir="${esc(x.email)}" data-org="${esc(x.organizacion || x.nombre || '')}">Unir</button></p>`).join('')}</details>` : ''}</section>`;
 
@@ -2989,23 +2989,26 @@ async function nuevaAsesoria() {
 async function convenioDlg() {
   try { await cargarComAj(true); } catch (e) { return fallo(e); }
   const cv = comAj.convenio;
-  dialogo(`<h3>Convenio y aviso</h3><p class="sub">El convenio de partner que se envía a firmar en línea, y a quién avisar cuando una asesoría lo firma para hacer el onboarding.</p>
+  dialogo(`<h3>Convenio y aviso</h3><p class="sub">El convenio de partner que se envía a firmar en línea, quién lleva las asesorías y a quién avisar cuando una lo firma para hacer el onboarding.</p>
     <label>Convenio en PDF</label>
     <p class="co-nota" style="margin:0 0 6px">${cv ? `Ahora: <a href="/api/asesorias/convenio" target="_blank" rel="noopener">${esc(cv.nombre)}</a>, subido el ${fechaLarga(cv.fecha)}. Si subes otro, los que ya se han enviado siguen con el suyo.` : 'Aún no hay ninguno: sin él no se puede enviar a firmar.'}</p>
     <input class="campo" type="file" name="pdf" accept="application/pdf,.pdf">
-    <label>Correo de Operaciones <small>(recibe el aviso de cada convenio firmado)</small></label>
+    <label>Quién lleva las asesorías <small>(le llegan las respuestas al convenio y una copia de cada envío)</small></label>
+    <input class="campo" type="email" name="ases" value="${esc(comAj.asesorias || '')}" placeholder="pablo@interactivos.net">
+    <label>Correo de Operaciones <small>(recibe el aviso de cada convenio firmado para hacer el onboarding)</small></label>
     <input class="campo" type="email" name="ops" value="${esc(comAj.operaciones || '')}" placeholder="operaciones@interactivos.net">
     ${PIE_DLG('Guardar')}`,
     async f => {
-      const ops = f.ops.value.trim();
+      const ops = f.ops.value.trim(), ases = f.ases.value.trim();
       if (ops && !correoOk(ops)) { aviso('El correo de Operaciones no es válido.', true); return false; }
+      if (ases && !correoOk(ases)) { aviso('El correo de quien lleva las asesorías no es válido.', true); return false; }
       const pdf = f.pdf.files[0];
       if (pdf) {
         const r = await fetch('/api/asesorias/convenio', { method: 'POST', headers: { 'X-Nombre': encodeURIComponent(pdf.name) }, body: pdf });
         const d = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(d.error || 'No se ha podido subir el convenio');
       }
-      await api('/api/comercial/ajustes', { operaciones: ops });
+      await api('/api/comercial/ajustes', { operaciones: ops, asesorias: ases });
       comAj = null;
       aviso(pdf ? 'Convenio subido.' : 'Guardado.');
     });

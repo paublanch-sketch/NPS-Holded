@@ -64,13 +64,16 @@ const ES_BAJA = /baja|cancel|inactiv|caducad|anulad|perdid|cerrad|^no$|^0$|false
 const cifNormal = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 const planNormal = s => { const t = texto(s, 60).replace(/\s+/g, ' '); return t ? t[0].toUpperCase() + t.slice(1) : ''; };
 
-// ---- Ajustes de la parte comercial: ingreso anual por plan, correo de Operaciones y convenio ----
+// ---- Ajustes de la parte comercial: ingreso anual por plan, correos de Asesorías y Operaciones y convenio ----
 async function config() {
   const a = (await ajustes.donde('clave', 'comercial'))[0] || { clave: 'comercial' };
-  return { precios: {}, operaciones: '', convenio: null, ...a };
+  return { precios: {}, operaciones: '', asesorias: '', convenio: null, ...a };
 }
 async function guardarConfig(cambios) { return ajustes.guardar({ ...(await config()), ...cambios }); }
-const correoOperaciones = c => c.operaciones || process.env.OPERACIONES_EMAIL || '';
+// 29/10/2026: las asesorías (embudo e invitaciones al convenio) las lleva Pablo; con el convenio
+// firmado entra Operaciones para el onboarding.
+const correoAsesorias = c => c.asesorias || process.env.ASESORIAS_EMAIL || 'pablo@interactivos.net';
+const correoOperaciones = c => c.operaciones || process.env.OPERACIONES_EMAIL || 'operaciones@interactivos.net';
 
 // Lo que deja al año la licencia: su importe si lo tiene; si no, el del plan.
 const anualDe = (h, precios) => h.importe != null ? h.importe : (precios[h.plan] ?? null);
@@ -250,8 +253,9 @@ async function enviarConvenio(req, { cliente, email, nombre, autor }) {
   if (correo.hayCorreo()) {
     const saludo = `Hola${nombre ? ' ' + texto(nombre).split(' ')[0] : ''}:`;
     const cuerpo = `${saludo}\n\nTe enviamos el convenio de asesoría partner de Interactivos para ${f.nombre}. Puedes leerlo y firmarlo en línea con el botón, desde el ordenador o el móvil.\n\nEl enlace vale ${DIAS_FIRMA} días. Si tienes cualquier duda, responde a este correo.`;
+    const ases = correoAsesorias(await config());
     try {
-      enviado = await correo.enviarSinEsperar({ to: email, subject: `Convenio de asesoría partner · ${f.nombre}`, text: `${cuerpo}\n\nLeer y firmar: ${url}`,
+      enviado = await correo.enviarSinEsperar({ to: email, bcc: ases, replyTo: ases, subject: `Convenio de asesoría partner · ${f.nombre}`, text: `${cuerpo}\n\nLeer y firmar: ${url}`,
         html: correo.plantilla({ titulo: 'Convenio de asesoría partner', cuerpo: correo.parrafos(cuerpo), boton: { texto: 'Leer y firmar el convenio', url }, pie: 'Correo enviado por Interactivos.' }) });
     } catch (e) { console.error('Convenio (envío):', e.message); }
   }
@@ -283,16 +287,16 @@ async function firmar(req, f, b) {
   // Aviso a Operaciones para el onboarding y copia a quien firma.
   const correo = require('./correo');
   if (correo.hayCorreo()) {
-    const conf = await config(), ops = correoOperaciones(conf);
+    const conf = await config(), ops = correoOperaciones(conf), ases = correoAsesorias(conf);
     const panel = `${URL_PUBLICA(req)}/admin#/clientes/${encodeURIComponent(f.nombre)}`;
     if (ops) {
       const t = `${f.nombre} ha firmado el convenio de asesoría partner.\n\nFirma: ${nombre}${cargo ? `, ${cargo}` : ''} (${nif}), el ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })}.\n\nToca hacer el onboarding. Cuando esté hecho, márcalo en su ficha del panel.`;
-      correo.enviar({ to: ops, subject: `Convenio firmado: ${f.nombre} · toca el onboarding`, text: `${t}\n\n${panel}`,
+      correo.enviar({ to: ops, cc: ases !== ops ? ases : undefined, subject: `Convenio firmado: ${f.nombre} · toca el onboarding`, text: `${t}\n\n${panel}`,
         html: correo.plantilla({ titulo: 'Convenio firmado', cuerpo: correo.parrafos(t), boton: { texto: 'Abrir su ficha', url: panel }, pie: 'Aviso del panel de Soporte Holded.' }) })
         .catch(e => console.error('Convenio (aviso a Operaciones):', e.message));
     }
     const t2 = `Hola ${nombre.split(' ')[0]}:\n\nHas firmado el convenio de asesoría partner de Interactivos en nombre de ${f.nombre}. Gracias por confiar en nosotros.\n\nEn unos días te escribiremos para empezar. Desde el enlace puedes volver a ver el convenio y el justificante de la firma.`;
-    correo.enviar({ to: c.email, subject: `Convenio firmado · ${f.nombre}`, text: t2,
+    correo.enviar({ to: c.email, replyTo: ops || ases, subject: `Convenio firmado · ${f.nombre}`, text: t2,
       html: correo.plantilla({ titulo: 'Convenio firmado', cuerpo: correo.parrafos(t2), pie: 'Correo enviado por Interactivos.' }) })
       .catch(e => console.error('Convenio (copia):', e.message));
   }
@@ -386,7 +390,7 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
   }
   if (req.method === 'GET' && ruta === '/api/comercial/ajustes') {
     const c = await config();
-    return json(res, { precios: c.precios, operaciones: correoOperaciones(c), convenio: c.convenio, etapas: ETAPAS, motivos: MOTIVOS_BAJA, tiposNota: TIPOS_NOTA,
+    return json(res, { precios: c.precios, operaciones: correoOperaciones(c), asesorias: correoAsesorias(c), convenio: c.convenio, etapas: ETAPAS, motivos: MOTIVOS_BAJA, tiposNota: TIPOS_NOTA,
       supergemas: { configurado: !!process.env.SUPERGEMAS_CLAVE, cuando: c.supergemas?.cuando || null, sinUnir: (c.supergemas?.cuentas || []).filter(x => !x.cliente) } }), true;
   }
   if (req.method === 'POST' && ruta === '/api/comercial/ajustes') {
@@ -395,10 +399,11 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
       cambios.precios = {};
       for (const [k, v] of Object.entries(b.precios).slice(0, 50)) { const n = leerImporte(v); if (texto(k) && n != null) cambios.precios[planNormal(k)] = n; }
     }
-    if (typeof b.operaciones === 'string') {
-      const e = b.operaciones.trim().toLowerCase();
-      if (e && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) return json(res, { error: 'Pon un correo válido para Operaciones' }, 400), true;
-      cambios.operaciones = e;
+    for (const [k, quien] of [['operaciones', 'Operaciones'], ['asesorias', 'Asesorías']]) {
+      if (typeof b[k] !== 'string') continue;
+      const e = b[k].trim().toLowerCase();
+      if (e && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) return json(res, { error: `Pon un correo válido para ${quien}` }, 400), true;
+      cambios[k] = e;
     }
     await guardarConfig(cambios);
     return json(res, { ok: true }), true;

@@ -26,7 +26,7 @@ function pararSesion(t) {
 // correos, ni en WhatsApp, ni en el Meet (28/10/2026). Se le enseña el título de su incidencia.
 const tituloCliente = t => t.asunto || t.tipo_incidencia || 'Tu incidencia';
 const vistaCliente = t => ({
-  titulo: tituloCliente(t), empresa: t.cliente, contacto: t.contacto || '', estado: t.estado, tecnico: t.tecnico || require('./auth').TECNICO, entrada: t.entrada,
+  titulo: tituloCliente(t), tipo: t.tipo_incidencia || '', empresa: t.cliente, contacto: t.contacto || '', estado: t.estado, tecnico: t.tecnico || require('./auth').TECNICO, entrada: t.entrada,
   mensajes: t.mensajes.filter(m => m.de !== 'nota'),
   pideValoracion: t.estado === 'Cerrado' && t.nps == null && !t.cierreAuto && !t.llamada,
   nps: t.nps,
