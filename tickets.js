@@ -105,6 +105,10 @@ const cuando = iso => {
 };
 
 const NPS_DIAS = 7; // un número 0–10 hasta una semana después del cierre se toma como valoración
+// 29/10/2026: tras la nota, solo lo que llega en las 24 h siguientes es «qué mejorarías» (antes, los
+// 7 días): pasado ese rato, lo que escribe el cliente es una consulta y va a una incidencia.
+const MEJORA_H = 24;
+const esperandoMejora = t => !!t.esperaMejora && (new Date() - new Date(t.esperaMejora)) / 36e5 < MEJORA_H;
 
 // Mensaje entrante de WhatsApp o correo: lo añade al ticket abierto de ese contacto,
 // recoge la valoración si el ticket acaba de cerrarse, o abre uno nuevo.
@@ -123,7 +127,7 @@ async function recibir(r) {
   // Los importados del Sheet nunca pidieron valoración: un número suyo no es un NPS.
   const recienCerrado = x => x && x.origen !== 'Sheet' && !x.historico && x.estado === 'Cerrado' && (new Date() - new Date(x.cierre)) / 864e5 < NPS_DIAS;
   const cerrado = !t && (recienCerrado(citado) ? citado : recientes.find(recienCerrado));
-  if (cerrado && cerrado.esperaMejora) {
+  if (cerrado && esperandoMejora(cerrado)) {
     cerrado.mejora = texto;
     cerrado.esperaMejora = false;
     cerrado.mensajes.push(msg);
@@ -133,7 +137,7 @@ async function recibir(r) {
   }
   if (cerrado && cerrado.nps == null && /^\s*(10|[0-9])\s*$/.test(texto)) {
     cerrado.nps = Number(texto);
-    cerrado.esperaMejora = true;
+    cerrado.esperaMejora = ahora(); // desde cuándo: vale MEJORA_H horas
     cerrado.mensajes.push(msg);
     await store.guardar(cerrado);
     avisar(cerrado, 'pideMejora');

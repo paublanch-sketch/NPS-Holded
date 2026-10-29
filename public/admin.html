@@ -900,9 +900,6 @@
   .co-seg-t td a { font-weight: 600; text-decoration: none; }
   .co-seg-pie { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
   .co-seg-pie b { margin-right: auto; font-size: 14px; }
-  .co-imp-tabla { max-height: 300px; overflow: auto; border: 1px solid var(--linea); border-radius: 10px; margin-top: 10px; }
-  .co-imp-tabla th, .co-imp-tabla td { padding: 6px 8px; text-align: left; white-space: nowrap; font-size: 12px; }
-  .co-map { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 12px; }
   dialog.ancho { width: min(820px, 96vw); }
   .pl.est-act { background: #e7f6ec; color: #17803d; } .pl.est-baja { background: var(--cr-f); color: var(--cr-t); }
   .pl.et-gris { background: var(--suave); color: var(--bruma); } .pl.et-azul { background: var(--azul-f); color: var(--azul-h); }
@@ -939,7 +936,7 @@
   .as-onb > b { display: block; margin-bottom: 6px; color: var(--at-t); }
   .as-onb .co-fila { background: var(--blanco); border: 1px solid #f5d49a; border-radius: 10px; margin-top: 6px; }
   @media (max-width: 1150px) { .co-arr { grid-template-columns: 1fr; } .co-dos { grid-template-columns: 1fr; } .co-seg-f { grid-template-columns: repeat(2, minmax(0, 1fr)); } .co-ficha { grid-template-columns: 1fr 1fr; } }
-  @media (max-width: 760px) { .co-serv { grid-template-columns: 1fr; } .co-map { grid-template-columns: 1fr 1fr; } .co-seg-f { grid-template-columns: 1fr; } .co-ficha { grid-template-columns: 1fr; } .co-barra { grid-template-columns: minmax(70px, 110px) minmax(0, 1fr) auto; } }
+  @media (max-width: 760px) { .co-serv { grid-template-columns: 1fr; } .co-seg-f { grid-template-columns: 1fr; } .co-ficha { grid-template-columns: 1fr; } .co-barra { grid-template-columns: minmax(70px, 110px) minmax(0, 1fr) auto; } }
 </style>
 </head>
 <body>
@@ -2682,12 +2679,11 @@ function vistaComercial() {
   const [d, h] = rangoCom();
   $('vista').innerHTML = `<div class="mk">
     <div class="mk-cab"><div class="mk-logo">${ICO_COM.euro}</div><div><h1>Comercial Holded</h1><p>ARR, licencias, renovaciones, bajas y Super Gemas. Hosting y dominios irán aparte.</p></div>
-      <div class="mk-chips"><button type="button" class="boton sec" id="coPrecios">Ingreso por plan</button><button type="button" class="boton" id="coImportar">Importar licencias</button></div></div>
+      <div class="mk-chips"><button type="button" class="boton sec" id="coPrecios">Ingreso por plan</button></div></div>
     <div class="filtros" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 28px 0">${periodoHtml('co', d, h)}<span class="co-nota" style="margin:0">El periodo cuenta para las bajas y el churn.</span></div>
     <div class="contenido" id="com"><div class="vacio">Cargando…</div></div></div>`;
   pararVista = montarPeriodo('co', fcom, rangoCom, () => { escribir('filtrosComercial', fcom); cargarComercial(); });
   $('coPrecios').onclick = () => preciosCom(cargarComercial);
-  $('coImportar').onclick = () => importarCom(cargarComercial);
   $('com').onclick = e => {
     const fila = e.target.closest('[data-cli]'), a = e.target.closest('[data-a]');
     if (fila && a) {
@@ -2752,7 +2748,7 @@ function pintarComercial(r, c) {
       <div class="acc"><button type="button" class="boton sec peq" data-a="nota">Anotar</button><button type="button" class="boton sec peq" data-a="renovada">Renovada</button><button type="button" class="boton sec peq" data-a="baja">Baja</button></div></div>`;
   const ren = `<section class="mk-sec"><div class="mk-sec-cab"><div class="mk-ico">${ICO.calendario}</div><div><h2>Renovaciones</h2><p>Licencias que vencen. Llama antes de la fecha, anota lo que te digan y márcalas como renovadas o de baja, con el motivo.</p></div></div>
     <div class="cl-tabs" id="coTabs">${tabs.map(([k, t, l]) => `<button type="button" data-t="${k}" class="${k === comTab ? 'on' : ''}">${t} <span class="n">${l.length}</span></button>`).join('')}</div>
-    <div class="co-filas" style="margin-top:12px">${R[comTab].map(filaRen).join('') || `<div class="vacio" style="padding:22px">${L.activas ? 'Ninguna licencia en este tramo.' : 'Aún no hay licencias: pégalas con «Importar licencias».'}</div>`}</div></section>`;
+    <div class="co-filas" style="margin-top:12px">${R[comTab].map(filaRen).join('') || `<div class="vacio" style="padding:22px">${L.activas ? 'Ninguna licencia en este tramo.' : 'Aún no hay licencias: se añaden en la ficha de cada cliente.'}</div>`}</div></section>`;
 
   const max = Math.max(1, ...L.porPlan.map(p => p.n));
   const planes = `<section class="mk-sec"><div class="mk-sec-cab"><div class="mk-ico">${ICO_COM.licencia}</div><div><h2>Licencias por plan</h2><p>Las activas y lo que nos deja cada plan al año.</p></div></div>
@@ -2850,89 +2846,6 @@ async function preciosCom(alFin) {
       await api('/api/comercial/ajustes', { precios });
       aviso('Ingresos por plan guardados.'); alFin?.();
     });
-}
-
-// ---- Importar el Excel de licencias: se pega (o se sube el CSV), se dice qué es cada columna,
-// se comprueba y se importa. Volver a importar actualiza las licencias, no duplica clientes. ----
-const CAMPOS_IMP = [
-  ['empresa', 'Empresa', /empresa|raz[oó]n social|cliente|nombre|compa[ñn]/i],
-  ['cif', 'CIF / NIF', /\bcif\b|\bnif\b|vat|identif/i],
-  ['email', 'Correo', /mail|correo/i],
-  ['telefono', 'Teléfono', /tel[eé]f|m[oó]vil|phone/i],
-  ['plan', 'Plan', /plan|licencia|suscrip|tarifa|producto/i],
-  ['estado', 'Estado', /estado|status|activ/i],
-  ['alta', 'Fecha de alta', /alta|inicio|contrat|compra|start|creaci/i],
-  ['renovacion', 'Renovación', /renov|venc|caduc|\bfin\b|hasta|expir|pr[oó]xim/i],
-  ['importe', 'Importe', /importe|precio|€|eur|cuota|pvp|amount|total|valor/i],
-  ['motivo', 'Motivo de baja', /motivo|observ|coment|nota/i],
-];
-function leerTabla(txt) {
-  const lineas = String(txt || '').replace(/\r/g, '').split('\n').filter(l => l.trim());
-  if (lineas.length < 2) return null;
-  const sep = lineas[0].includes('\t') ? '\t' : lineas[0].split(';').length > lineas[0].split(',').length ? ';' : ',';
-  const partir = l => {
-    if (sep === '\t') return l.split('\t').map(x => x.trim().replace(/^"(.*)"$/, '$1'));
-    const out = [];
-    let cur = '', dentro = false;
-    for (let i = 0; i < l.length; i++) {
-      const ch = l[i];
-      if (dentro) { if (ch === '"' && l[i + 1] === '"') { cur += '"'; i++; } else if (ch === '"') dentro = false; else cur += ch; }
-      else if (ch === '"') dentro = true;
-      else if (ch === sep) { out.push(cur.trim()); cur = ''; }
-      else cur += ch;
-    }
-    out.push(cur.trim());
-    return out;
-  };
-  const filas = lineas.map(partir);
-  return { cab: filas[0], filas: filas.slice(1).filter(f => f.some(Boolean)) };
-}
-function importarCom(alFin) {
-  let tabla = null, comprobado = false;
-  dialogo(`<h3>Importar licencias de Holded</h3>
-    <p class="sub">En el Excel de licencias, copia las filas con la de los títulos y pégalas aquí, o sube el CSV. Se unen a los clientes que ya están por CIF, correo o nombre; volver a importar actualiza, no duplica.</p>
-    <div id="impPegar"><textarea class="campo" name="pegado" rows="7" placeholder="Empresa → CIF → Correo → Plan → Alta → Renovación → Importe…"></textarea>
-      <input class="campo" type="file" name="fichero" accept=".csv,.txt,.tsv" style="margin-top:8px"></div>
-    <div id="impMapa" class="oculto"><label>Qué es cada columna <small>(lo que no esté, «No está»)</small></label><div class="co-map" id="impCampos"></div>
-      <label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" name="mensual" style="width:auto"> El importe es al mes (se multiplica por 12)</label></div>
-    <div id="impRes"></div>
-    <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton" id="impBtn">Leer</button></div>`,
-    async f => {
-      if (!tabla) {
-        const txt = f.fichero.files[0] ? await f.fichero.files[0].text() : f.pegado.value;
-        tabla = leerTabla(txt);
-        if (!tabla?.filas.length) { tabla = null; aviso('Pega las filas con la de los títulos encima.', true); return false; }
-        const usadas = new Set();
-        $('impCampos').innerHTML = CAMPOS_IMP.map(([k, t, re]) => {
-          const i = tabla.cab.findIndex((h, j) => !usadas.has(j) && re.test(h));
-          if (i >= 0) usadas.add(i);
-          return `<div><label>${t}</label><select class="campo" name="col_${k}"><option value="">No está</option>${tabla.cab.map((h, j) => `<option value="${j}" ${j === i ? 'selected' : ''}>${esc(h || `Columna ${j + 1}`)}</option>`).join('')}</select></div>`;
-        }).join('');
-        $('impPegar').classList.add('oculto');
-        $('impMapa').classList.remove('oculto');
-        $('impBtn').textContent = `Comprobar ${tabla.filas.length} filas`;
-        const otraVez = () => { comprobado = false; $('impRes').innerHTML = ''; $('impBtn').textContent = `Comprobar ${tabla.filas.length} filas`; };
-        $('impMapa').onchange = otraVez;
-        return false;
-      }
-      if (f.col_empresa.value === '') { aviso('Di qué columna es la empresa.', true); return false; }
-      const filas = tabla.filas.map(x => Object.fromEntries(CAMPOS_IMP.map(([k]) => [k, f['col_' + k].value === '' ? '' : x[Number(f['col_' + k].value)] ?? ''])));
-      if (!comprobado) {
-        const r = await api('/api/comercial/importar', { filas, mensual: f.mensual.checked });
-        comprobado = true;
-        $('impRes').innerHTML = `<p class="co-nota" style="margin:14px 0 0"><b>${r.unidos}</b> se unen a clientes que ya están · <b>${r.nuevos}</b> clientes nuevos · <b class="${r.errores ? 'co-cr' : ''}">${r.errores}</b> con errores, que no se importan</p>
-          <div class="co-imp-tabla"><table><thead><tr><th>Fila</th><th>Empresa</th><th>Qué pasa</th><th>Plan</th><th>Estado</th><th>Renovación</th><th>Al año</th></tr></thead><tbody>
-          ${r.filas.slice(0, 300).map(x => `<tr><td>${x.n}</td><td>${esc(x.empresa)}</td><td>${x.accion === 'error' ? `<span class="co-cr">${esc(x.motivo)}</span>` : x.accion === 'unir' ? `Se une a «${esc(x.cliente)}» <small>(${esc(x.como)})</small>` : 'Cliente nuevo'}</td><td>${esc(x.plan || '')}</td><td>${esc(x.estado || '')}</td><td>${x.renovacion ? diaTxt(x.renovacion) : ''}</td><td>${x.anual != null ? euros(x.anual) : ''}</td></tr>`).join('')}</tbody></table></div>`;
-        $('impBtn').textContent = `Importar ${r.unidos + r.nuevos} licencias`;
-        return false;
-      }
-      const r = await api('/api/comercial/importar', { filas, mensual: f.mensual.checked, aplicar: true });
-      aviso(`Licencias importadas: ${r.unidos} unidas a su cliente y ${r.nuevos} clientes nuevos.`);
-      clientesCache = null; alFin?.();
-    });
-  const d = $('dlg');
-  d.classList.add('ancho');
-  d.addEventListener('close', () => d.classList.remove('ancho'), { once: true });
 }
 
 // Convenios firmados que esperan el onboarding: número en el menú y aviso cuando llega uno nuevo.

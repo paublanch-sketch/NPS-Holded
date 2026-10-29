@@ -1,6 +1,7 @@
 // Parte comercial (reunión con Pablo y Operaciones, 28/10/2026): solo Holded, y aparte del soporte.
 //   · Licencias de Holded de cada cliente (plan, alta, renovación e importe): renovaciones de los
-//     próximos 30 y 60 días, bajas con su motivo y churn. Se cargan pegando el Excel de licencias.
+//     próximos 30 y 60 días, bajas con su motivo y churn. Se apuntan en la ficha de cada cliente
+//     (29/10/2026: fuera el botón de importar el Excel de licencias).
 //   · ARR: licencias de Holded + Soporte Premium (42 €/mes; las asesorías partner, gratis) + Super Gemas.
 //   · Seguimiento comercial de cada cliente: notas sin minutos (llamadas, correos, reuniones), que
 //     ve todo el equipo. Las llamadas de soporte siguen en el ticket, con sus minutos.
@@ -30,7 +31,7 @@ const sha = s => crypto.createHash('sha256').update(s).digest('hex');
 const texto = (v, max = 200) => String(v ?? '').trim().slice(0, max);
 const URL_PUBLICA = req => (process.env.PUBLIC_URL || `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`).replace(/\/+$/, '');
 
-// ---- Lo que viene del Excel ----
+// ---- Fechas e importes que se escriben en el panel ----
 function valida(a, m, d) {
   const x = new Date(a, m - 1, d);
   return x.getFullYear() === a && x.getMonth() === m - 1 && x.getDate() === d ? dia(x) : null;
@@ -60,7 +61,6 @@ function leerImporte(v) {
   const n = Number(s);
   return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
 }
-const ES_BAJA = /baja|cancel|inactiv|caducad|anulad|perdid|cerrad|^no$|^0$|false/i;
 const cifNormal = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 const planNormal = s => { const t = texto(s, 60).replace(/\s+/g, ' '); return t ? t[0].toUpperCase() + t.slice(1) : ''; };
 
@@ -135,62 +135,6 @@ function resumen(fs, { desde, hasta }, conf) {
       referidos: referidos.length },
     ejemplo: fs.some(f => f.ejemplo && (f.holded || f.gemas || f.partner)),
   };
-}
-
-// ---- Importar el Excel de licencias ----
-// Cada fila trae (como texto) empresa, cif, email, telefono, plan, estado, alta, renovacion, importe
-// y motivo. Se une a un cliente que ya existe por CIF, por correo o por el nombre (aunque esté escrito
-// distinto); si no, se crea su ficha. Volver a importar actualiza la licencia, no duplica.
-async function importar(filas, { mensual = false, aplicar = false } = {}) {
-  const fs = (await clientes.todos()).filter(f => !f.ejemplo);
-  const correos = new Map();
-  for (const t of await tickets.todos()) if (t.email && !t.ejemplo) correos.set(t.email.toLowerCase(), t.cliente);
-  for (const f of fs) if (f.email) correos.set(f.email.toLowerCase(), f.nombre);
-  for (const c of await cuentas.todos()) if (c.activa !== false) correos.set(c.email, c.cliente);
-  const porCif = new Map(fs.filter(f => f.holded?.cif).map(f => [cifNormal(f.holded.cif), f.nombre]));
-  const nombres = fs.map(f => f.nombre);
-  const r = { filas: [], nuevos: 0, unidos: 0, errores: 0 };
-  const usados = new Map(), vistas = new Map();
-  const todos = aplicar ? await clientes.todos() : [];
-  for (const [i, x] of filas.slice(0, 5000).entries()) {
-    const empresa = texto(x.empresa, 160);
-    const fila = { n: i + 1, empresa };
-    const alta = leerFecha(x.alta), renovacion = leerFecha(x.renovacion);
-    const importe = leerImporte(x.importe);
-    const problemas = [!empresa && 'falta la empresa', alta === null && `no entiendo la fecha de alta «${texto(x.alta, 30)}»`, renovacion === null && `no entiendo la fecha de renovación «${texto(x.renovacion, 30)}»`].filter(Boolean);
-    const repetida = vistas.get(empresa.toLowerCase());
-    if (repetida) problemas.push(`repetida: ya está en la fila ${repetida}`);
-    if (problemas.length) { r.filas.push({ ...fila, accion: 'error', motivo: problemas.join(', ') }); r.errores++; continue; }
-    vistas.set(empresa.toLowerCase(), i + 1);
-    let cliente = porCif.get(cifNormal(x.cif)) || correos.get(String(x.email || '').trim().toLowerCase()) || null;
-    let como = cliente ? (porCif.get(cifNormal(x.cif)) ? 'CIF' : 'correo') : '';
-    if (!cliente) {
-      const igual = nombres.find(n => n.toLowerCase() === empresa.toLowerCase());
-      const seguros = igual ? [igual] : nombres.filter(n => cli.parecido(empresa, n)?.nivel === 'seguro');
-      if (seguros.length === 1) { cliente = seguros[0]; como = igual ? 'nombre' : 'nombre parecido'; }
-    }
-    // Dos filas del Excel que caen en el mismo cliente: la segunda va aparte.
-    if (cliente && usados.has(cliente)) { cliente = null; como = ''; }
-    if (cliente) usados.set(cliente, true);
-    const estado = ES_BAJA.test(texto(x.estado, 40)) ? 'Baja' : 'Activa';
-    const anual = importe == null ? null : Math.round(importe * (mensual ? 12 : 1) * 100) / 100;
-    r.filas.push({ ...fila, accion: cliente ? 'unir' : 'nuevo', cliente: cliente || empresa, como, plan: planNormal(x.plan), estado, renovacion, anual });
-    cliente ? r.unidos++ : r.nuevos++;
-    if (!aplicar) continue;
-    let f = todos.find(y => y.nombre === (cliente || empresa) && !y.ejemplo);
-    if (!f) todos.push(f = { nombre: empresa, servicio: 'Sin clasificar', tipo_cliente: 'Sin clasificar' });
-    const antes = f.holded || {};
-    f.holded = { ...antes, plan: planNormal(x.plan) || antes.plan || '', estado, alta: alta || antes.alta || '', renovacion: renovacion || antes.renovacion || '',
-      importe: anual ?? antes.importe ?? null, cif: texto(x.cif, 20) || antes.cif || '', importado: dia() };
-    if (estado === 'Baja' && !antes.baja) f.holded.baja = { fecha: renovacion && renovacion <= dia() ? renovacion : dia(), motivo: MOTIVOS_BAJA.includes(texto(x.motivo)) ? texto(x.motivo) : (texto(x.motivo) ? 'Otro' : 'Sin indicar'), detalle: texto(x.motivo, 300) };
-    if (estado === 'Activa') delete f.holded.baja;
-    const email = String(x.email || '').trim().toLowerCase();
-    if (!f.email && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) f.email = email.slice(0, 200);
-    if (!f.telefono && texto(x.telefono)) f.telefono = texto(x.telefono, 40);
-    await clientes.guardar(f);
-    if (!cliente) nombres.push(empresa);
-  }
-  return r;
 }
 
 // ---- Fichas: buscar, cambiar y anotar ----
@@ -408,10 +352,6 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
     await guardarConfig(cambios);
     return json(res, { ok: true }), true;
   }
-  if (req.method === 'POST' && ruta === '/api/comercial/importar') {
-    if (!Array.isArray(b.filas) || !b.filas.length) return json(res, { error: 'Pega las filas del Excel, con la fila de los títulos' }, 400), true;
-    return json(res, await importar(b.filas, { mensual: !!b.mensual, aplicar: !!b.aplicar })), true;
-  }
   if (req.method === 'POST' && ruta === '/api/comercial/licencia') {
     const f = await ficha(b.cliente);
     const alta = leerFecha(b.alta), renovacion = leerFecha(b.renovacion);
@@ -568,4 +508,4 @@ async function rutasFirma(req, res, ruta, { json, leerCuerpo, pagina }) {
   return false;
 }
 
-module.exports = { rutas, rutasFirma, vistaFicha, resumen, importar, leerFecha, leerImporte, etapaDe, unirGemas, PREMIUM_EUROS_MES, ETAPAS };
+module.exports = { rutas, rutasFirma, vistaFicha, resumen, leerFecha, leerImporte, etapaDe, unirGemas, PREMIUM_EUROS_MES, ETAPAS };
