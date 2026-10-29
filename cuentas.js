@@ -127,10 +127,12 @@ async function enviarCodigo(c) {
   return { enviado: c.codigo.enviado };
 }
 
+// Límites de intentos. La IP se puede falsear (auth.ipDe), así que lo que protege una cuenta concreta
+// cuenta también sin IP (porIp: false): cambiar de IP no da más intentos ni más correos.
 const reciente = new Map();
-const ipDe = req => String(req.headers['x-forwarded-for'] || req.socket.remoteAddress).split(',')[0].trim();
-function frenar(req, clave, max, minutos) {
-  const k = `${clave}:${ipDe(req)}`, ahora = Date.now();
+function frenar(req, clave, max, minutos, { porIp = true } = {}) {
+  const k = porIp ? `${clave}:${require('./auth').ipDe(req)}` : clave, ahora = Date.now();
+  if (reciente.size > 5000) for (const [x, l] of reciente) if (!l.length || ahora - l.at(-1) > 3600000) reciente.delete(x);
   const l = (reciente.get(k) || []).filter(x => ahora - x < minutos * 60000);
   reciente.set(k, [...l, ahora]);
   return l.length >= max;
@@ -149,7 +151,7 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
   if (req.method === 'POST' && ruta === '/api/cuenta/entrar') {
     const b = await leerCuerpo(req);
     const email = normal(b.email);
-    if (frenar(req, 'entrar:' + email, 8, 15)) return json(res, { error: 'Demasiados intentos. Prueba dentro de un rato.' }, 429), true;
+    if (frenar(req, 'entrar:' + email, 8, 15) || frenar(req, 'entrar-cuenta:' + email, 30, 15, { porIp: false })) return json(res, { error: 'Demasiados intentos. Prueba dentro de un rato.' }, 429), true;
     const c = (await cuentas.todos()).find(x => x.email === email && x.activa !== false && x.hash);
     if (!c || !claveBuena(String(b.clave || ''), c.hash)) return json(res, { error: 'El correo o la contraseña no son correctos.' }, 401), true;
     c.ultimoAcceso = new Date().toISOString();
@@ -165,7 +167,7 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
     const c = (await cuentas.todos()).find(x => x.email === email && x.activa !== false);
     if (!c) return json(res, { error: 'Este correo no tiene acceso al portal. Pídeselo a tu técnico de Interactivos.' }, 404), true;
     if (c.hash) return json(res, { paso: 'clave', nombre: c.nombre || '' }), true;
-    if (frenar(req, 'codigo:' + email, 5, 15)) return json(res, { error: 'Ya te hemos enviado varios códigos. Prueba dentro de un rato.' }, 429), true;
+    if (frenar(req, 'codigo:' + email, 5, 15, { porIp: false })) return json(res, { error: 'Ya te hemos enviado varios códigos. Prueba dentro de un rato.' }, 429), true;
     return json(res, { paso: 'codigo', nombre: c.nombre || '', minutos: MIN_CODIGO, ...(await enviarCodigo(c)) }), true;
   }
   if (req.method === 'POST' && ruta === '/api/cuenta/primera') {
@@ -192,7 +194,7 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
   // «¿Has olvidado tu contraseña?»: responde siempre igual, exista o no la cuenta.
   if (req.method === 'POST' && ruta === '/api/cuenta/olvido') {
     const email = normal((await leerCuerpo(req)).email);
-    if (frenar(req, 'olvido', 5, 60)) return json(res, { error: 'Demasiadas peticiones. Prueba dentro de un rato.' }, 429), true;
+    if (frenar(req, 'olvido', 5, 60) || frenar(req, 'olvido:' + email, 3, 60, { porIp: false })) return json(res, { error: 'Demasiadas peticiones. Prueba dentro de un rato.' }, 429), true;
     const c = (await cuentas.todos()).find(x => x.email === email && x.activa !== false);
     if (c) {
       const url = nuevoEnlace(c, c.hash ? 'clave' : 'alta');

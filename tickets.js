@@ -109,6 +109,7 @@ const NPS_DIAS = 7; // un número 0–10 hasta una semana después del cierre se
 // 7 días): pasado ese rato, lo que escribe el cliente es una consulta y va a una incidencia.
 const MEJORA_H = 24;
 const esperandoMejora = t => !!t.esperaMejora && (new Date() - new Date(t.esperaMejora)) / 36e5 < MEJORA_H;
+const REABRIR_DIAS = 30; // la respuesta al correo de una incidencia cerrada la reabre hasta 30 días después
 
 // Mensaje entrante de WhatsApp o correo: lo añade al ticket abierto de ese contacto,
 // recoge la valoración si el ticket acaba de cerrarse, o abre uno nuevo.
@@ -125,8 +126,14 @@ async function recibir(r) {
   const citado = r.ticketId && recientes.find(x => x.id === r.ticketId);
   let t = citado && citado.estado !== 'Cerrado' ? citado : recientes.find(x => x.estado !== 'Cerrado');
   // Los importados del Sheet nunca pidieron valoración: un número suyo no es un NPS.
-  const recienCerrado = x => x && x.origen !== 'Sheet' && !x.historico && x.estado === 'Cerrado' && (new Date() - new Date(x.cierre)) / 864e5 < NPS_DIAS;
-  const cerrado = !t && (recienCerrado(citado) ? citado : recientes.find(recienCerrado));
+  const cerradaDeApp = x => x && x.origen !== 'Sheet' && !x.historico && x.estado === 'Cerrado';
+  const diasCerrada = x => (new Date() - new Date(x.cierre)) / 864e5;
+  const recienCerrado = x => cerradaDeApp(x) && diasCerrada(x) < NPS_DIAS;
+  // 29/10/2026: lo que responde al correo de una incidencia cerrada, o lo que llega por WhatsApp (sin
+  // hilos) tras una recién cerrada, es de esa incidencia y la reabre, como prometen los avisos de cierre.
+  // Antes abría otra nueva.
+  const respondida = cerradaDeApp(citado) && diasCerrada(citado) < REABRIR_DIAS ? citado : null;
+  const cerrado = !t && (respondida || recientes.find(recienCerrado));
   if (cerrado && esperandoMejora(cerrado)) {
     cerrado.mejora = texto;
     cerrado.esperaMejora = false;
@@ -135,7 +142,8 @@ async function recibir(r) {
     avisar(cerrado, 'gracias');
     return cerrado;
   }
-  if (cerrado && cerrado.nps == null && /^\s*(10|[0-9])\s*$/.test(texto)) {
+  // Un número solo es la nota si se le pidió: no tras un cierre automático ni una llamada apuntada.
+  if (cerrado && recienCerrado(cerrado) && cerrado.nps == null && !cerrado.cierreAuto && !cerrado.llamada && /^\s*(10|[0-9])\s*$/.test(texto)) {
     cerrado.nps = Number(texto);
     cerrado.esperaMejora = ahora(); // desde cuándo: vale MEJORA_H horas
     cerrado.mensajes.push(msg);
@@ -143,8 +151,12 @@ async function recibir(r) {
     avisar(cerrado, 'pideMejora');
     return cerrado;
   }
+  if (!t && cerrado && (cerrado === respondida || r.canal === 'WhatsApp')) t = cerrado;
   if (t) {
-    if (t.estado === 'Cerrado') ACCIONES.reabrir(t);
+    if (t.estado === 'Cerrado') {
+      ACCIONES.reabrir(t);
+      t.mensajes.push({ de: 'nota', autor: 'Sistema', texto: 'Reabierta: el cliente ha vuelto a escribir.', fecha: ahora() });
+    }
     if (t.estado === 'Pendiente cliente') t.estado = 'En curso';
     if (r.buzon && !t.buzon) t.buzon = r.buzon;
     t.mensajes.push(msg);
@@ -335,6 +347,8 @@ const ACCIONES = {
   },
   // La videollamada que pidió el cliente sin Google: ya tiene enlace de Meet y se le envía.
   confirmarCita(t, b) {
+    // La de este ticket: PREVIOS la buscó en la lectura de antes de llamar a Google.
+    b.cita = (t.citas || []).find(x => x.id === b.cita.id) || b.cita;
     Object.assign(b.cita, { estado: 'prevista' }, b.reunion);
     t.mensajes.push({ de: 'sistema', texto: `Videollamada de Google Meet confirmada para el ${cuando(b.cita.inicio)}.`, enlace: b.cita.enlace, fecha: ahora() });
     if (!t.primera_respuesta) t.primera_respuesta = ahora();
@@ -347,7 +361,7 @@ const ACCIONES = {
     c.estado = 'anulada';
     t.mensajes.push({ de: 'sistema', texto: `Se ha anulado la videollamada del ${cuando(c.inicio)}.`, fecha: ahora() });
   },
-  pendiente(t) { pararSesion(t); t.estado = 'Pendiente cliente'; },
+  pendiente(t) { pararSesion(t); t.estado = 'Pendiente cliente'; t.pendienteDesde = ahora(); },
   // El stand-by también se quita a mano: vuelve a En curso.
   reanudar(t) { if (t.estado === 'Pendiente cliente') t.estado = 'En curso'; },
   cerrar(t, b) {
@@ -425,18 +439,20 @@ async function rutasPublicas(req, res, ruta) {
       try { cita = await nuevaCita(t, { inicio: libre.inicio, minutos: google.resumen().minutosCita, tecnico: t.tecnico, origen: 'cliente' }); }
       catch (e) { console.error('Google (reservar):', e.message); }
     }
+    // Google tarda: se vuelve a leer el ticket para no pisar lo que se haya escrito mientras.
+    const f = await porId(t.id) || t;
     if (cita) {
-      ACCIONES.cita(t, { cita });
-      t.mensajes.push({ de: 'nota', autor: 'Sistema', texto: `El cliente ha reservado una videollamada para el ${cuando(cita.inicio)}.`, fecha: ahora() });
-      await store.guardar(t);
-      avisar(t, 'cita', { cita });
+      ACCIONES.cita(f, { cita });
+      f.mensajes.push({ de: 'nota', autor: 'Sistema', texto: `El cliente ha reservado una videollamada para el ${cuando(cita.inicio)}.`, fecha: ahora() });
+      await store.guardar(f);
+      avisar(f, 'cita', { cita });
     } else {
-      (t.citas ||= []).push({ id: Date.now(), inicio: libre.inicio, fin: libre.fin, estado: 'pedida', origen: 'cliente', tecnico: t.tecnico });
-      t.mensajes.push({ de: 'sistema', texto: `Has pedido una videollamada para el ${cuando(libre.inicio)}. Te enviaremos el enlace de Google Meet en cuanto la confirmemos.`, fecha: ahora() });
-      t.mensajes.push({ de: 'nota', autor: 'Sistema', texto: `El cliente pide una videollamada para el ${cuando(libre.inicio)}. Confírmala con el enlace de Meet.`, fecha: ahora() });
-      await store.guardar(t);
+      (f.citas ||= []).push({ id: Date.now(), inicio: libre.inicio, fin: libre.fin, estado: 'pedida', origen: 'cliente', tecnico: f.tecnico });
+      f.mensajes.push({ de: 'sistema', texto: `Has pedido una videollamada para el ${cuando(libre.inicio)}. Te enviaremos el enlace de Google Meet en cuanto la confirmemos.`, fecha: ahora() });
+      f.mensajes.push({ de: 'nota', autor: 'Sistema', texto: `El cliente pide una videollamada para el ${cuando(libre.inicio)}. Confírmala con el enlace de Meet.`, fecha: ahora() });
+      await store.guardar(f);
     }
-    return json(res, vistaCliente(t), 201), true;
+    return json(res, vistaCliente(f), 201), true;
   }
 
   // Adjuntos: el cliente sube archivos a su incidencia y puede volver a abrirlos.
@@ -552,15 +568,25 @@ async function contabilizarReuniones() {
   contando = true;
   try {
     const ahoraMs = Date.now();
-    for (const t of await store.todos()) {
-      let cambio = false;
-      for (const c of (t.citas || []).filter(x => x.estado === 'prevista' && x.codigo)) {
+    for (const viejo of await store.todos()) {
+      // Primero se pregunta a Meet (tarda) y luego se apunta en el ticket recién leído: así no se pisa
+      // lo que haya entrado mientras (29/10/2026).
+      const respuestas = [];
+      for (const c of (viejo.citas || []).filter(x => x.estado === 'prevista' && x.codigo)) {
         // Las agendadas, a partir de su hora de fin; las de «ahora», cuando se ha parado el cronómetro.
-        const sesion = (t.sesiones || []).find(x => x.codigo === c.codigo && !x.real);
+        const sesion = (viejo.sesiones || []).find(x => x.codigo === c.codigo && !x.real);
         const listo = c.origen === 'ahora' ? sesion && sesion.fin : new Date(c.fin).getTime() + 10 * 60000 < ahoraMs;
         if (!listo) continue;
-        let r = null;
-        try { r = await google.duracionReal(c.codigo, c.inicio); } catch (e) { console.error('Meet:', e.message); continue; }
+        try { respuestas.push({ id: c.id, r: await google.duracionReal(c.codigo, c.inicio) }); } catch (e) { console.error('Meet:', e.message); }
+      }
+      if (!respuestas.length) continue;
+      const t = await porId(viejo.id);
+      if (!t) continue;
+      let cambio = false;
+      for (const { id, r } of respuestas) {
+        const c = (t.citas || []).find(x => x.id === id && x.estado === 'prevista');
+        if (!c) continue;
+        const sesion = (t.sesiones || []).find(x => x.codigo === c.codigo && !x.real);
         if (r) {
           if (sesion) Object.assign(sesion, { inicio: r.inicio, fin: r.fin, real: true });
           else if (r.minutos) t.sesiones.push({ tipo: 'video', tecnico: c.tecnico || t.tecnico, inicio: r.inicio, fin: r.fin, codigo: c.codigo, real: true });
@@ -583,12 +609,21 @@ async function contabilizarReuniones() {
 // noticias, con la etiqueta «Cierre automático por inactividad» y sin pedir valoración. Si el
 // cliente vuelve a escribir, se reabre y la etiqueta se quita.
 const DIAS_INACTIVIDAD = 14;
-const ultimaActividad = t => [...t.mensajes].reverse().find(m => m.de !== 'nota')?.fecha || t.entrada;
+// 29/10/2026: los días cuentan desde que se puso en espera (pendienteDesde) o desde lo último que se
+// escribió, lo que sea más tarde. Antes contaban solo desde el último mensaje, y un ticket viejo
+// puesto hoy en espera se cerraba en la hora siguiente.
+const ultimaActividad = t => [[...t.mensajes].reverse().find(m => m.de !== 'nota')?.fecha || t.entrada, t.pendienteDesde || ''].sort().pop();
 async function cerrarInactivos() {
   const d = new Date(Date.now() - DIAS_INACTIVIDAD * 864e5);
   const limite = new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 19);
-  for (const t of await store.todos()) {
-    if (t.estado !== 'Pendiente cliente' || t.archivado || t.ejemplo || t.historico || ultimaActividad(t) > limite) continue;
+  const enEspera = t => t && t.estado === 'Pendiente cliente' && !t.archivado && !t.ejemplo && !t.historico;
+  for (const { id } of (await store.todos()).filter(enEspera)) {
+    // Se vuelve a leer justo antes de tocarlo, por si el cliente acaba de escribir.
+    const t = await porId(id);
+    if (!enEspera(t)) continue;
+    // En espera desde antes de apuntar la fecha: los días empiezan a contar ahora.
+    if (!t.pendienteDesde) { t.pendienteDesde = ahora(); await store.guardar(t); continue; }
+    if (ultimaActividad(t) > limite) continue;
     pararSesion(t);
     Object.assign(t, { estado: 'Cerrado', cierre: ahora(), cierreAuto: true });
     t.mensajes.push({ de: 'sistema', texto: `Hemos cerrado tu incidencia porque llevaba ${DIAS_INACTIVIDAD} días esperando tu respuesta. Si aún lo necesitas, escríbenos aquí y la volvemos a abrir.`, fecha: ahora() });
@@ -659,19 +694,29 @@ async function rutasConsola(req, res, ruta, equipo) {
     if (!s || s.tipo !== 'video' || !s.codigo || !google.activo()) return json(res, { personas: null }), true;
     let r;
     try { r = await google.sala(s.codigo); } catch (e) { return json(res, { personas: null, error: e.message }), true; }
+    let f = t;
     if (!s.juntos) {
-      if (r.juntosDesde) Object.assign(s, { inicio: r.juntosDesde, juntos: true });
-      else s.inicio = ahora();
-      await store.guardar(t);
+      // Se vuelve a leer: mientras Meet contestaba ha podido entrar un mensaje del cliente.
+      f = await porId(m[1]) || t;
+      const s2 = activa(f);
+      if (s2?.codigo === s.codigo && !s2.juntos) {
+        if (r.juntosDesde) Object.assign(s2, { inicio: r.juntosDesde, juntos: true });
+        else s2.inicio = ahora();
+        await store.guardar(f);
+      }
     }
-    return json(res, { personas: r.personas, juntos: !!s.juntos, ticket: await vistaPanel(t) }), true;
+    return json(res, { personas: r.personas, juntos: !!activa(f)?.juntos, ticket: await vistaPanel(f) }), true;
   }
   if (!m || req.method !== 'POST') return false;
-  const t = await porId(m[1]);
+  let t = await porId(m[1]);
   if (!t) return json(res, { error: 'Ticket no encontrado' }, 404), true;
   if (!ACCIONES[m[2]]) return json(res, { error: 'Acción desconocida' }, 400), true;
   const b = quien(await leerCuerpo(req));
-  if (PREVIOS[m[2]]) await PREVIOS[m[2]](t, b);
+  if (PREVIOS[m[2]]) {
+    await PREVIOS[m[2]](t, b);
+    // Google tarda: se vuelve a leer el ticket para no pisar lo que haya entrado mientras.
+    t = await porId(m[1]) || t;
+  }
   ACCIONES[m[2]](t, b);
   await store.guardar(t);
   avisar(t, m[2], b);

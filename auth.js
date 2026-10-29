@@ -63,10 +63,22 @@ async function usuarioDe(req) {
   return sesionValida(req) ? { usuario: USUARIO } : null;
 }
 
-// Límite de intentos de login por IP: 8 cada 15 minutos.
-const intentos = new Map();
+// IP de quien llama (29/10/2026). Render añade a X-Forwarded-For lo que trae la petición sin quitarlo,
+// así que su primer valor lo puede escribir cualquiera: se prefiere la que pone Cloudflare, que va
+// delante de Render. Como tampoco es seguro del todo, los límites de intentos van además por cuenta.
+const ipDe = req => String(req.headers['cf-connecting-ip'] || req.headers['true-client-ip'] || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim();
+
+// Límite de intentos de login por IP: 8 cada 15 minutos. Y, como solo hay un usuario, 30 fallos cada
+// 15 minutos entre todas las IP: cambiar de IP (o falsearla) no da más intentos.
+const intentos = new Map(), fallos = [];
+const demasiadosFallos = () => {
+  const desde = Date.now() - 15 * 60000;
+  while (fallos.length && fallos[0] < desde) fallos.shift();
+  return fallos.length >= 30;
+};
 function limitar(ip) {
   const ahora = Date.now();
+  if (intentos.size > 5000) for (const [k, v] of intentos) if (ahora - v.desde > 15 * 60000) intentos.delete(k);
   const r = intentos.get(ip) || { n: 0, desde: ahora };
   if (ahora - r.desde > 15 * 60000) { r.n = 0; r.desde = ahora; }
   r.n++;
@@ -76,11 +88,11 @@ function limitar(ip) {
 
 async function rutas(req, res, ruta, { json, leerCuerpo }) {
   if (req.method === 'POST' && ruta === '/api/login') {
-    const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress).split(',')[0].trim();
-    if (limitar(ip)) return json(res, { error: 'Demasiados intentos. Prueba de nuevo en unos minutos.' }, 429), true;
+    const ip = ipDe(req);
+    if (limitar(ip) || demasiadosFallos()) return json(res, { error: 'Demasiados intentos. Prueba de nuevo en unos minutos.' }, 429), true;
     const b = await leerCuerpo(req);
     const ok = CLAVE && iguales(String(b.usuario || '').trim().toLowerCase(), USUARIO) & iguales(b.clave || '', CLAVE);
-    if (!ok) return json(res, { error: 'Usuario o contraseña incorrectos.' }, 401), true;
+    if (!ok) { fallos.push(Date.now()); return json(res, { error: 'Usuario o contraseña incorrectos.' }, 401), true; }
     intentos.delete(ip);
     abrirSesion(req, res);
     return json(res, { usuario: USUARIO }), true;
@@ -92,4 +104,4 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
   return false;
 }
 
-module.exports = { usuarioDe, rutas, abrirSesion, permitidoGoogle, dominioGoogle, textoGoogle, TECNICO, TECNICOS };
+module.exports = { usuarioDe, rutas, abrirSesion, permitidoGoogle, dominioGoogle, textoGoogle, ipDe, TECNICO, TECNICOS };

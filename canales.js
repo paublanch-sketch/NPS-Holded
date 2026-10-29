@@ -63,7 +63,8 @@ const numeroPublico = () => String(env.WA_NUMERO_PUBLICO || waEstado.publico || 
 const estadoWa = () => ({
   activo: !!waActivo(), origen: waEstado.origen, numero: waEstado.info?.numero || '', nombre: waEstado.info?.nombre || '', publico: numeroPublico(),
   webhook: `${URL_PUBLICA}/whatsapp/webhook`, verificar: WA.verificar || '', conSecreto: !!WA.secreto,
-  recibido: waEstado.recibido, enviado: waEstado.enviado, fallo: waEstado.fallo, error: waEstado.error,
+  recibido: waEstado.recibido, enviado: waEstado.enviado, fallo: waEstado.fallo,
+  error: waEstado.error || (waActivo() && !WA.secreto ? 'Falta la clave secreta de la app de Meta (WA_APP_SECRET en Render): por seguridad, los mensajes que llegan se rechazan.' : null),
 });
 
 async function rutasPanel(req, res, ruta, { json, leerCuerpo }) {
@@ -169,8 +170,9 @@ tickets.avisos.push(async (t, evento, b) => {
 });
 
 // Firma X-Hub-Signature-256 de Meta: sin ella cualquiera podría crear tickets.
+// 29/10/2026: sin la clave secreta de la app no se acepta nada (antes entraba todo sin comprobar).
 function firmaValida(crudo, cabecera) {
-  if (!WA.secreto) return true;
+  if (!WA.secreto) return false;
   const esperada = 'sha256=' + crypto.createHmac('sha256', WA.secreto).update(crudo).digest('hex');
   return cabecera && cabecera.length === esperada.length && crypto.timingSafeEqual(Buffer.from(cabecera), Buffer.from(esperada));
 }
@@ -194,7 +196,10 @@ async function rutasWhatsApp(req, res, ruta, url) {
     return res.end(ok ? url.searchParams.get('hub.challenge') : 'Token no válido'), true;
   }
   const crudo = await leerCrudo(req);
-  if (!firmaValida(crudo, req.headers['x-hub-signature-256'])) return tickets.json(res, { error: 'Firma no válida' }, 401), true;
+  if (!firmaValida(crudo, req.headers['x-hub-signature-256'])) {
+    if (!WA.secreto) console.error('WhatsApp: mensaje rechazado porque falta WA_APP_SECRET');
+    return tickets.json(res, { error: 'Firma no válida' }, 401), true;
+  }
   let cuerpo;
   try { cuerpo = JSON.parse(crudo); } catch { return tickets.json(res, { error: 'JSON no válido' }, 400), true; }
   for (const entry of cuerpo.entry || []) {

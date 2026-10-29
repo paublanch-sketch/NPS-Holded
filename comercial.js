@@ -211,7 +211,8 @@ async function porToken(token) {
   const h = sha(token);
   return (await clientes.todos()).find(f => f.partner?.convenio?.token === h) || null;
 }
-const ipDe = req => String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+// La IP como en el login (auth.ipDe); en el justificante va también la cadena X-Forwarded-For entera.
+const ipDe = req => require('./auth').ipDe(req);
 
 async function firmar(req, f, b) {
   const c = f.partner.convenio;
@@ -224,7 +225,7 @@ async function firmar(req, f, b) {
   const firma = String(b.firma || '');
   const png = firma.startsWith('data:image/png;base64,') ? Buffer.from(firma.slice(22), 'base64') : null;
   if (!png || png.length < 200 || png.length > 300000 || png.toString('latin1', 1, 4) !== 'PNG') throw error('Firma en el recuadro antes de enviar');
-  c.firmado = { nombre, nif, cargo, fecha: new Date().toISOString(), ip: ipDe(req), navegador: texto(req.headers['user-agent'], 300), firma };
+  c.firmado = { nombre, nif, cargo, fecha: new Date().toISOString(), ip: ipDe(req), reenvios: texto(req.headers['x-forwarded-for'], 300), navegador: texto(req.headers['user-agent'], 300), firma };
   cambiarEtapa(f, 'Convenio firmado', nombre);
   nota(f, 'Nota', `Convenio firmado en línea por ${nombre}${cargo ? ` (${cargo})` : ''}. Toca hacer el onboarding.`, nombre);
   await clientes.guardar(f);
@@ -261,7 +262,7 @@ button{margin-top:24px;font:inherit;padding:8px 14px;border-radius:9px;border:1p
 <h1>Justificante de firma del convenio de asesoría partner</h1><p>Firma electrónica hecha en línea desde el enlace que se envió a ${h(c.email)}.</p>
 <table>${fila('Asesoría', f.nombre)}${fila('Firmado por', x.nombre)}${fila('DNI / NIE', x.nif)}${x.cargo ? fila('Cargo', x.cargo) : ''}
 ${fila('Fecha y hora', new Date(x.fecha).toLocaleString('es-ES', { timeZone: 'Europe/Madrid', dateStyle: 'long', timeStyle: 'medium' }))}
-${fila('Dirección IP', x.ip)}${fila('Navegador', x.navegador)}${fila('Documento', c.documentoNombre || 'Convenio')}${fila('Huella del documento (SHA-256)', c.hashDoc || '')}
+${fila('Dirección IP', x.ip)}${x.reenvios && x.reenvios !== x.ip ? fila('Cadena de proxies (X-Forwarded-For)', x.reenvios) : ''}${fila('Navegador', x.navegador)}${fila('Documento', c.documentoNombre || 'Convenio')}${fila('Huella del documento (SHA-256)', c.hashDoc || '')}
 ${fila('Enviado a firmar', new Date(c.enviado).toLocaleString('es-ES', { timeZone: 'Europe/Madrid', dateStyle: 'long', timeStyle: 'short' }))}</table>
 <div class="firma"><img src="${h(x.firma)}" alt="Firma de ${h(x.nombre)}"></div>
 <div><button type="button" onclick="print()">Imprimir o guardar en PDF</button></div></body></html>`;
@@ -288,17 +289,21 @@ async function traerGemas() {
 }
 async function unirGemas(lista) {
   const fs = (await clientes.todos()).filter(f => !f.ejemplo);
+  const suyos = (await tickets.todos()).filter(t => !t.ejemplo);
   const correos = new Map();
-  for (const t of await tickets.todos()) if (t.email && !t.ejemplo) correos.set(t.email.toLowerCase(), t.cliente);
+  for (const t of suyos) if (t.email) correos.set(t.email.toLowerCase(), t.cliente);
   for (const c of await cuentas.todos()) correos.set(c.email, c.cliente);
   for (const f of fs) { if (f.email) correos.set(f.email.toLowerCase(), f.nombre); if (f.gemas?.cuenta) correos.set(f.gemas.cuenta, f.nombre); }
   const conf = await config();
   const antes = new Map((conf.supergemas?.cuentas || []).map(c => [c.email, c.cliente]));
+  // 29/10/2026: un nombre que ya no existe (un cliente fusionado) no vale, y uno que solo tiene
+  // incidencias recibe su ficha. Antes, los dos paraban la lectura con «Ese cliente no existe».
+  const conFicha = new Set(fs.map(f => f.nombre)), ticketDe = new Map(suyos.map(t => [t.cliente, t]));
   const r = { unidas: 0, sinUnir: 0 };
   const guardadas = [];
   for (const c of lista) {
     const email = String(c.email || '').toLowerCase();
-    let cliente = antes.get(email) || correos.get(email) || null;
+    let cliente = [antes.get(email), correos.get(email)].find(n => n && (conFicha.has(n) || ticketDe.has(n))) || null;
     if (!cliente && c.organizacion) {
       const seguros = fs.map(f => f.nombre).filter(n => n.toLowerCase() === String(c.organizacion).toLowerCase() || cli.parecido(c.organizacion, n)?.nivel === 'seguro');
       if (seguros.length === 1) cliente = seguros[0];
@@ -307,6 +312,10 @@ async function unirGemas(lista) {
       holded: !!c.holded, ultimoUso: c.ultimo_uso || null, asesoria: texto(c.asesoria, 160), cliente };
     guardadas.push(cuenta);
     if (!cliente) { r.sinUnir++; continue; }
+    if (!conFicha.has(cliente)) {
+      await clientes.guardar({ nombre: cliente, ...cli.clasificar(ticketDe.get(cliente), new Map()) });
+      conFicha.add(cliente);
+    }
     await ponerGemas(cliente, cuenta);
     r.unidas++;
   }

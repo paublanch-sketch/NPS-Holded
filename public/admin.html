@@ -1091,9 +1091,10 @@ function ordenar(l) {
   const peso = t => t.primera_respuesta ? 1 : 0;
   return l.sort((a, b) => GRUPO_BJ(a) - GRUPO_BJ(b) || peso(a) - peso(b) || a.entrada.localeCompare(b.entrada));
 }
-// Stand-by: a los 14 días sin noticias del cliente se cierra sola (tickets.js).
-const ultimaAct = t => [...t.mensajes].reverse().find(m => m.de !== 'nota')?.fecha || t.entrada;
-const cierraEl = t => fecha(new Date(new Date(ultimaAct(t)).getTime() + 14 * 864e5));
+// Stand-by: a los 14 días sin noticias del cliente se cierra sola (tickets.js), contados desde que se
+// puso en espera o desde lo último que se escribió. Sin fecha de espera (de antes), el servidor empieza a contar ahora.
+const ultimaAct = t => [[...t.mensajes].reverse().find(m => m.de !== 'nota')?.fecha || t.entrada, t.pendienteDesde || ''].sort().pop();
+const cierraEl = t => fecha(new Date((t.pendienteDesde ? new Date(ultimaAct(t)).getTime() : Date.now()) + 14 * 864e5));
 // Número del ticket dentro del cliente: 1, 2, 3… por fecha de entrada.
 const numDelCliente = t => tickets.filter(x => x.cliente === t.cliente && !x.historico && x.entrada <= t.entrada).length;
 

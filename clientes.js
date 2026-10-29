@@ -1,6 +1,6 @@
 // Clientes: su servicio y su origen se guardan una vez por cliente y todos sus tickets
 // lo heredan. También permite fusionar dos nombres que son el mismo cliente.
-const { tickets, clientes, ajustes } = require('./store');
+const { tickets, clientes, ajustes, cuentas } = require('./store');
 
 // 28/10/2026: «Kit Digital» se llama «Kit Digital 1». El Kit Digital 2 está preparado pero oculto
 // hasta que abra: con KIT_DIGITAL_2=1 sale como servicio en fichas, bandeja y Métricas.
@@ -209,6 +209,14 @@ async function fusionar(de, a) {
   }
   // Los clientes que traía la asesoría «de» pasan a «a».
   for (const f of await clientes.todos()) if (f.asesoria === de) { f.asesoria = a; await clientes.guardar(f); }
+  // 29/10/2026: también los accesos al portal (si no, entraban y no veían sus incidencias) y las
+  // cuentas de Super Gemas unidas a «de» (si no, «Traer de Super Gemas» fallaba con ese nombre).
+  for (const c of await cuentas.todos()) if (c.cliente === de) { c.cliente = a; await cuentas.guardar(c); }
+  const com = (await ajustes.donde('clave', 'comercial'))[0];
+  if (com?.supergemas?.cuentas?.some(c => c.cliente === de)) {
+    com.supergemas.cuentas = com.supergemas.cuentas.map(c => c.cliente === de ? { ...c, cliente: a } : c);
+    await ajustes.guardar(com);
+  }
   return n;
 }
 
