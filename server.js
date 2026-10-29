@@ -130,7 +130,7 @@ http.createServer(async (req, res) => {
     if (ruta === '/api/portal') {
       const c = canales.correo.resumen().correo;
       return json(res, {
-        whatsapp: (process.env.WA_NUMERO_PUBLICO || '').replace(/\D/g, ''),
+        whatsapp: canales.numeroPublico(),
         email: process.env.SOPORTE_EMAIL || process.env.MAIL_USER || '',
         telefono: process.env.SOPORTE_TELEFONO || '',
         google: process.env.GOOGLE_RESENA_URL || '',
@@ -181,6 +181,7 @@ http.createServer(async (req, res) => {
     if (await comercial.rutas(req, res, ruta, { json, leerCuerpo })) return;
     if (await cuentas.rutasPanel(req, res, ruta, { json, leerCuerpo })) return;
     if (await ejemplo.rutas(req, res, ruta, { json, leerCuerpo })) return;
+    if (await canales.rutasPanel(req, res, ruta, { json, leerCuerpo })) return;
     if (await canales.correo.rutas(req, res, ruta, { json, leerCuerpo })) return;
     if (req.method === 'POST' && ruta === '/api/google/probar') {
       try { return json(res, { ...(await google.probar()), google: google.resumen() }); }

@@ -535,7 +535,7 @@ function resumen() {
     },
     publica: URL_PUBLICA || null,
     despierto: !!despierto,
-    whatsapp: !!(env.WA_TOKEN && env.WA_PHONE_ID),
+    whatsapp: require('./canales').estadoWa(),
     plantillasWa: require('./canales').PLANTILLAS_WA.map(({ nombre, cuerpo }) => ({ nombre, cuerpo })),
     idiomaWa: env.WA_PLANTILLA_IDIOMA || 'es',
     google: require('./google').resumen(),
@@ -561,4 +561,4 @@ async function iniciar() {
 // Para los correos de las cuentas del portal (cuentas.js).
 const hayCorreo = () => !!principal();
 
-module.exports = { respuestaDelEquipo, firmaHilo, iniciar, rutas, revisarCorreo, sinCita, resumen, plantilla, parrafos, enviar, enviarSinEsperar, envioCaido, hayCorreo, automatico, aTicket };
+module.exports = { cifrar, descifrar, respuestaDelEquipo, firmaHilo, iniciar, rutas, revisarCorreo, sinCita, resumen, plantilla, parrafos, enviar, enviarSinEsperar, envioCaido, hayCorreo, automatico, aTicket };

@@ -318,6 +318,11 @@
   .buzon-campos label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--bruma); }
   .buzon-ayuda { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
   .buzon-nuevo.solo-etiqueta .no-render { display: none; }
+  .wa-pasos { margin-top: 12px; }
+  .wa-pasos summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--azul); padding: 6px 0; }
+  .wa-pasos ol { margin: 6px 0 10px; padding-left: 20px; font-size: 13px; color: var(--bruma); display: flex; flex-direction: column; gap: 6px; }
+  .wa-pasos ol b { color: var(--pizarra); font-weight: 600; }
+  .wa-pasos code { font-size: 12px; background: var(--suave); padding: 2px 6px; border-radius: 6px; overflow-wrap: anywhere; }
   .can-prueba select { flex: 0 1 200px; min-width: 0; }
   .can-pend { margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--cal); color: var(--bruma); font-size: 13px; }
   .can-acc { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
@@ -3037,7 +3042,7 @@ function vistaCanales() {
     <div class="contenido" id="can"><div class="vacio">Cargando…</div></div>`;
   cargarCanales();
   // Cada 30 s, salvo mientras se rellena el formulario de buzón.
-  const ocupado = () => { const f = $('buzonNuevo'); return f && (f.contains(document.activeElement) || [...f.elements].some(e => e.value && e.type !== 'submit' && e.type !== 'button')); };
+  const ocupado = () => ['buzonNuevo', 'waForm'].some(id => { const f = $(id); return f && (f.contains(document.activeElement) || [...f.elements].some(e => e.value && e.type !== 'submit' && e.type !== 'button')); });
   const i = setInterval(() => !document.hidden && !ocupado() && cargarCanales(), 30000);
   pararVista = () => clearInterval(i);
 }
@@ -3045,7 +3050,7 @@ async function cargarCanales(r) {
   try { r = r || await api('/api/canales'); } catch (e) { return fallo(e); }
   marcarCanales(r);
   if (!$('can')) return;
-  const c = r.correo, g = r.google;
+  const c = r.correo, g = r.google, w = r.whatsapp;
   // Estado de cada canal: activo, con fallo o pendiente.
   const correoOk = c.configurado && c.lectura.ok !== false && c.envio.ok !== false;
   const googleOk = g.activo && g.ok !== false;
@@ -3055,7 +3060,7 @@ async function cargarCanales(r) {
   const cab = (ico, titulo, sub, estado) => `<div class="can-cab"><span class="can-ico">${ico}</span><div><h2>${titulo}</h2><p>${sub}</p></div>${estado}</div>`;
   $('can').innerHTML = `
     <div class="can-resumen">
-      ${[[ICO_CAN.correo, 'Correo', correoOk, c.configurado && !correoOk], [ICO_CAN.whatsapp, 'WhatsApp', r.whatsapp, false], [ICO_CAN.meet, 'Google Meet', googleOk, g.activo && g.ok === false], [ICO_CAN.portal, 'Portal del cliente', !!r.publica, false]]
+      ${[[ICO_CAN.correo, 'Correo', correoOk, c.configurado && !correoOk], [ICO_CAN.whatsapp, 'WhatsApp', r.whatsapp.activo, !!(r.whatsapp.error || r.whatsapp.fallo)], [ICO_CAN.meet, 'Google Meet', googleOk, g.activo && g.ok === false], [ICO_CAN.portal, 'Portal del cliente', !!r.publica, false]]
         .map(([i, n, ok, mal]) => `<div class="can-mini"><span class="can-ico">${i}</span><div><b>${n}</b>${est(ok, mal)}</div></div>`).join('')}
     </div>
     <div class="can-grid">
@@ -3089,10 +3094,36 @@ async function cargarCanales(r) {
         </div>` : ''}
       </section>
       <section class="tarjeta can">
-        ${cab(ICO_CAN.whatsapp, 'WhatsApp', 'Un número dedicado: todo lo que escriban entra como ticket y la conversación sigue en el mismo chat.', est(r.whatsapp, false))}
-        ${r.whatsapp
-          ? `${fila('Mensajes', 'Entran como tickets y las respuestas salen por el mismo chat')}${fila('Fuera de 24 h', 'Los avisos salen con plantillas aprobadas por Meta')}`
-          : `<p class="can-pend">Pendiente de dar de alta el número en WhatsApp Business de Meta.</p>`}
+        ${cab(ICO_CAN.whatsapp, 'WhatsApp', 'Un número dedicado: todo lo que escriban entra como ticket y la conversación sigue en el mismo chat.', est(w.activo, !!(w.error || w.fallo)))}
+        ${w.activo ? `
+          ${fila('Número', `<b>${esc(w.numero || '+' + w.publico)}</b>${w.nombre ? ` · ${esc(w.nombre)}` : ''}${w.origen === 'render' ? ' <span class="pl sin">Render</span>' : ''}`)}
+          ${fila('Entrante', w.recibido ? `Último mensaje ${haceTxt(w.recibido)}` : 'Aún no ha llegado ninguno: si escribes al número y no entra, revisa el webhook en Meta')}
+          ${fila('Saliente', w.fallo && (!w.enviado || w.fallo.cuando > w.enviado) ? `<span class="can-mal">No se puede enviar</span><small class="can-mal">${esc(w.fallo.error)}</small>` : w.enviado ? `Último envío ${haceTxt(w.enviado)}` : 'Listo para enviar')}
+          ${fila('Fuera de 24 h', 'Los avisos salen con plantillas aprobadas por Meta')}` : ''}
+        ${w.error ? `<p class="buzon-aviso">${esc(w.error)}</p>` : ''}
+        ${w.origen === 'render' ? '' : `
+          <details class="wa-pasos"${w.activo ? '' : ' open'}><summary>${w.activo ? 'Datos de Meta y webhook' : 'Cómo dar de alta el número en Meta'}</summary>
+            ${w.activo ? '' : `<ol>
+              <li>En <b>developers.facebook.com</b>, crea una app de tipo <b>Empresa</b> y añádele el producto <b>WhatsApp</b>.</li>
+              <li>En WhatsApp → <b>Configuración de la API</b>, añade el número de soporte y verifícalo con el SMS. Copia el <b>Identificador del número de teléfono</b>.</li>
+              <li>En <b>business.facebook.com</b> → Usuarios del sistema, crea uno con permiso <b>whatsapp_business_messaging</b> y genera un <b>token permanente</b>.</li>
+              <li>En la app → Configuración → <b>Básica</b>, copia la <b>Clave secreta de la app</b>.</li>
+              <li>Pega los tres datos aquí abajo y pulsa «Conectar WhatsApp».</li>
+              <li>En WhatsApp → <b>Configuración</b> → Webhook, pon la dirección y el token de verificación de abajo y suscríbete a <b>messages</b>.</li>
+            </ol>`}
+            ${fila('Webhook', `<code>${esc(w.webhook)}</code> <button type="button" class="boton sec peq" data-copiar="${esc(w.webhook)}">Copiar</button>`)}
+            ${fila('Token de verificación', `<code>${esc(w.verificar)}</code> <button type="button" class="boton sec peq" data-copiar="${esc(w.verificar)}">Copiar</button>`)}
+            <form class="buzon-nuevo" id="waForm" autocomplete="off">
+              <div class="buzon-campos">
+                <label>Token permanente<input class="campo" name="token" type="password" autocomplete="new-password" placeholder="${w.activo ? 'Déjalo vacío para no cambiarlo' : 'EAAG…'}"></label>
+                <label>Identificador del número<input class="campo" name="telefonoId" inputmode="numeric" placeholder="${w.activo ? 'Déjalo vacío para no cambiarlo' : '1234567890123'}"></label>
+                <label>Clave secreta de la app<input class="campo" name="secreto" type="password" autocomplete="new-password" placeholder="${w.activo && w.conSecreto ? 'Déjala vacía para no cambiarla' : '32 letras y números'}"></label>
+                <label>Número que verán los clientes<input class="campo" name="publico" inputmode="tel" placeholder="${esc(w.publico ? '+' + w.publico : 'El del número de Meta')}"></label>
+              </div>
+              <p class="buzon-ayuda">Se comprueban con Meta antes de guardarlos. El token y la clave se guardan cifrados.</p>
+              <div class="can-acc" style="margin-top:10px"><button class="boton" id="waGuardar">${w.activo ? 'Guardar' : 'Conectar WhatsApp'}</button>${w.activo ? '<button type="button" class="boton sec" id="waQuitar">Desconectar</button>' : ''}</div>
+            </form>
+          </details>`}
       </section>
       <section class="tarjeta can">
         ${cab(ICO_CAN.meet, 'Google Meet y Calendar', 'Videollamadas con el cliente: se crean solas, el cliente reserva huecos libres y la duración se apunta sola.', g.errorClave ? '<span class="can-est mal">● Clave no válida</span>' : est(googleOk, g.activo && g.ok === false, 'Conectado'))}
@@ -3112,6 +3143,22 @@ async function cargarCanales(r) {
         : '<p class="can-pend">Pendiente de publicar la dirección del portal.</p>'}
       </section>
     </div>`;
+  // WhatsApp: conectar desde aquí, copiar el webhook y el token de verificación.
+  $('can').querySelectorAll('[data-copiar]').forEach(b => b.onclick = async () => {
+    try { await navigator.clipboard.writeText(b.dataset.copiar); aviso('Copiado.'); } catch { aviso('No se ha podido copiar: selecciónalo a mano.', true); }
+  });
+  const wf = $('waForm');
+  if (wf) wf.onsubmit = async e => {
+    e.preventDefault();
+    const bt = $('waGuardar'), txt = bt.textContent;
+    bt.disabled = true; bt.textContent = 'Comprobando con Meta…';
+    try { const r2 = await api('/api/canales/whatsapp', Object.fromEntries(new FormData(wf))); cargarCanales(r2); aviso(`WhatsApp conectado: ${r2.whatsapp.numero || 'número guardado'}.`); }
+    catch (err) { fallo(err); bt.disabled = false; bt.textContent = txt; }
+  };
+  if ($('waQuitar')) $('waQuitar').onclick = async () => {
+    if (!confirm('¿Desconectar WhatsApp? Dejarán de entrar los mensajes y no se podrá responder por WhatsApp hasta volver a conectarlo.')) return;
+    try { cargarCanales(await api('/api/canales/whatsapp/quitar', {})); aviso('WhatsApp desconectado.'); } catch (err) { fallo(err); }
+  };
   const b = $('revisar');
   if (b) b.onclick = async () => {
     b.disabled = true; b.textContent = 'Revisando…';
