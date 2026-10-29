@@ -79,12 +79,11 @@ async function enviarEnlace(c, url) {
   const texto = alta
     ? `Hola${c.nombre ? ' ' + c.nombre.split(' ')[0] : ''}:\n\nYa tienes acceso al Soporte Holded de Interactivos. Desde allí abres tus incidencias y ves cómo van, desde cualquier dispositivo.\n\nPon tu contraseña con el botón (el enlace vale ${DIAS_INVITACION} días).`
     : `Hola${c.nombre ? ' ' + c.nombre.split(' ')[0] : ''}:\n\nHas pedido cambiar la contraseña del Soporte Holded. Ponla con el botón (el enlace vale ${HORAS_RECUPERAR} horas).\n\nSi no lo has pedido tú, no hagas nada: tu contraseña sigue igual.`;
-  await correo.enviar({
+  return correo.enviarSinEsperar({
     to: c.email, subject: titulo,
     text: `${texto}\n\n${alta ? 'Poner mi contraseña' : 'Cambiar la contraseña'}: ${url}`,
     html: correo.plantilla({ titulo, cuerpo: correo.parrafos(texto), boton: { texto: alta ? 'Poner mi contraseña' : 'Cambiar la contraseña', url }, pie: 'Correo enviado desde el Soporte Holded de Interactivos.' }),
   });
-  return true;
 }
 
 // Alta de una cuenta (o nueva invitación si ya existe) desde el panel.
@@ -95,14 +94,17 @@ async function darAcceso({ cliente, email, nombre }) {
   const todas = await cuentas.todos();
   const otra = todas.find(c => c.email === email && c.cliente !== cliente && c.activa !== false);
   if (otra) throw Object.assign(new Error(`Ese correo ya tiene acceso como ${otra.cliente}`), { status: 409 });
-  const c = todas.find(x => x.email === email && x.cliente === cliente) || { email, cliente, creada: new Date().toISOString(), version: 1 };
+  const antes = todas.find(x => x.email === email && x.cliente === cliente);
+  const c = antes || { email, cliente, creada: new Date().toISOString(), version: 1 };
+  // Para que el panel diga qué ha pasado: acceso nuevo, ya tenía cuenta o ya estaba invitado.
+  const nueva = !antes || antes.activa === false;
   Object.assign(c, { nombre: String(nombre || c.nombre || '').trim().slice(0, 120), activa: true });
   const url = nuevoEnlace(c, 'alta');
   await cuentas.guardar(c);
   let enviado = false;
   try { enviado = await enviarEnlace(c, url); } catch (e) { console.error('Cuentas (invitación):', e.message); }
-  // Sin correo saliente, el panel enseña el enlace para pasarlo a mano.
-  return { id: c.id, email, enviado, enlace: enviado ? null : url };
+  // Si el correo no sale, el panel enseña el enlace para pasarlo a mano.
+  return { id: c.id, email, nueva, conClave: !nueva && !!c.hash, enviado, enlace: enviado ? null : url, correoCaido: !enviado && require('./correo').envioCaido() };
 }
 
 const reciente = new Map();

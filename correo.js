@@ -84,14 +84,18 @@ async function cargarBuzones() {
   for (const b of buzones) await detectarServidores(b);
 }
 
+// Render, en el plan gratuito, no deja salir correo por SMTP (puertos 25, 465 y 587) desde septiembre
+// de 2025: la conexión no contesta y nodemailer esperaba 2 minutos. Ahora se corta a los 10 s.
 function smtp(b) {
   if (!listo(b) || !b.smtp) return null;
   if (!b.transporte) {
     const nodemailer = require('nodemailer');
-    b.transporte = nodemailer.createTransport({ host: b.smtp, port: b.smtpPuerto, secure: b.smtpPuerto === 465, auth: { user: b.usuario, pass: b.clave } });
+    b.transporte = nodemailer.createTransport({ host: b.smtp, port: b.smtpPuerto, secure: b.smtpPuerto === 465, auth: { user: b.usuario, pass: b.clave },
+      connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 30000 });
   }
   return b.transporte;
 }
+const sinConexion = e => /timeout|ETIMEDOUT|ECONNREFUSED|ENETUNREACH|EHOSTUNREACH|ECONNRESET/i.test(`${e.code || ''} ${e.message || ''}`);
 // Se responde desde el buzón donde entró el ticket; si no, desde el primero que pueda enviar.
 const principal = () => buzones.find(b => smtp(b)) || null;
 const buzonPara = t => buzones.find(b => b.usuario === t?.buzon && smtp(b)) || principal();
@@ -105,9 +109,21 @@ async function enviar(opciones, b = principal()) {
     b.estado.smtp.enviados++;
     return r;
   } catch (e) {
-    Object.assign(b.estado.smtp, { ok: false, ultimo: new Date().toISOString(), error: e.message });
+    const bloqueado = sinConexion(e);
+    Object.assign(b.estado.smtp, { ok: false, ultimo: new Date().toISOString(), bloqueado,
+      error: bloqueado ? `No se puede conectar con ${b.smtp}:${b.smtpPuerto} (${e.message}). En el plan gratuito, Render no deja enviar correo por SMTP.` : e.message });
     throw e;
   }
+}
+
+// ¿Está cortado el correo saliente? (lo último que se intentó enviar no pudo ni conectar)
+const envioCaido = (b = principal()) => !!(b && b.estado.smtp.ok === false && b.estado.smtp.bloqueado);
+
+// Para lo que el panel espera (invitaciones al portal, convenios): si el correo no ha salido en unos
+// segundos, se responde igual (con el enlace para pasarlo a mano) y el envío sigue por detrás.
+function enviarSinEsperar(opciones, b = principal()) {
+  const envio = enviar(opciones, b).then(() => true);
+  return Promise.race([envio, new Promise(ok => setTimeout(() => ok(false), envioCaido(b) ? 1500 : 8000))]);
 }
 
 // ---------- Plantilla con la marca (estilos en línea, que es lo que respetan los gestores de correo) ----------
@@ -545,4 +561,4 @@ async function iniciar() {
 // Para los correos de las cuentas del portal (cuentas.js).
 const hayCorreo = () => !!principal();
 
-module.exports = { respuestaDelEquipo, firmaHilo, iniciar, rutas, revisarCorreo, sinCita, resumen, plantilla, parrafos, enviar, hayCorreo, automatico, aTicket };
+module.exports = { respuestaDelEquipo, firmaHilo, iniciar, rutas, revisarCorreo, sinCita, resumen, plantilla, parrafos, enviar, enviarSinEsperar, envioCaido, hayCorreo, automatico, aTicket };

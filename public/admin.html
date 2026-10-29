@@ -2429,7 +2429,7 @@ async function enviarConvenioDlg(x, alFin) {
       const r = await api('/api/asesorias/enviar', { cliente: x.nombre, email, nombre: f.nombre.value, autor: tomarAutor(f) });
       clientesCache = null; alFin?.();
       if (r.enviado) aviso(`Convenio enviado a ${email}.`);
-      else setTimeout(() => copiarEnlace('Convenio listo para firmar', `No hay correo saliente: pásale este enlace a ${email}. Vale 30 días.`, r.enlace));
+      else setTimeout(() => copiarEnlace('Convenio listo para firmar', `${r.correoCaido ? 'El correo no ha salido (Render, en el plan gratuito, no deja enviar correo)' : 'El correo no ha salido'}: pásale este enlace a ${email}. Vale 30 días.`, r.enlace));
     });
 }
 function referirCom(x, alFin) {
@@ -2859,11 +2859,13 @@ let accesosCache = null;
 const cargarAccesos = async () => accesosCache ||= await api('/api/accesos');
 const correoOk = e => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
 
-// Con correo saliente la invitación se envía sola; sin él, el panel da el enlace para pasarlo a mano.
+// Siempre dice qué ha pasado (acceso nuevo, ya tenía cuenta o ya estaba invitado). Si el correo ha
+// salido, basta un aviso; si no, el panel da el enlace para pasarlo a mano.
 function avisoAcceso(r, email) {
-  if (r.enviado) return aviso(`Invitación enviada a ${email}.`);
+  const que = r.nueva ? `Acceso creado para ${email}` : r.conClave ? `${email} ya tenía acceso` : `${email} ya estaba invitado`;
+  if (r.enviado) return aviso(`${que}: le ha llegado un correo para ${r.conClave ? 'entrar y, si quiere, cambiar la contraseña' : 'poner su contraseña'}.`);
   const url = r.enlace.startsWith('http') ? r.enlace : location.origin + r.enlace;
-  dialogo(`<h3>Acceso creado</h3><p class="sub">No hay correo saliente para enviar la invitación: pásale este enlace a ${esc(email)} para que ponga su contraseña. Vale 7 días.</p>
+  dialogo(`<h3>${esc(que)}</h3><p class="sub">${r.correoCaido ? 'El correo no ha salido: Render, en el plan gratuito, no deja enviar correo.' : 'El correo no ha salido.'} Pásale este enlace a ${esc(email)} para que ponga su contraseña. Vale 7 días.</p>
     <input class="campo" name="enlace" readonly value="${esc(url)}">
     <div class="pie"><button type="button" class="boton sec" data-cerrar>Cerrar</button><button type="submit" class="boton">Copiar enlace</button></div>`,
     async f => { try { await navigator.clipboard.writeText(f.enlace.value); aviso('Enlace copiado.'); } catch { f.enlace.select(); return false; } });
@@ -2898,12 +2900,13 @@ function montarAcceso(cliente) {
     e.preventDefault();
     const f = e.target, email = f.email.value.trim();
     if (!correoOk(email)) { aviso('Pon un correo válido.', true); return f.email.focus(); }
-    f.querySelector('button').disabled = true;
-    try { await dar(email, f.nombre.value.trim()); } catch (err) { fallo(err); f.querySelector('button').disabled = false; }
+    const b = f.querySelector('button');
+    b.disabled = true; b.textContent = 'Dando acceso…';
+    try { await dar(email, f.nombre.value.trim()); } catch (err) { fallo(err); b.disabled = false; b.textContent = 'Dar acceso'; }
   };
   card.onclick = async e => {
     const re = e.target.closest('[data-reenviar]'), q = e.target.closest('[data-quitar-acc]');
-    if (re) { re.disabled = true; try { await dar(re.dataset.reenviar, re.dataset.nombre); } catch (err) { fallo(err); re.disabled = false; } }
+    if (re) { re.disabled = true; re.textContent = 'Enviando…'; try { await dar(re.dataset.reenviar, re.dataset.nombre); } catch (err) { fallo(err); re.disabled = false; re.textContent = 'Reenviar'; } }
     if (q && confirm('¿Quitar el acceso al portal? Ya no podrá entrar con esa cuenta.')) {
       try { await api('/api/accesos/quitar', { id: q.dataset.quitarAcc }); aviso('Acceso quitado.'); await recargar(); } catch (err) { fallo(err); }
     }

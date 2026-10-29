@@ -251,12 +251,11 @@ async function enviarConvenio(req, { cliente, email, nombre, autor }) {
     const saludo = `Hola${nombre ? ' ' + texto(nombre).split(' ')[0] : ''}:`;
     const cuerpo = `${saludo}\n\nTe enviamos el convenio de asesoría partner de Interactivos para ${f.nombre}. Puedes leerlo y firmarlo en línea con el botón, desde el ordenador o el móvil.\n\nEl enlace vale ${DIAS_FIRMA} días. Si tienes cualquier duda, responde a este correo.`;
     try {
-      await correo.enviar({ to: email, subject: `Convenio de asesoría partner · ${f.nombre}`, text: `${cuerpo}\n\nLeer y firmar: ${url}`,
+      enviado = await correo.enviarSinEsperar({ to: email, subject: `Convenio de asesoría partner · ${f.nombre}`, text: `${cuerpo}\n\nLeer y firmar: ${url}`,
         html: correo.plantilla({ titulo: 'Convenio de asesoría partner', cuerpo: correo.parrafos(cuerpo), boton: { texto: 'Leer y firmar el convenio', url }, pie: 'Correo enviado por Interactivos.' }) });
-      enviado = true;
     } catch (e) { console.error('Convenio (envío):', e.message); }
   }
-  return { enviado, enlace: enviado ? null : url };
+  return { enviado, enlace: enviado ? null : url, correoCaido: !enviado && correo.envioCaido() };
 }
 
 async function porToken(token) {
