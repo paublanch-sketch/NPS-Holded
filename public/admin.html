@@ -442,25 +442,35 @@
   button.mk-estado small { font-weight: 700; opacity: .75; }
   .mk-flecha { font-size: 10px; transition: transform .15s; }
   button.mk-estado[aria-expanded="true"] .mk-flecha { transform: rotate(180deg); }
-  .mk-porque { margin: -6px 0 16px; padding: 12px 14px; border-radius: 12px; background: var(--cal); border: 1px solid var(--linea); display: flex; flex-direction: column; gap: 10px; }
-  .mk-porque > b { font-size: 13px; }
-  .mk-porque-fila { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; }
-  .mk-porque-fila .mk-dot { margin-top: 5px; flex: none; }
-  .mk-porque-fila.critico .mk-dot { background: var(--mk-cr); } .mk-porque-fila.atencion .mk-dot { background: var(--mk-at); }
-  .mk-porque-fila small { display: block; color: var(--bruma); font-size: 12px; margin-top: 2px; }
-  .mk-porque-fila > div { flex: 1; min-width: 0; }
-  .mk-pq-casos { margin-top: 8px; display: flex; flex-direction: column; border: 1px solid var(--linea); border-radius: 10px; background: var(--blanco); overflow: hidden; }
-  .mk-pq-caso { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border: 0; border-bottom: 1px solid var(--linea); background: none; font: inherit; font-size: 13px; text-align: left; cursor: pointer; color: inherit; }
+  /* Por qué está en Atención o Crítico (29/10/2026, «tan feo»): una tarjeta por motivo, una al
+     lado de la otra, con la cifra grande en el color del estado y los casos en filas de una línea. */
+  .mk-porque { margin: -4px 0 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 12px; align-items: start; }
+  .mk-pq { border: 1px solid var(--linea); border-radius: 12px; background: var(--blanco); overflow: hidden; --f: var(--mk-at-f); --p: var(--mk-at-p); --t: var(--mk-at-t); }
+  .mk-pq.critico { --f: var(--mk-cr-f); --p: var(--mk-cr-p); --t: var(--mk-cr-t); }
+  .mk-pq-cab { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--f); }
+  .mk-pq-cab .v { font-size: 24px; font-weight: 700; line-height: 1; letter-spacing: -.02em; color: var(--t); white-space: nowrap; }
+  .mk-pq-cab .l { flex: 1; min-width: 0; }
+  .mk-pq-cab .l b { display: block; font-size: 13.5px; line-height: 1.3; }
+  .mk-pq-cab .l small { display: block; margin-top: 2px; font-size: 11.5px; line-height: 1.35; color: var(--bruma); }
+  .mk-pq-nivel { flex: none; align-self: flex-start; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--p); color: var(--t); }
+  .mk-pq-casos { display: flex; flex-direction: column; }
+  .mk-pq-caso { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 14px; border: 0; border-top: 1px solid var(--linea); background: none; font: inherit; text-align: left; cursor: pointer; color: inherit; }
   .mk-pq-caso:hover { background: var(--cal); }
-  .mk-pq-caso { flex-wrap: wrap; }
-  .mk-pq-caso > span { min-width: 0; flex: 1 1 200px; }
-  .mk-pq-caso small { margin-top: 1px; overflow-wrap: anywhere; }
-  .mk-pq-caso em { font-style: normal; font-size: 12px; font-weight: 600; color: var(--bruma); white-space: nowrap; flex: none; }
-  .mk-pq-nps { display: inline-block; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+  .mk-pq-caso .q { flex: 1; min-width: 0; }
+  .mk-pq-caso .q b, .mk-pq-caso .q small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mk-pq-caso .q b { font-size: 13px; }
+  .mk-pq-caso .q small { margin-top: 1px; font-size: 12px; color: var(--bruma); }
+  .mk-pq-caso .d { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+  .mk-pq-caso .d small { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .mk-pq-pill { font-style: normal; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 99px; background: var(--suave); color: var(--bruma); white-space: nowrap; }
+  .mk-pq-pill.val { background: var(--p); color: var(--t); }
+  .mk-pq-nps { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
   .mk-pq-nps.ok { background: var(--mk-ok-p); color: var(--mk-ok-t); }
   .mk-pq-nps.atencion { background: var(--mk-at-p); color: var(--mk-at-t); }
   .mk-pq-nps.critico { background: var(--mk-cr-p); color: var(--mk-cr-t); }
-  .mk-pq-mas { padding: 8px; border: 0; background: none; font: inherit; font-size: 12px; font-weight: 600; color: var(--azul); cursor: pointer; }
+  .mk-pq-mas { width: 100%; padding: 9px; border: 0; border-top: 1px solid var(--linea); background: none; font: inherit; font-size: 12px; font-weight: 600; color: var(--azul); cursor: pointer; }
+  .mk-pq-mas:hover { background: var(--cal); }
+  @media (max-width: 760px) { .mk-pq-caso .q small { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; } }
   /* KPI que abren su detalle por clientes */
   .mk-tile.clic, .mk-aro.clic { cursor: pointer; transition: border-color .15s, box-shadow .15s; }
   .mk-tile.clic:hover { border-color: #c9d6f5; box-shadow: 0 4px 14px rgba(37, 99, 235, .10); }
@@ -1665,25 +1675,30 @@ const REGLA = {
 const ORDEN_MOTIVO = ['excedido', 'fueraSla', 'valoracion', 'abiertas'];
 function motivos(b, estado) {
   const n = b.niveles || {};
+  // [cifra, lo que es]: el chip del estado los junta; la tarjeta del porqué pone la cifra en grande.
   const valor = {
-    abiertas: () => `${num(b.abiertas)} incidencias abiertas`,
-    fueraSla: () => `${num(b.fueraSla)} ${b.fueraSla === 1 ? 'incidencia respondida' : 'incidencias respondidas'} pasada la hora`,
-    excedido: () => `${exceso(b.excedidoMin || 0)} sin responder sobre la hora de SLA`,
-    valoracion: () => `valoración media de ${num(b.valoracion, 1)}/5`,
+    abiertas: () => [num(b.abiertas), b.abiertas === 1 ? 'incidencia abierta' : 'incidencias abiertas'],
+    fueraSla: () => [num(b.fueraSla), `${b.fueraSla === 1 ? 'incidencia respondida' : 'incidencias respondidas'} pasada la hora`],
+    excedido: () => [exceso(b.excedidoMin || 0), 'sin responder sobre la hora de SLA'],
+    valoracion: () => [`${num(b.valoracion, 1)}/5`, 'valoración media'],
   };
-  return ORDEN_MOTIVO.filter(k => n[k] === estado).map(k => ({ clave: k, texto: valor[k](), regla: REGLA[k][estado] }));
+  return ORDEN_MOTIVO.filter(k => n[k] === estado).map(k => {
+    const [cifra, que] = valor[k]();
+    return { clave: k, cifra, que, texto: k === 'valoracion' ? `${que} de ${cifra}` : `${cifra} ${que}`, regla: REGLA[k][estado] };
+  });
 }
 // Dentro del porqué, quién está detrás de cada motivo: qué clientes, qué incidencias y quién
 // ha puesto cada valoración. Cada fila abre la incidencia en la bandeja.
-const PORQUE_VISIBLES = 4;
+const PORQUE_VISIBLES = 3;
 function casosDelMotivo(b, clave) {
   const d = b.detalle || {};
-  const fila = (c, dcha, sub) => `<button type="button" class="mk-pq-caso" data-ticket="${c.id}"><span><b>${esc(c.cliente)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span><em>${dcha}</em></button>`;
-  const l = clave === 'abiertas' ? (b.casos || []).map(c => fila(c, esc(c.estado), `${c.titulo || c.tipo || ''} · desde ${horaEntrada(c.entrada)}`))
-    : clave === 'fueraSla' ? (d.fueraSla || []).map(c => fila(c, c.respondido ? `respondida en ${dur(c.esperaMin)}` : `sin responder · ${dur(c.esperaMin)}`, `${c.titulo || ''} · ${horaEntrada(c.entrada)}`))
-    : clave === 'excedido' ? (d.excedido || []).map(c => fila(c, exceso(c.excesoMin), `${c.titulo || ''} · sin responder desde ${horaEntrada(c.entrada)}`))
+  const pill = (txt, val) => `<em class="mk-pq-pill${val ? ' val' : ''}">${esc(txt)}</em>`;
+  const fila = (c, dcha, sub, cuando) => `<button type="button" class="mk-pq-caso" data-ticket="${c.id}"${sub ? ` title="${esc(sub)}"` : ''}><span class="q"><b>${esc(c.cliente)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span><span class="d">${dcha}${cuando ? `<small>${esc(cuando)}</small>` : ''}</span></button>`;
+  const l = clave === 'abiertas' ? (b.casos || []).map(c => fila(c, pill(c.estado), c.titulo || c.tipo || '', `desde ${horaEntrada(c.entrada)}`))
+    : clave === 'fueraSla' ? (d.fueraSla || []).map(c => fila(c, pill(c.respondido ? `en ${dur(c.esperaMin)}` : `sin responder · ${dur(c.esperaMin)}`, true), c.titulo || '', horaEntrada(c.entrada)))
+    : clave === 'excedido' ? (d.excedido || []).map(c => fila(c, pill(exceso(c.excesoMin), true), c.titulo || '', `sin responder desde ${horaEntrada(c.entrada)}`))
     : (d.valoracion || []).map(c => fila(c, `<span class="mk-pq-nps ${c.nps >= 9 ? 'ok' : c.nps >= 7 ? 'atencion' : 'critico'}">${c.nps}/10</span>`,
-        [c.contacto, c.titulo, fecha(c.cierre)].filter(Boolean).join(' · ') + (c.mejora ? ` — «${c.mejora}»` : '')));
+        [c.contacto, c.titulo].filter(Boolean).join(' · ') + (c.mejora ? ` — «${c.mejora}»` : ''), fecha(c.cierre)));
   if (!l.length) return '';
   return `<div class="mk-pq-casos">${l.map((x, i) => i >= PORQUE_VISIBLES ? x.replace('class="mk-pq-caso"', 'class="mk-pq-caso mas oculto"') : x).join('')}
     ${l.length > PORQUE_VISIBLES ? `<button type="button" class="mk-pq-mas" data-pqmas="${l.length - PORQUE_VISIBLES}">Ver ${l.length - PORQUE_VISIBLES} más</button>` : ''}</div>`;
@@ -1807,8 +1822,9 @@ function bloqueServicio(b, r) {
     : estado === 'ok' ? '<span class="mk-estado ok">✓ Todo OK</span>'
     : `<button type="button" class="mk-estado ${estado}" data-porque aria-expanded="false" title="Ver por qué">${estado === 'critico' ? '⊗ Crítico' : '! Atención'}${primero ? ` · ${esc(primero.texto)}` : ''}${todos.length > 1 ? ` <small>+${todos.length - 1}</small>` : ''} <span class="mk-flecha">▾</span></button>`;
   const porque = todos.length ? `<div class="mk-porque oculto">
-      <b>Por qué está ${estado === 'critico' ? 'en Crítico' : 'en Atención'}</b>
-      ${todos.map(m => `<div class="mk-porque-fila ${crit.includes(m) ? 'critico' : 'atencion'}"><span class="mk-dot"></span><div><b>${esc(m.texto[0].toUpperCase() + m.texto.slice(1))}</b><small>${esc(m.regla)}</small>${casosDelMotivo(b, m.clave)}</div></div>`).join('')}
+      ${todos.map(m => { const nv = crit.includes(m) ? 'critico' : 'atencion'; return `<div class="mk-pq ${nv}">
+        <div class="mk-pq-cab"><span class="v">${esc(m.cifra)}</span><div class="l"><b>${esc(m.que[0].toUpperCase() + m.que.slice(1))}</b><small>${esc(m.regla)}</small></div><span class="mk-pq-nivel">${nv === 'critico' ? 'Crítico' : 'Atención'}</span></div>
+        ${casosDelMotivo(b, m.clave)}</div>`; }).join('')}
     </div>` : '';
   const niveles = b.niveles || {};
   const det = clave => `${b.nombre}||${clave}`;
