@@ -1059,7 +1059,7 @@ const PESTANAS = [
 let pestana = leer('pestana', 'abiertos');
 if (!['abiertos', 'vencen', 'espera', 'cerrados'].includes(pestana)) pestana = 'abiertos';
 let busca = '', modoNota = false, selActual = null, firmaDet = '';
-const firmaDe = t => JSON.stringify([t?.id, t?.mensajes?.length, t?.estado, t?.tecnico, t?.sesiones?.length, t?.activa?.inicio, t?.tipo_incidencia, t?.cierreAuto, t?.nps]);
+const firmaDe = t => JSON.stringify([t?.id, t?.mensajes?.length, t?.estado, t?.tecnico, t?.sesiones?.length, t?.activa?.inicio, t?.activa?.esperando, t?.tipo_incidencia, t?.cierreAuto, t?.nps]);
 
 // Cambia el ticket abierto sin volver a montar la bandeja.
 function seleccionar(id) {
@@ -1080,7 +1080,8 @@ function slaDe(t) {
   const m = laborables(t.entrada);
   return [m > 60 ? 'critico' : m > 45 ? 'atencion' : 'ok', m > 60 ? `Fuera de SLA · ${dur(m)}` : `Sin responder · ${dur(m)}`];
 }
-const segundos = t => (t.horas_previas || 0) * 3600 + (t.sesiones || []).reduce((s, x) => s + ((x.fin ? new Date(x.fin) : new Date()) - new Date(x.inicio)) / 1000, 0);
+// La videollamada que espera a que entren los dos (esperando) aún no cuenta (tickets.js).
+const segundos = t => (t.horas_previas || 0) * 3600 + (t.sesiones || []).reduce((s, x) => s + (x.esperando ? 0 : ((x.fin ? new Date(x.fin) : new Date()) - new Date(x.inicio)) / 1000), 0);
 
 // Prioridad (28/10/2026): 1) Servicio Premium, 2) asesorías partner, 3) Implementación, 4) Kit Digital 1
 // y, cuando abra, 5) Kit Digital 2. Las asesorías partner tienen Premium gratis: van detrás de los que pagan.
@@ -1275,10 +1276,12 @@ function pintarDetalle(t) {
     <aside class="lado">
       <div class="tarjeta">
         <h3>${ICO_BJ.reloj}Tiempo</h3>
-        <div class="reloj ${t.activa ? 'on' : ''}" id="reloj">${hms(segundos(t))}</div>
-        <div class="reloj-sub">${t.activa ? `${t.activa.tipo === 'video' ? 'Videollamada' : 'Cronómetro'} en marcha · ${esc(t.activa.tecnico || '')}` : `Tiempo de atención del ticket · ${horasTxt(horasCliente)} con el cliente`}</div>
+        <div class="reloj ${t.activa && !t.activa.esperando ? 'on' : ''}" id="reloj">${hms(segundos(t))}</div>
+        <div class="reloj-sub">${t.activa?.esperando ? 'Videollamada: el tiempo empieza cuando estéis los dos dentro'
+          : t.activa ? `${t.activa.tipo === 'video' ? 'Videollamada con el cliente' : 'Cronómetro en marcha'}${t.activa.tecnico ? ' · ' + esc(t.activa.tecnico) : ''}` : `Tiempo de atención del ticket · ${horasTxt(horasCliente)} con el cliente`}</div>
         ${cerrado ? '' : `<div class="botones tiempo">
-          ${t.activa ? `<button class="boton rojo" data-a="parar">${ICO_BJ.pausa}Pausar</button>` : `<button class="boton verde" data-a="iniciar">${ICO_BJ.play}Iniciar</button>`}
+          ${t.activa ? `<button class="boton rojo" data-a="parar">${ICO_BJ.pausa}${t.activa.esperando ? 'Terminar' : 'Pausar'}</button>` : `<button class="boton verde" data-a="iniciar">${ICO_BJ.play}Iniciar</button>`}
+          ${t.activa?.esperando ? `<button class="boton verde" data-a="juntos" title="Si Meet no avisa solo de que el cliente ha entrado">${ICO_BJ.play}Ya estamos los dos</button>` : ''}
           <button class="boton sec" data-t="15">+15m</button><button class="boton sec" data-t="30">+30m</button><button class="boton sec" data-t="60">+1h</button>
         </div>
         <button type="button" class="boton sec bj-llamada" data-t="llamada">${ICO_BJ.tel}Apuntar llamada</button>
@@ -1464,17 +1467,21 @@ function pintarPedidas() {
 }
 
 // Videollamada en marcha: Meet dice si el cliente ya está en la sala; hasta entonces el tiempo no cuenta.
+// Cuando entran los dos, el servidor pone el tiempo en marcha y aquí se vuelve a pintar el ticket.
 let salaTimer = null;
 function vigilarSala(t) {
   clearInterval(salaTimer);
-  if (t.activa?.tipo !== 'video' || !t.activa.codigo || !googleInfo.activo) return;
+  if (t.activa?.tipo !== 'video' || !t.activa.esperando || !t.activa.codigo || !googleInfo.activo) return;
   const mirar = async () => {
     let r;
     try { r = await api(`/api/tickets/${t.id}/sala`); } catch { return; }
     if (r.personas == null || selActual !== t.id) return;
-    if (r.ticket) tickets = tickets.map(x => x.id === r.ticket.id ? r.ticket : x);
+    if (r.ticket) {
+      tickets = tickets.map(x => x.id === r.ticket.id ? r.ticket : x);
+      if (firmaDe(r.ticket) !== firmaDet) { firmaDet = firmaDe(r.ticket); return pintarDetalle(r.ticket); }
+    }
     const sub = document.querySelector('.reloj-sub');
-    if (sub) sub.textContent = r.juntos ? 'Videollamada con el cliente en la sala' : 'Esperando a que entre el cliente: el tiempo aún no cuenta';
+    if (sub && !r.juntos) sub.textContent = r.personas ? 'Estás tú en la sala: el tiempo empieza cuando entre el cliente' : 'Esperando a que entréis los dos: el tiempo aún no cuenta';
   };
   mirar();
   salaTimer = setInterval(mirar, 20000);

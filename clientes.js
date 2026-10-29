@@ -234,7 +234,7 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
       c.tickets++;
       if (t.estado !== 'Cerrado') c.abiertos++;
       // Horas: las del Sheet más las sesiones del cronómetro.
-      c.horas += (t.horas_previas || 0) + (t.sesiones || []).reduce((h, x) => h + ((x.fin ? new Date(x.fin) : ahora) - new Date(x.inicio)) / 36e5, 0);
+      c.horas += (t.horas_previas || 0) + (t.sesiones || []).reduce((h, x) => h + (x.esperando ? 0 : ((x.fin ? new Date(x.fin) : ahora) - new Date(x.inicio)) / 36e5), 0);
       // Último contacto: el mensaje más reciente, con el cliente o del equipo.
       for (const f of [t.entrada, ...(t.mensajes || []).filter(m => m.de !== 'sistema').map(m => m.fecha)]) if (f > c.ultimo) c.ultimo = f;
       if (t.email) c.emails.add(t.email.toLowerCase());

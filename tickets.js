@@ -12,13 +12,23 @@ const ahora = () => {
 
 // Horas sumando las sesiones del cronómetro (la abierta cuenta hasta ahora) más las
 // apuntadas a mano en el Sheet para los tickets importados.
-const horas = t => +((t.horas_previas || 0) + (t.sesiones || []).reduce((s, x) => s + (new Date(x.fin || ahora()) - new Date(x.inicio)), 0) / 3600000).toFixed(2);
+// 29/10/2026: la videollamada nace «esperando» y no cuenta hasta que están los dos dentro.
+const duracionMs = x => x.esperando ? 0 : new Date(x.fin || ahora()) - new Date(x.inicio);
+const horas = t => +((t.horas_previas || 0) + (t.sesiones || []).reduce((s, x) => s + duracionMs(x), 0) / 3600000).toFixed(2);
 
 const activa = t => (t.sesiones || []).find(s => !s.fin);
 
 function pararSesion(t) {
   const s = activa(t);
-  if (s) s.fin = ahora();
+  if (!s) return;
+  s.fin = ahora();
+  // Videollamada en la que nunca estuvieron los dos: cero. Si Meet dice después que sí, contabilizarReuniones pone el rato real.
+  if (s.esperando) { s.inicio = s.fin; delete s.esperando; }
+}
+// Ya están los dos en la videollamada: el tiempo cuenta desde «desde».
+function juntar(s, desde) {
+  Object.assign(s, { inicio: desde, juntos: true });
+  delete s.esperando;
 }
 
 // Lo que ve el cliente: nada de horas, notas internas ni datos de otros.
@@ -45,7 +55,7 @@ const vistaPanel = async t => { const cli = require('./clientes'); return { ...v
 // cronómetro en su fecha y las horas del Sheet en la fecha de cierre (o de entrada).
 const trabajo = t => [
   ...(t.horas_previas ? [{ fecha: (t.cierre || t.entrada).slice(0, 10), horas: t.horas_previas, tecnico: t.tecnico }] : []),
-  ...(t.sesiones || []).map(x => ({ fecha: x.inicio.slice(0, 10), horas: (new Date(x.fin || ahora()) - new Date(x.inicio)) / 3600000, tecnico: x.tecnico || t.tecnico })),
+  ...(t.sesiones || []).map(x => ({ fecha: x.inicio.slice(0, 10), horas: duracionMs(x) / 3600000, tecnico: x.tecnico || t.tecnico })),
 ];
 
 async function porToken(token) {
@@ -326,10 +336,15 @@ const ACCIONES = {
     if (t.estado === 'Nuevo' || t.estado === 'Pendiente cliente') t.estado = 'En curso';
   },
   parar(t) { pararSesion(t); },
+  // «Ya estamos los dos»: cuando Meet no puede decir quién hay en la sala, el técnico pone en marcha el tiempo.
+  juntos(t) {
+    const s = activa(t);
+    if (s?.tipo === 'video' && s.esperando) juntar(s, ahora());
+  },
   video(t, b) {
     pararSesion(t);
     t.video = b.enlace;
-    t.sesiones.push({ tipo: 'video', tecnico: b.tecnico, inicio: ahora(), fin: null, codigo: b.codigo || null });
+    t.sesiones.push({ tipo: 'video', tecnico: b.tecnico, inicio: ahora(), fin: null, codigo: b.codigo || null, esperando: true });
     // También como cita, para que Meet diga después cuánto duró de verdad.
     if (b.codigo) (t.citas ||= []).push({ id: Date.now(), inicio: ahora(), fin: ahora(), enlace: b.enlace, codigo: b.codigo, eventoId: b.eventoId || null, tecnico: b.tecnico, origen: 'ahora', estado: 'prevista' });
     t.mensajes.push({ de: 'sistema', texto: `${b.tecnico || 'El técnico'} te invita a una videollamada de Google Meet.`, enlace: t.video, fecha: ahora() });
@@ -687,7 +702,8 @@ async function rutasConsola(req, res, ruta, equipo) {
     return json(res, await vistaPanel(t), 201), true;
   }
   const m = ruta.match(/^\/api\/tickets\/(\d+)\/(\w+)$/);
-  // Videollamada en marcha: el cronómetro empieza cuando el cliente entra en la sala (28/10/2026).
+  // Videollamada en marcha: el cronómetro empieza cuando están los dos en la sala (28/10/2026; desde el
+// 29/10 no cuenta nada hasta entonces, ni aunque el panel no esté mirando).
   if (m && req.method === 'GET' && m[2] === 'sala') {
     const t = await porId(m[1]);
     const s = t && activa(t);
@@ -695,13 +711,13 @@ async function rutasConsola(req, res, ruta, equipo) {
     let r;
     try { r = await google.sala(s.codigo); } catch (e) { return json(res, { personas: null, error: e.message }), true; }
     let f = t;
-    if (!s.juntos) {
+    // Hasta que Meet ve a los dos dentro, el tiempo no cuenta; desde entonces, cuenta desde que entró el segundo.
+    if (s.esperando && r.juntosDesde) {
       // Se vuelve a leer: mientras Meet contestaba ha podido entrar un mensaje del cliente.
       f = await porId(m[1]) || t;
       const s2 = activa(f);
-      if (s2?.codigo === s.codigo && !s2.juntos) {
-        if (r.juntosDesde) Object.assign(s2, { inicio: r.juntosDesde, juntos: true });
-        else s2.inicio = ahora();
+      if (s2?.codigo === s.codigo && s2.esperando) {
+        juntar(s2, r.juntosDesde);
         await store.guardar(f);
       }
     }
