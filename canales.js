@@ -201,6 +201,9 @@ function mensajeWhatsApp(t, evento, b, ventana) {
       : plantilla('soporte_cierre', tickets.tituloCliente(t));
     // Sin plantilla aprobada: solo si aún está abierta la ventana de 24 h.
     case 'cierreAuto': return ventana ? libre(`Hemos cerrado tu incidencia «${tickets.tituloCliente(t)}» porque llevaba ${b.dias} días esperando tu respuesta. Si aún lo necesitas, escríbenos por aquí y la volvemos a abrir.`) : null;
+    // Pantalla compartida y AnyDesk (30/10/2026): sin plantilla aprobada, solo dentro de la ventana de 24 h.
+    case 'pantalla': return b.paso === 'abrir' && ventana && URL_PUBLICA ? libre(`${b.tecnico || 'El técnico'} te enseña su pantalla para resolver tu incidencia. Ábrela aquí y pulsa «Ver su pantalla» (sin instalar nada):\n${enlace(t)}`) : null;
+    case 'anydesk': return b.paso === 'pedir' && ventana ? libre(`Para ayudarte desde tu ordenador nos conectaremos con AnyDesk:\n1. Descárgalo en https://anydesk.com/es/downloads y ábrelo.\n2. Mándanos por aquí el número que sale en «Tu dirección»${URL_PUBLICA ? ` (o escríbelo en ${enlace(t)})` : ''}.\n3. Cuando te conectemos, pulsa «Aceptar».`) : null;
     // Solo salen justo después de un mensaje del cliente: siempre dentro de la ventana.
     case 'pideMejora': return libre('¡Gracias! ¿Qué mejorarías? Puedes responder aquí mismo.');
     case 'gracias': return libre('Gracias por tu opinión, nos ayuda mucho.');

@@ -1059,7 +1059,7 @@ const PESTANAS = [
 let pestana = leer('pestana', 'abiertos');
 if (!['abiertos', 'vencen', 'espera', 'cerrados'].includes(pestana)) pestana = 'abiertos';
 let busca = '', modoNota = false, selActual = null, firmaDet = '';
-const firmaDe = t => JSON.stringify([t?.id, t?.mensajes?.length, t?.estado, t?.tecnico, t?.sesiones?.length, t?.activa?.inicio, t?.activa?.esperando, t?.tipo_incidencia, t?.cierreAuto, t?.nps]);
+const firmaDe = t => JSON.stringify([t?.id, t?.mensajes?.length, t?.estado, t?.tecnico, t?.sesiones?.length, t?.activa?.inicio, t?.activa?.esperando, t?.pantalla, !!t?.anydesk, t?.anydesk?.numero, t?.tipo_incidencia, t?.cierreAuto, t?.nps]);
 
 // Cambia el ticket abierto sin volver a montar la bandeja.
 function seleccionar(id) {
@@ -1113,6 +1113,8 @@ const ICO_BJ = {
   acciones: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5 1.4 0 2.6.4 3.6 1M18 13v6M15 16h6"/></svg>',
   detalles: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
   video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg>',
+  pantalla: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',
+  remoto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="m10 7 5 2.5-2.2.6-.6 2.2z"/></svg>',
   espera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.5 3.6-5.5 7-5.5s6.2 2 7 5.5"/></svg>',
   cerrar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
   play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg>',
@@ -1278,7 +1280,7 @@ function pintarDetalle(t) {
         <h3>${ICO_BJ.reloj}Tiempo</h3>
         <div class="reloj ${t.activa && !t.activa.esperando ? 'on' : ''}" id="reloj">${hms(segundos(t))}</div>
         <div class="reloj-sub">${t.activa?.esperando ? 'Videollamada: el tiempo empieza cuando estéis los dos dentro'
-          : t.activa ? `${t.activa.tipo === 'video' ? 'Videollamada con el cliente' : 'Cronómetro en marcha'}${t.activa.tecnico ? ' · ' + esc(t.activa.tecnico) : ''}` : `Tiempo de atención del ticket · ${horasTxt(horasCliente)} con el cliente`}</div>
+          : t.activa ? `${{ video: 'Videollamada con el cliente', pantalla: 'El cliente está viendo tu pantalla', remoto: 'Control remoto con AnyDesk' }[t.activa.tipo] || 'Cronómetro en marcha'}${t.activa.tecnico ? ' · ' + esc(t.activa.tecnico) : ''}` : `Tiempo de atención del ticket · ${horasTxt(horasCliente)} con el cliente`}</div>
         ${cerrado ? '' : `<div class="botones tiempo">
           ${t.activa ? `<button class="boton rojo" data-a="parar">${ICO_BJ.pausa}${t.activa.esperando ? 'Terminar' : 'Pausar'}</button>` : `<button class="boton verde" data-a="iniciar">${ICO_BJ.play}Iniciar</button>`}
           <button class="boton sec" data-t="15">+15m</button><button class="boton sec" data-t="30">+30m</button><button class="boton sec" data-t="60">+1h</button>
@@ -1292,6 +1294,7 @@ function pintarDetalle(t) {
           ${cerrado
             ? `<div style="font-size:13px;color:var(--bruma);margin-bottom:6px">Cerrado el ${fechaHora(t.cierre)}${t.nps != null ? ` · <b style="color:var(--pizarra)">NPS ${t.nps}</b>` : ' · valoración pendiente'}${t.mejora ? `<br>«${esc(t.mejora)}»` : ''}</div><button class="boton sec" data-a="reabrir">Reabrir</button>`
             : `${t.activa?.tipo === 'video' ? `<a class="boton sec" style="text-align:center;text-decoration:none" href="${esc(t.video)}" target="_blank" rel="noopener">${ICO_BJ.video}Volver a la sala ↗</a>` : `<button class="boton sec" data-a="video">${ICO_BJ.video}Videollamada</button>`}
+               ${botonesRemoto(t)}
                ${t.estado === 'Pendiente cliente'
                  ? `<button class="boton bj-esperar" data-a="reanudar" aria-pressed="true" title="Quitar el stand-by y volver a En curso">${ICO_BJ.espera}En stand-by · quitar</button><div class="bj-espera-nota">Si el cliente no contesta, se cierra sola el ${cierraEl(t)}.</div>`
                  : `<button class="boton bj-esperar" data-a="pendiente" aria-pressed="false">${ICO_BJ.espera}Poner en stand-by</button>`}
@@ -1382,6 +1385,17 @@ function pintarDetalle(t) {
       }).catch(fallo);
     }
     if (a === 'video') return dialogoVideo(t);
+    if (a === 'compartirPantalla') return compartirPantalla(t);
+    if (a === 'dejarPantalla') return pantalla?.id === t.id ? dejarPantalla() : accion(t.id, 'pantalla', { paso: 'cerrar' }).catch(fallo);
+    if (a === 'pedirAnydesk') return accion(t.id, 'anydesk', { paso: 'pedir' }).then(() => aviso('Le hemos pedido al cliente su número de AnyDesk.')).catch(fallo);
+    if (a === 'quitarAnydesk') return accion(t.id, 'anydesk', { paso: 'quitar' }).catch(fallo);
+    if (a === 'conectarAnydesk') {
+      // Abre AnyDesk en este ordenador con el número del cliente; desde ahora cuenta el tiempo.
+      const enlace = document.createElement('a');
+      enlace.href = 'anydesk:' + t.anydesk.numero;
+      enlace.click();
+      return accion(t.id, 'anydesk', { paso: 'conectar' }).catch(fallo);
+    }
     if (a === 'confirmarCita') return confirmarCita(t, Number(b.dataset.cita));
     if (a === 'anularCita') {
       if (!confirm('¿Anular esta videollamada? El cliente recibirá el aviso.')) return;
@@ -1486,6 +1500,88 @@ function vigilarSala(t) {
   mirar();
   salaTimer = setInterval(mirar, 20000);
 }
+
+// ---------- Compartir mi pantalla y control remoto con AnyDesk (30/10/2026) ----------
+// Mi pantalla: el cliente la ve en su incidencia sin instalar nada (WebRTC). Su navegador pide verla y este
+// panel le contesta con la pantalla; el tiempo cuenta solo mientras el cliente está conectado. Llevar su
+// ratón no se puede desde el navegador: para eso, AnyDesk (el cliente manda su número y aquí se conecta).
+function botonesRemoto(t) {
+  const mia = pantalla?.id === t.id;
+  const pant = mia || t.pantalla
+    ? `<button class="boton sec" data-a="dejarPantalla">${ICO_BJ.pantalla}Dejar de compartir</button><div class="bj-espera-nota">${!mia ? 'Se está compartiendo desde otra pestaña.' : t.activa?.tipo === 'pantalla' ? 'El cliente está viendo tu pantalla: el tiempo cuenta.' : 'Esperando a que el cliente la abra en su incidencia (aún no cuenta el tiempo).'}</div>`
+    : `<button class="boton sec" data-a="compartirPantalla">${ICO_BJ.pantalla}Compartir mi pantalla</button>`;
+  const ad = !t.anydesk ? `<button class="boton sec" data-a="pedirAnydesk">${ICO_BJ.remoto}Control remoto (AnyDesk)</button>`
+    : t.anydesk.numero ? `<button class="boton sec" data-a="conectarAnydesk">${ICO_BJ.remoto}Conectar con AnyDesk · ${esc(t.anydesk.numero)}</button><button type="button" class="bj-otro" data-a="quitarAnydesk">Ya no hace falta AnyDesk</button>`
+    : `<div class="bj-espera-nota">AnyDesk: esperando a que el cliente mande su número.</div><button type="button" class="bj-otro" data-a="quitarAnydesk">Ya no hace falta AnyDesk</button>`;
+  return pant + ad;
+}
+let pantalla = null; // { id, stream, pc, visor, timer, corte, ocupado }
+const iceListo = pc => new Promise(ok => {
+  if (pc.iceGatheringState === 'complete') return ok();
+  const fin = setTimeout(ok, 3000);
+  pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') { clearTimeout(fin); ok(); } });
+});
+async function compartirPantalla(t) {
+  if (pantalla) return aviso('Ya estás compartiendo la pantalla en otra incidencia: deja de compartirla antes.', true);
+  let stream;
+  try { stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 15 }, audio: false }); }
+  catch { return aviso('No se ha compartido la pantalla.', true); }
+  pantalla = { id: t.id, stream, pc: null, visor: null };
+  stream.getVideoTracks()[0].addEventListener('ended', () => dejarPantalla());
+  try { await accion(t.id, 'pantalla', { paso: 'abrir' }); }
+  catch (e) { stream.getTracks().forEach(x => x.stop()); pantalla = null; return fallo(e); }
+  aviso('Pantalla compartida: el cliente la verá al pulsar «Ver su pantalla» en su incidencia.');
+  pantalla.timer = setInterval(senalPantalla, 1500);
+}
+async function senalPantalla() {
+  const p = pantalla;
+  if (!p || p.ocupado) return;
+  p.ocupado = true;
+  try {
+    const r = await api(`/api/tickets/${p.id}/pantalla`);
+    if (!r.abierta) return void dejarPantalla(false);
+    // El cliente ha cerrado su visor: se corta ya y deja de contar el tiempo.
+    if (p.visor && !r.visor) {
+      p.pc?.close();
+      Object.assign(p, { pc: null, visor: null });
+      clearTimeout(p.corte);
+      return void accion(p.id, 'pantalla', { paso: 'desconectado' }).catch(() => {});
+    }
+    if (!r.oferta || r.visor === p.visor) return;
+    // Un visor nuevo (el cliente la abre o recarga su página): conexión nueva.
+    p.pc?.close();
+    p.visor = r.visor;
+    const pc = p.pc = new RTCPeerConnection(r.ice);
+    p.stream.getTracks().forEach(x => pc.addTrack(x, p.stream));
+    pc.onconnectionstatechange = () => estadoPantalla(p, pc);
+    await pc.setRemoteDescription(r.oferta);
+    await pc.setLocalDescription(await pc.createAnswer());
+    await iceListo(pc);
+    await api(`/api/tickets/${p.id}/senal`, { visor: r.visor, respuesta: pc.localDescription });
+  } catch {} finally { p.ocupado = false; }
+}
+// Conectado: cuenta el tiempo. Cortado: si en 8 s no vuelve, deja de contar.
+function estadoPantalla(p, pc) {
+  if (pantalla !== p || p.pc !== pc) return;
+  clearTimeout(p.corte);
+  const paso = paso => accion(p.id, 'pantalla', { paso }).catch(() => {});
+  if (pc.connectionState === 'connected') paso('conectado');
+  else if (['failed', 'closed'].includes(pc.connectionState)) paso('desconectado');
+  else if (pc.connectionState === 'disconnected') p.corte = setTimeout(() => paso('desconectado'), 8000);
+}
+async function dejarPantalla(avisarServidor = true) {
+  const p = pantalla;
+  if (!p) return;
+  pantalla = null;
+  clearInterval(p.timer); clearTimeout(p.corte);
+  p.pc?.close();
+  p.stream.getTracks().forEach(x => x.stop());
+  if (avisarServidor) await accion(p.id, 'pantalla', { paso: 'cerrar' }).catch(fallo);
+}
+// Si se cierra la pestaña mientras se comparte, deja de contar enseguida.
+addEventListener('pagehide', () => {
+  if (pantalla) navigator.sendBeacon(`/api/tickets/${pantalla.id}/pantalla`, new Blob([JSON.stringify({ paso: 'cerrar', tecnico: yo() })], { type: 'application/json' }));
+});
 
 function dialogoVideo(t) {
   const g = googleInfo.activo && googleInfo.ok !== false;

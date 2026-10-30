@@ -257,6 +257,17 @@ function correoPara(t, evento, b) {
       boton: ver,
     };
     case 'pideMejora': return { titulo: '¡Gracias por tu valoración!', texto: '¿Qué mejorarías? Puedes responder a este correo con lo que quieras contarnos.' };
+    // Pantalla compartida y AnyDesk (30/10/2026): solo cuando empiezan, y si hay portal al que llevarle.
+    case 'pantalla': return b.paso === 'abrir' && ver ? {
+      titulo: `${b.tecnico || 'El técnico'} te enseña su pantalla`,
+      texto: `Hola${nombre}:\n\n${b.tecnico || 'El técnico'} quiere enseñarte su pantalla para resolver tu incidencia ${tituloDe(t)}. Ábrela desde tu incidencia y pulsa «Ver su pantalla»: se ve en el navegador, sin instalar nada.`,
+      boton: { texto: 'Ver su pantalla', url: ver.url },
+    } : null;
+    case 'anydesk': return b.paso === 'pedir' ? {
+      titulo: 'Asistencia remota con AnyDesk',
+      texto: `Hola${nombre}:\n\nPara ayudarte desde tu ordenador con tu incidencia ${tituloDe(t)}, nos conectaremos con AnyDesk:\n\n1. Descárgalo en https://anydesk.com/es/downloads y ábrelo.\n2. Escribe en tu incidencia el número que sale en «Tu dirección»${ver ? '' : ' (o respóndelo a este correo)'}.\n3. Cuando te conectemos, pulsa «Aceptar» en AnyDesk.`,
+      boton: ver,
+    } : null;
   }
   return null;
 }

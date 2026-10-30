@@ -262,6 +262,17 @@
   .cita-dlg .err { color: var(--error); font-weight: 500; margin-top: 10px; }
   .dlg-x { position: absolute; top: 14px; right: 14px; border: 0; background: none; font-size: 24px; line-height: 1; color: var(--bruma); cursor: pointer; padding: 4px 8px; border-radius: 8px; }
   .dlg-x:hover { background: var(--cal); color: var(--pizarra); }
+  /* Pantalla del técnico y pasos de AnyDesk (30/10/2026) */
+  .pantalla-dlg { border: 0; border-radius: 14px; padding: 0; width: min(1280px, calc(100vw - 32px)); max-width: none; background: #0f1219; color: #fff; box-shadow: 0 24px 60px rgba(0, 0, 0, .45); }
+  .pantalla-dlg::backdrop { background: rgba(15, 18, 25, .8); }
+  .pantalla-cab { position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 56px 12px 18px; font-size: 14px; }
+  .pantalla-cab span { color: #aeb4bf; font-size: 13px; }
+  .pantalla-dlg .dlg-x { top: 6px; color: #aeb4bf; }
+  .pantalla-dlg .dlg-x:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+  .pantalla-dlg video { display: block; width: 100%; max-height: calc(100vh - 110px); background: #000; border-radius: 0 0 14px 14px; }
+  .pasos-ad { margin: 12px 0 16px; padding-left: 20px; color: var(--bruma); font-size: 14px; line-height: 1.55; }
+  .pasos-ad li + li { margin-top: 6px; }
+  .pasos-ad a { color: var(--acento); font-weight: 600; }
   .dias { display: flex; gap: 6px; overflow-x: auto; margin: 16px 0 10px; padding-bottom: 4px; scrollbar-width: thin; }
   .dias button { flex: none; border: 1px solid var(--linea2); background: var(--blanco); border-radius: 12px; padding: 8px 12px; cursor: pointer; text-align: center; line-height: 1.25; }
   .dias button small { display: block; color: var(--muted); font-size: 11px; text-transform: capitalize; }
@@ -363,6 +374,7 @@
   <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
   <symbol id="i-whatsapp" viewBox="0 0 24 24"><path d="M20.5 11.6a8.5 8.5 0 0 1-12.6 7.4L3.5 20.5l1.5-4.3a8.5 8.5 0 1 1 15.5-4.6z"/><path d="M9 8.5c0 3.5 3 6.5 6.5 6.5l1-1.6-2.3-1-1 1a5 5 0 0 1-2.6-2.6l1-1-1-2.3z"/></symbol>
   <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3z"/></symbol>
+  <symbol id="i-pantalla" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></symbol>
   <symbol id="i-auri" viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2.5" y="13" width="4" height="6" rx="1.5"/><rect x="17.5" y="13" width="4" height="6" rx="1.5"/><path d="M19.5 19v.5a2.5 2.5 0 0 1-2.5 2.5h-3"/></symbol>
 </svg>
 
@@ -534,6 +546,10 @@
       </div>
     </div>
     <dialog class="cita-dlg" id="citaDlg" aria-labelledby="citaTit"><div id="cita"></div></dialog>
+    <dialog class="pantalla-dlg" id="pantallaDlg" aria-labelledby="pantallaTit">
+      <div class="pantalla-cab"><b id="pantallaTit">Pantalla del técnico</b><span id="pantallaEstado"></span><button type="button" class="dlg-x" data-cerrar aria-label="Cerrar">×</button></div>
+      <video id="pantallaVideo" autoplay playsinline muted></video>
+    </dialog>
   </section>
 </main>
 
@@ -913,20 +929,99 @@ function iniciarTicket() {
   const franja = c => `${diaLargo(c.inicio)} · ${c.inicio.slice(11, 16)}–${c.fin.slice(11, 16)}`;
   function pintarVideo(t) {
     const c = t.citas?.[0], v = $('vcard');
-    const firma = JSON.stringify([t.video, c, t.reservar]);
+    // El técnico ha dejado de compartir su pantalla: se cierra el visor.
+    if (!t.pantalla && $('pantallaDlg').open) $('pantallaDlg').close();
+    const firma = JSON.stringify([t.video, c, t.reservar, t.pantalla, t.anydesk]);
     if (firma === firmaV) return;
     firmaV = firma;
-    const tarjeta = (tit, sub, fin = '') => `<span class="vcard-ico">${icono('video')}</span><span class="vcard-txt"><b>${tit}</b><span>${sub}</span></span>${fin}`;
+    const tarjeta = (tit, sub, fin = '', ico = 'video') => `<span class="vcard-ico">${icono(ico)}</span><span class="vcard-txt"><b>${tit}</b><span>${sub}</span></span>${fin}`;
     let html = '';
-    if (t.video) html = tarjeta('Videollamada en curso', 'Con Google Meet, en el navegador o en la app.', `<a class="boton" href="${esc(t.video)}" target="_blank" rel="noopener">Unirme</a>`);
+    // Primero lo que está pasando ahora: la pantalla del técnico y AnyDesk (30/10/2026).
+    if (t.pantalla) html = tarjeta(`${esc(t.pantalla.tecnico || 'El técnico')} te enseña su pantalla`, 'Se ve aquí mismo, sin instalar nada.', '<button type="button" class="boton" id="vPantalla">Ver su pantalla</button>', 'pantalla');
+    else if (t.anydesk) html = tarjeta('Asistencia remota con AnyDesk', t.anydesk.numero ? `Enviado: ${esc(t.anydesk.numero)}. Cuando te conectemos, pulsa «Aceptar» en AnyDesk.` : 'Para ayudarte desde tu ordenador.', `<button type="button" class="boton" id="vAnydesk">${t.anydesk.numero ? 'Cambiar' : 'Empezar'}</button>`, 'pantalla');
+    else if (t.video) html = tarjeta('Videollamada en curso', 'Con Google Meet, en el navegador o en la app.', `<a class="boton" href="${esc(t.video)}" target="_blank" rel="noopener">Unirme</a>`);
     else if (c && !c.pedida) html = tarjeta('Tu videollamada', esc(franja(c)), c.enlace ? `<a class="boton" href="${esc(c.enlace)}" target="_blank" rel="noopener">Unirme</a>` : '');
     else if (c) html = tarjeta('Videollamada pedida', `${esc(franja(c))}. Te enviaremos el enlace de Google Meet al confirmarla.`);
     else if (t.reservar) html = `<button type="button" class="vcard-btn" id="vReservar">${tarjeta('¿Prefieres hablar con un técnico?', 'Reserva una videollamada por Google Meet.', icono('flecha', 'i flecha'))}</button>`;
-    v.className = 'vcard' + (t.video ? ' en-curso' : '') + (html ? '' : ' oculto');
+    v.className = 'vcard' + (t.video || t.pantalla ? ' en-curso' : '') + (html ? '' : ' oculto');
     v.innerHTML = html;
     $('escribir').classList.toggle('sin-video', !html);
     $('mVideo').classList.toggle('oculto', !(t.reservar && !c && !t.video));
     if ($('vReservar')) $('vReservar').onclick = abrirReserva;
+    if ($('vPantalla')) $('vPantalla').onclick = verPantalla;
+    if ($('vAnydesk')) $('vAnydesk').onclick = () => pasosAnydesk(t);
+  }
+
+  // La pantalla del técnico (30/10/2026): este navegador pide verla (su oferta), el panel del técnico le
+  // contesta con la pantalla y se ve aquí, por WebRTC, sin instalar nada.
+  let vista = null;
+  const iceListo = pc => new Promise(ok => {
+    if (pc.iceGatheringState === 'complete') return ok();
+    const fin = setTimeout(ok, 3000);
+    pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') { clearTimeout(fin); ok(); } });
+  });
+  async function verPantalla() {
+    cerrarPantalla();
+    const estado = txt => { $('pantallaEstado').textContent = txt; };
+    if (!$('pantallaDlg').open) $('pantallaDlg').showModal();
+    estado('Conectando…');
+    try {
+      const { ice } = await api(`/api/soporte/${token}/pantalla`);
+      const pc = new RTCPeerConnection(ice);
+      vista = { pc };
+      pc.addTransceiver('video', { direction: 'recvonly' });
+      pc.ontrack = e => { $('pantallaVideo').srcObject = e.streams[0] || new MediaStream([e.track]); };
+      pc.onconnectionstatechange = () => {
+        if (vista?.pc !== pc) return;
+        if (pc.connectionState === 'connected') estado('');
+        else if (pc.connectionState === 'disconnected') estado('Se ha cortado: reconectando…');
+        else if (pc.connectionState === 'failed') estado('No se ha podido conectar. Escríbenos por el chat.');
+      };
+      await pc.setLocalDescription(await pc.createOffer());
+      await iceListo(pc);
+      const { visor } = await api(`/api/soporte/${token}/pantalla`, { oferta: pc.localDescription });
+      if (vista?.pc === pc) vista.visor = visor;
+      // Espera la respuesta del panel del técnico (pregunta cada segundo, como mucho un minuto).
+      for (let i = 0; i < 60 && vista?.pc === pc; i++) {
+        const r = await api(`/api/soporte/${token}/pantalla?visor=${visor}`);
+        if (!r.abierta) return estado('El técnico ha dejado de compartir su pantalla.');
+        if (r.respuesta) return void await pc.setRemoteDescription(r.respuesta);
+        await new Promise(ok => setTimeout(ok, 1000));
+      }
+      if (vista?.pc === pc) estado('El técnico no responde. Escríbenos por el chat.');
+    } catch (e) { estado(e.message); }
+  }
+  // Al cerrar el visor (o la página) se avisa, para que el técnico deje de contar el tiempo enseguida.
+  function cerrarPantalla() {
+    if (vista?.visor) fetch(`/api/soporte/${token}/pantalla`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cerrar: true, visor: vista.visor }), keepalive: true }).catch(() => {});
+    vista?.pc.close();
+    vista = null;
+    $('pantallaVideo').srcObject = null;
+  }
+  $('pantallaDlg').addEventListener('close', cerrarPantalla);
+  addEventListener('pagehide', cerrarPantalla);
+  $('pantallaDlg').addEventListener('click', e => { if (e.target.closest('[data-cerrar]')) $('pantallaDlg').close(); });
+
+  // AnyDesk: los pasos y el número que sale en «Tu dirección», para que el técnico se conecte.
+  function pasosAnydesk(t, error = '') {
+    $('cita').innerHTML = `<button type="button" class="dlg-x" data-cerrar aria-label="Cerrar">×</button><h2 id="citaTit">${icono('pantalla')}Asistencia remota con AnyDesk</h2>
+      <p>Para ayudarte desde tu ordenador, el técnico se conecta con AnyDesk. Tú ves en todo momento lo que hace y puedes cortar cuando quieras.</p>
+      <ol class="pasos-ad">
+        <li>Descarga AnyDesk en <a href="https://anydesk.com/es/downloads" target="_blank" rel="noopener">anydesk.com/es/downloads</a> (Windows o Mac) y ábrelo.</li>
+        <li>Copia el número que sale en <b>«Tu dirección»</b> y escríbelo aquí.</li>
+        <li>Cuando te conectemos, pulsa <b>«Aceptar»</b> en AnyDesk.</li>
+      </ol>
+      <label class="et" for="adNumero">Tu número de AnyDesk</label>
+      <input class="texto" id="adNumero" inputmode="numeric" autocomplete="off" placeholder="123 456 789" value="${esc(t.anydesk?.numero || '')}">
+      ${error ? `<p class="err" role="alert">${esc(error)}</p>` : ''}
+      <div class="pie" style="margin-top:18px"><button type="button" class="boton" id="adEnviar">Enviar el número</button><button type="button" class="enlace" data-cerrar>Cancelar</button></div>`;
+    if (!$('citaDlg').open) $('citaDlg').showModal();
+    $('adNumero').focus();
+    $('adEnviar').onclick = async () => {
+      $('adEnviar').disabled = true;
+      try { const r = await api(`/api/soporte/${token}/anydesk`, { numero: $('adNumero').value }); enviado = true; $('citaDlg').close(); pintar(r); }
+      catch (e) { pasosAnydesk(t, e.message); }
+    };
   }
   async function abrirReserva() {
     horaSel = null; huecos = null;

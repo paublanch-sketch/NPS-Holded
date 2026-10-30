@@ -523,7 +523,13 @@ async function rutasPublicas(req, res, ruta) {
       return json(res, { abierta: !!sala, ice: ICE, respuesta: sala && visor && sala.visor === visor ? sala.respuesta || null : null }), true;
     }
     if (req.method !== 'POST') return false;
-    const oferta = sdp((await leerCuerpo(req)).oferta, 'offer');
+    const b = await leerCuerpo(req);
+    // El cliente cierra el visor (o la página): el panel lo ve en su siguiente consulta y deja de contar ya.
+    if (b.cerrar) {
+      if (sala && sala.visor === b.visor) Object.assign(sala, { visor: null, oferta: null, respuesta: null });
+      return json(res, { ok: true }), true;
+    }
+    const oferta = sdp(b.oferta, 'offer');
     if (!sala) return json(res, { error: 'El técnico ya no está compartiendo su pantalla.' }, 409), true;
     if (!oferta) return json(res, { error: 'No se ha podido conectar con la pantalla.' }, 400), true;
     Object.assign(sala, { visor: crypto.randomBytes(8).toString('hex'), oferta, respuesta: null });
