@@ -57,6 +57,12 @@ async function guardarFicha(nombre, cambios) {
   if (typeof cambios.telefono === 'string') c.telefono = cambios.telefono.trim().slice(0, 40);
   // Razón social en la lista de clientes del Kit Digital activos.
   if (typeof cambios.kitDigital === 'string' && cambios.kitDigital.trim()) c.kitDigital = cambios.kitDigital.trim();
+  // 30/10/2026: horas contratadas de su servicio (p. ej., una implementación de 5 h como máximo). Vacío, sin límite.
+  if (cambios.horasContratadas !== undefined) {
+    const n = Number(String(cambios.horasContratadas ?? '').replace(',', '.'));
+    if (String(cambios.horasContratadas ?? '').trim() === '') delete c.horasContratadas;
+    else if (n > 0 && n <= 1000) c.horasContratadas = Math.round(n * 100) / 100;
+  }
   return clientes.guardar(c);
 }
 
@@ -270,6 +276,7 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
       ...clasificar({ cliente: c.nombre }, mapa), notas: mapa.get(c.nombre)?.notas || '', kitDigital: mapa.get(c.nombre)?.kitDigital || null,
       codigo: mapa.get(c.nombre)?.id ? 'CL-' + String(mapa.get(c.nombre).id).padStart(4, '0') : '',
       cambiosServicio: mapa.get(c.nombre)?.cambiosServicio || [],
+      horasContratadas: mapa.get(c.nombre)?.horasContratadas || null,
       ejemplo: !!mapa.get(c.nombre)?.ejemplo, ...vistaFicha(mapa.get(c.nombre) || {}),
     })).sort((a, b) => b.ultimo.localeCompare(a.ultimo));
     return json(res, { clientes: l, servicios: SERVICIOS, origenes: ORIGENES }), true;

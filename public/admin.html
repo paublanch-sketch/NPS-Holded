@@ -1080,6 +1080,13 @@ function slaDe(t) {
   const m = laborables(t.entrada);
   return [m > 60 ? 'critico' : m > 45 ? 'atencion' : 'ok', m > 60 ? `Fuera de SLA · ${dur(m)}` : `Sin responder · ${dur(m)}`];
 }
+// Horas contratadas (30/10/2026, p. ej. una implementación de 5 h como máximo): las de su servicio actual
+// sobre las contratadas. Ámbar con el 80 % gastado; rojo si se pasan.
+const horasDelServicio = (lista, servicio) => lista.filter(x => x.servicio === servicio).reduce((s, x) => s + segundos(x), 0) / 3600;
+const bolsaHtml = (usadas, contratadas) => {
+  const queda = contratadas - usadas, poco = queda >= 0 && queda <= contratadas * 0.2, h = n => num(n, 1).replace(/,0$/, '');
+  return `<span style="color:${queda < 0 ? 'var(--cr-t)' : poco ? 'var(--at-t)' : 'inherit'}">${h(usadas)} de ${h(contratadas)} h${queda < 0 ? ` · pasadas en ${h(-queda)} h` : poco ? ` · quedan ${h(queda)} h` : ''}</span>`;
+};
 // La videollamada que espera a que entren los dos (esperando) aún no cuenta (tickets.js).
 const segundos = t => (t.horas_previas || 0) * 3600 + (t.sesiones || []).reduce((s, x) => s + (x.esperando ? 0 : ((x.fin ? new Date(x.fin) : new Date()) - new Date(x.inicio)) / 1000), 0);
 
@@ -1166,6 +1173,8 @@ function vistaBandeja(idSel) {
   const refrescar = async () => {
     if (document.hidden) return;
     try { tickets = await api('/api/tickets'); } catch (e) { return fallo(e); }
+    // La ficha de cada cliente (horas contratadas y notas) se ve en el detalle: si aún no está, se trae.
+    if (!clientesCache) cargarClientes().then(() => { const t = tickets.find(x => x.id === selActual); if (t) pintarDetalle(t); }).catch(() => {});
     pintarLista(selActual);
     if (selActual) {
       const t = tickets.find(x => x.id === selActual);
@@ -1323,7 +1332,9 @@ function pintarDetalle(t) {
           ${fila('Empresa', esc(t.cliente))}
           ${fila('Servicio', esc(t.servicio || ficha?.servicio || 'Sin clasificar'))}
           ${fila('Origen', esc(t.tipo_cliente || ficha?.tipo_cliente || 'Sin clasificar'))}
+          ${ficha?.horasContratadas ? fila('Contratadas', bolsaHtml(horasDelServicio(tickets.filter(x => x.cliente === t.cliente), ficha.servicio), ficha.horasContratadas)) : ''}
         </div>
+        ${ficha?.notas ? `<p style="margin:10px 0 0;font-size:12.5px;color:var(--bruma);white-space:pre-wrap;background:var(--suave);border-radius:8px;padding:8px 10px">${esc(ficha.notas)}</p>` : ''}
       </div>
       <div class="tarjeta">
         <h3>${ICO_BJ.detalles}Historial del cliente</h3>
@@ -2300,7 +2311,7 @@ function pintarClientes() {
     const nombre = b.closest('[data-nombre]').dataset.nombre;
     const m = document.createElement('div');
     m.className = 'cl-menu';
-    m.innerHTML = '<button data-a="editar">Editar servicio y origen…</button><button data-a="fusionar">Fusionar con otro…</button>';
+    m.innerHTML = '<button data-a="editar">Editar servicio, origen y horas…</button><button data-a="fusionar">Fusionar con otro…</button>';
     b.parentNode.append(m);
     m.onclick = ev => {
       const a = ev.target.closest('button[data-a]')?.dataset.a;
@@ -2320,13 +2331,14 @@ function nuevoCliente() {
   dialogo(`<h3>Nuevo cliente</h3><p class="sub">Para dar de alta un cliente que todavía no ha abierto ninguna incidencia.</p>
     <label>Nombre o razón social</label><input class="campo" name="nombre" required>
     <div class="dos"><div><label>Servicio</label>${selCampo('servicio', c.servicios, 'Kit Digital 1')}</div><div><label>Origen</label>${selCampo('tipo_cliente', c.origenes, 'Antiguo cliente AKIRA')}</div>
-    <div><label>Correo <small>(opcional)</small></label><input class="campo" name="email" type="email"></div><div><label>Teléfono <small>(opcional)</small></label><input class="campo" name="telefono" type="tel"></div></div>
-    <label>Notas <small>(opcional)</small></label><textarea class="campo" name="notas" rows="3"></textarea>
+    <div><label>Correo <small>(opcional)</small></label><input class="campo" name="email" type="email"></div><div><label>Teléfono <small>(opcional)</small></label><input class="campo" name="telefono" type="tel"></div>
+    <div><label>Horas contratadas <small>(opcional)</small></label><input class="campo" name="horasContratadas" inputmode="decimal" placeholder="Ej.: 5"></div></div>
+    <label>Notas <small>(opcional; las ve el técnico en cada incidencia)</small></label><textarea class="campo" name="notas" rows="3"></textarea>
     <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Crear cliente</button></div>`,
     async fm => {
       const nombre = fm.nombre.value.trim();
       if (!nombre) { aviso('Falta el nombre.', true); return false; }
-      await api('/api/clientes', { nuevo: true, nombre, servicio: fm.servicio.value, tipo_cliente: fm.tipo_cliente.value, email: fm.email.value, telefono: fm.telefono.value, notas: fm.notas.value });
+      await api('/api/clientes', { nuevo: true, nombre, servicio: fm.servicio.value, tipo_cliente: fm.tipo_cliente.value, email: fm.email.value, telefono: fm.telefono.value, notas: fm.notas.value, horasContratadas: fm.horasContratadas.value });
       aviso('Cliente creado.');
       clientesCache = null;
       location.hash = `#/clientes/${encodeURIComponent(nombre)}`;
@@ -2335,12 +2347,13 @@ function nuevoCliente() {
 function editarCliente(nombre) {
   const c = clientesCache, x = c.clientes.find(y => y.nombre === nombre);
   dialogo(`<h3>${esc(nombre)}</h3><p class="sub">El servicio y el origen cuentan en todas sus incidencias y en las métricas.</p>
-    <div class="dos"><div><label>Servicio</label>${selCampo('servicio', c.servicios, x.servicio)}</div><div><label>Origen</label>${selCampo('tipo_cliente', c.origenes, x.tipo_cliente)}</div></div>
-    <label>Notas</label><textarea class="campo" name="notas" rows="3">${esc(x.notas || '')}</textarea>
+    <div class="dos"><div><label>Servicio</label>${selCampo('servicio', c.servicios, x.servicio)}</div><div><label>Origen</label>${selCampo('tipo_cliente', c.origenes, x.tipo_cliente)}</div>
+    <div><label>Horas contratadas <small>(vacío, sin límite)</small></label><input class="campo" name="horasContratadas" inputmode="decimal" value="${x.horasContratadas ?? ''}" placeholder="Ej.: 5"></div></div>
+    <label>Notas <small>(las ve el técnico en cada incidencia)</small></label><textarea class="campo" name="notas" rows="3">${esc(x.notas || '')}</textarea>
     <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Guardar</button></div>`,
     async fm => {
-      await api('/api/clientes', { nombre, servicio: fm.servicio.value, tipo_cliente: fm.tipo_cliente.value, notas: fm.notas.value });
-      Object.assign(x, { servicio: fm.servicio.value, tipo_cliente: fm.tipo_cliente.value, notas: fm.notas.value });
+      const f = await api('/api/clientes', { nombre, servicio: fm.servicio.value, tipo_cliente: fm.tipo_cliente.value, notas: fm.notas.value, horasContratadas: fm.horasContratadas.value });
+      Object.assign(x, { servicio: fm.servicio.value, tipo_cliente: fm.tipo_cliente.value, notas: fm.notas.value, horasContratadas: f.horasContratadas || null });
       aviso('Cliente actualizado.');
       pintarClientes();
     });
@@ -2404,6 +2417,7 @@ async function vistaFicha(nombre) {
           <div id="fsel" style="display:flex;gap:10px;flex-wrap:wrap">
             <label style="font-size:12px;color:var(--bruma)">Servicio<br>${sel('servicio', c.servicios, x.servicio)}</label>
             <label style="font-size:12px;color:var(--bruma)">Origen<br>${sel('tipo_cliente', c.origenes, x.tipo_cliente)}</label>
+            <label style="font-size:12px;color:var(--bruma)">Horas contratadas<br><input class="campo" data-campo="horasContratadas" inputmode="decimal" value="${x.horasContratadas ?? ''}" placeholder="Sin límite" style="width:110px"></label>
           </div>
         </div>
         ${(x.cambiosServicio || []).length ? `<p style="margin:10px 0 0;font-size:12px;color:var(--bruma)">${x.cambiosServicio.map(k => `${esc(k.a)} desde el ${fechaLarga(k.fecha)} (antes, ${esc(k.de)})`).reverse().join(' · ')}. Sus incidencias de antes de cada cambio siguen en el servicio de entonces.</p>` : ''}
@@ -2411,6 +2425,7 @@ async function vistaFicha(nombre) {
           <div class="ficha-dato"><b>${l.length}</b><span>Incidencias</span></div>
           <div class="ficha-dato"><b>${l.filter(t => t.estado !== 'Cerrado').length}</b><span>Abiertas ahora</span></div>
           <div class="ficha-dato"><b>${num(horas, 1)} h</b><span>Horas de soporte</span></div>
+          ${x.horasContratadas ? `<div class="ficha-dato"><b>${bolsaHtml(horasDelServicio(l, x.servicio), x.horasContratadas)}</b><span>Contratadas · ${esc(x.servicio)}</span></div>` : ''}
           <div class="ficha-dato"><b>${nps.length ? num(nps.reduce((a, b) => a + b, 0) / nps.length / 2, 1) + '/5' : '—'}</b><span>Valoración media${nps.length ? ` · ${nps.length} resp.` : ''}</span></div>
         </div>
         ${x.notas ? `<p style="margin:12px 0 0;font-size:13px;color:var(--bruma);white-space:pre-wrap">${esc(x.notas)}</p>` : ''}
@@ -2432,10 +2447,16 @@ async function vistaFicha(nombre) {
   montarCom(x, c, () => { clientesCache = null; vistaFicha(nombre); });
   $('nuevaLlamada').onclick = () => pedirLlamada({ ficha: x, abiertas: l.filter(t => t.estado !== 'Cerrado'), alGuardar: () => { clientesCache = null; vistaFicha(nombre); } });
   $('fsel').onchange = async e => {
-    const s = e.target.closest('select[data-campo]');
+    const s = e.target.closest('[data-campo]');
     if (!s) return;
-    try { await api('/api/clientes', { nombre, [s.dataset.campo]: s.value }); x[s.dataset.campo] = s.value; aviso(`${nombre}: ${s.value}`); }
-    catch (err) { fallo(err); }
+    const horas = s.dataset.campo === 'horasContratadas';
+    try {
+      await api('/api/clientes', { nombre, [s.dataset.campo]: s.value });
+      aviso(`${nombre}: ${horas ? (s.value.trim() ? `${s.value.trim()} h contratadas` : 'sin límite de horas') : s.value}`);
+      // Se vuelve a pintar: cambian las horas contratadas y desde cuándo tiene cada servicio.
+      clientesCache = null;
+      vistaFicha(nombre);
+    } catch (err) { fallo(err); }
   };
 }
 
