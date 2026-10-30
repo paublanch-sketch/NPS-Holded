@@ -577,7 +577,7 @@
   .dm-graf-t { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--bruma); margin: 4px 0 6px; }
   .dm-graf { position: relative; margin: 0 0 18px; }
   .dm-graf svg { width: 100%; height: auto; display: block; overflow: visible; }
-  .dm-hot { position: absolute; top: 0; transform: translateX(-50%); cursor: default; }
+  .dm-hot { position: absolute; top: 0; cursor: default; }
   .dm-hot:hover { background: rgba(37, 99, 235, .06); border-radius: 6px; }
   .dm-hot .globo { display: none; position: absolute; left: 50%; transform: translate(-50%, calc(-100% - 10px)); white-space: nowrap; background: #1b2330; color: #fff; border-radius: 8px; padding: 6px 10px; font-size: 12px; line-height: 1.35; box-shadow: 0 6px 18px rgba(20, 30, 50, .28); z-index: 3; pointer-events: none; }
   .dm-hot .globo b { display: block; font-size: 14px; }
@@ -2076,7 +2076,9 @@ function graficaDet(s, k) {
   const vals = (s?.puntos || []).map(p => p[k.serie]);
   const con = vals.filter(v => v != null);
   if (vals.length < 2 || !con.length) return '';
-  const W = 640, H = 210, izq = 46, der = 14, arr = 18, aba = 30, base = H - aba;
+  // 30/10/2026: se dibuja al ancho que tendrá en pantalla (antes, siempre a 640 y encogido: en el móvil las
+  // fechas y cifras de los ejes quedaban de 5 px). El diálogo ocupa el 94 % del ancho menos sus márgenes.
+  const W = Math.round(Math.min(640, Math.max(220, innerWidth * 0.94 - 60))), H = 210, izq = 46, der = 14, arr = 18, aba = 30, base = H - aba;
   const entero = !['horas', 'valoracion'].includes(k.serie);
   let paso, tope;
   if (k.serie === 'valoracion') { paso = 1; tope = 5; }
@@ -2105,13 +2107,16 @@ function graficaDet(s, k) {
   const corta = f => new Date(f + 'T12:00').toLocaleDateString('es-ES', s.tipo === 'mes' ? { month: 'short', year: '2-digit' } : { day: 'numeric', month: 'short' });
   const larga = p => s.tipo === 'dia' ? new Date(p.desde + 'T12:00').toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })
     : s.tipo === 'semana' ? `Del ${corta(p.desde)} al ${corta(p.hasta)}` : new Date(p.desde + 'T12:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-  const cada = Math.ceil(vals.length / 7);
+  const cada = Math.ceil(vals.length / (W < 420 ? 4 : 7)); // en pantallas estrechas, menos fechas en el eje
   const ejeX = s.puntos.map((p, i) => i % cada && i !== vals.length - 1 ? '' : `<text x="${X(i).toFixed(1)}" y="${H - 9}" text-anchor="middle" font-size="10" fill="#9aa3b1">${esc(corta(p.desde))}</text>`).join('');
   const ult = pts.map((p, i) => p ? i : -1).filter(i => i >= 0).at(-1);
   const puntos = pts.map((p, i) => p ? `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${i === ult ? 5 : 3}" fill="${i === ult ? '#2563eb' : '#fff'}" stroke="#2563eb" stroke-width="2"/>` : '').join('');
   // Una zona por tramo, de arriba abajo, con su globo a la altura del punto.
-  const ancho = (W - izq - der) / (vals.length - 1) / W * 100;
-  const zonas = s.puntos.map((p, i) => `<div class="dm-hot${i === 0 ? ' primero' : i === vals.length - 1 ? ' ultimo' : ''}" style="left:${(X(i) / W * 100).toFixed(2)}%;width:${ancho.toFixed(2)}%;height:${(base / H * 100).toFixed(1)}%"><span class="globo" style="top:${((pts[i] ? pts[i][1] : base) / base * 100).toFixed(1)}%">${esc(larga(p))}<b>${vals[i] == null ? 'Sin datos' : esc(k.serieFmt(vals[i]))}</b></span></div>`).join('');
+  // Cada zona va de medio tramo antes a medio tramo después de su punto, sin salirse de la gráfica (la última
+  // se salía por la derecha y el diálogo hacía scroll lateral).
+  const pasoX = (W - izq - der) / (vals.length - 1);
+  const zona = i => { const a = Math.max(0, X(i) - pasoX / 2), b = Math.min(W, X(i) + pasoX / 2); return `left:${(a / W * 100).toFixed(2)}%;width:${((b - a) / W * 100).toFixed(2)}%`; };
+  const zonas = s.puntos.map((p, i) => `<div class="dm-hot${i === 0 ? ' primero' : i === vals.length - 1 ? ' ultimo' : ''}" style="${zona(i)};height:${(base / H * 100).toFixed(1)}%"><span class="globo" style="top:${((pts[i] ? pts[i][1] : base) / base * 100).toFixed(1)}%">${esc(larga(p))}<b>${vals[i] == null ? 'Sin datos' : esc(k.serieFmt(vals[i]))}</b></span></div>`).join('');
   const tit = `${k.serieTit} ${TRAMO[s.tipo]}`;
   return `<div class="dm-graf-t">${esc(tit)}</div><div class="dm-graf"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(tit)}">
     <defs><linearGradient id="dmArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2563eb" stop-opacity=".2"/><stop offset="1" stop-color="#2563eb" stop-opacity="0"/></linearGradient></defs>
