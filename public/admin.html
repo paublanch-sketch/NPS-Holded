@@ -3179,8 +3179,10 @@ function vistaCanales() {
     <div class="cl-cab"><div><h1>Canales</h1><p>Por dónde entran y salen los mensajes de los clientes.</p></div></div>
     <div class="contenido" id="can"><div class="vacio">Cargando…</div></div>`;
   cargarCanales();
-  // Cada 30 s, salvo mientras se rellena el formulario de buzón.
-  const ocupado = () => ['buzonNuevo', 'waForm', 'puenteForm'].some(id => { const f = $(id); return f && (f.contains(document.activeElement) || [...f.elements].some(e => e.value && e.type !== 'submit' && e.type !== 'button')); });
+  // Cada 30 s, salvo mientras se rellena un formulario (30/10/2026: cualquiera en el que se haya escrito, no
+  // solo el de buzón, para no borrar lo pegado).
+  $('can').addEventListener('input', e => { const f = e.target.closest('form'); if (f) f.dataset.tocado = '1'; });
+  const ocupado = () => [...$('can').querySelectorAll('form')].some(f => f.dataset.tocado || f.contains(document.activeElement));
   const i = setInterval(() => !document.hidden && !ocupado() && cargarCanales(), 30000);
   pararVista = () => clearInterval(i);
 }
@@ -3274,6 +3276,8 @@ async function cargarCanales(r) {
   const cuando = iso => iso ? hace(iso) : 'todavía no';
   const fila = (k, v) => `<div class="can-fila"><span>${k}</span><div>${v}</div></div>`;
   const cab = (ico, titulo, sub, estado) => `<div class="can-cab"><span class="can-ico">${ico}</span><div><h2>${titulo}</h2><p>${sub}</p></div>${estado}</div>`;
+  // Los desplegables que estaban abiertos siguen abiertos al volver a pintar (p. ej., «Sin coexistencia»).
+  const abiertos = new Set([...$('can').querySelectorAll('details[open] > summary')].map(s => s.textContent.trim()));
   $('can').innerHTML = `
     <div class="can-resumen">
       ${[[ICO_CAN.correo, 'Correo', correoOk, c.configurado && !correoOk], [ICO_CAN.whatsapp, 'WhatsApp', r.whatsapp.activo, !!(r.whatsapp.error || r.whatsapp.fallo)], [ICO_CAN.meet, 'Google Meet', googleOk, g.activo && g.ok === false], [ICO_CAN.portal, 'Portal del cliente', !!r.publica, false]]
@@ -3378,7 +3382,7 @@ async function cargarCanales(r) {
             </ol>
             <form class="buzon-nuevo" id="waForm" autocomplete="off">
               <div class="buzon-campos">
-                <label>Token permanente<input class="campo" name="token" type="password" autocomplete="new-password" placeholder="${w.activo ? 'Déjalo vacío para no cambiarlo' : 'EAAG…'}"></label>
+                <label>Token de acceso de Meta<input class="campo" name="token" type="password" autocomplete="new-password" placeholder="${w.activo ? 'Déjalo vacío para no cambiarlo' : 'EAAG… (el temporal sirve para probar)'}"></label>
                 <label>Identificador del número<input class="campo" name="telefonoId" inputmode="numeric" placeholder="${w.activo ? 'Déjalo vacío para no cambiarlo' : '1234567890123'}"></label>
                 <label>Clave secreta de la app<input class="campo" name="secreto" type="password" autocomplete="new-password" placeholder="${w.activo && w.conSecreto ? 'Déjala vacía para no cambiarla' : '32 letras y números'}"></label>
                 <label>Número que verán los clientes<input class="campo" name="publico" inputmode="tel" placeholder="${esc(w.publico ? '+' + w.publico : 'El del número de Meta')}"></label>
@@ -3407,6 +3411,7 @@ async function cargarCanales(r) {
         : '<p class="can-pend">Pendiente de publicar la dirección del portal.</p>'}
       </section>
     </div>`;
+  $('can').querySelectorAll('details > summary').forEach(s => { if (abiertos.has(s.textContent.trim())) s.parentElement.open = true; });
   // Puente de Google: copiar el código del script, conectar su URL y quitarlo.
   if ($('puenteCopiar')) $('puenteCopiar').onclick = async () => {
     try { await navigator.clipboard.writeText(codigoPuente(P.clave)); aviso('Código copiado: pégalo en el proyecto de Apps Script.'); }

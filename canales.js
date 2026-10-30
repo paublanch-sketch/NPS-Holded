@@ -150,11 +150,15 @@ async function rutasPanel(req, res, ruta, { json, leerCuerpo }) {
   // Al editar, lo que se deja vacío se queda como estaba.
   const token = String(b.token || '').trim() || antes.token, secreto = String(b.secreto || '').trim() || antes.secreto || env.WA_APP_SECRET;
   const telefonoId = String(b.telefonoId || '').replace(/\D/g, '') || d.telefonoId;
-  if (!token || !telefonoId) return json(res, { error: 'Faltan el token y el identificador del número' }, 400), true;
+  if (!token && !telefonoId) return json(res, { error: 'Faltan el token de acceso de Meta y el identificador del número' }, 400), true;
+  if (!token) return json(res, { error: 'Falta el token de acceso de Meta (vale el temporal de «Configuración de la API»)' }, 400), true;
+  if (!telefonoId) return json(res, { error: 'Falta el identificador del número (Phone Number ID en Meta)' }, 400), true;
   // Sin la clave secreta cualquiera podría mandar mensajes falsos al webhook.
   if (!secreto) return json(res, { error: 'Falta la clave secreta de la app (Configuración → Básica en developers.facebook.com)' }, 400), true;
   let info;
-  try { info = await infoNumero(token, telefonoId); } catch (e) { return json(res, { error: 'Meta no acepta esos datos: ' + e.message }, 400), true; }
+  try { info = await infoNumero(token, telefonoId); } catch (e) {
+    return json(res, { error: `Meta no acepta esos datos: ${e.message}.${/auth/i.test(e.message) ? ' El token no vale: genera uno nuevo en Meta, cópialo con su botón y pégalo enseguida (al generar otro, el anterior deja de valer).' : ''}` }, 400), true;
+  }
   Object.assign(d, { cifrado: correo.cifrar(JSON.stringify({ token, secreto })), telefonoId, info, coexistencia: false, tokenCaduca: null,
     publico: String(b.publico || '').replace(/\D/g, '') || info.numero.replace(/\D/g, ''), actualizado: new Date().toISOString() });
   await ajustes.guardar(d);
