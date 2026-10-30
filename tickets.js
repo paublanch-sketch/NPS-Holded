@@ -45,9 +45,35 @@ const vistaCliente = t => ({
     .map(c => ({ inicio: c.inicio, fin: c.fin, enlace: c.enlace || null, pedida: c.estado === 'pedida' })),
   // Siempre se puede pedir videollamada: sin Google queda pedida y el equipo la confirma (28/10/2026).
   reservar: t.estado !== 'Cerrado',
+  // El técnico le está enseñando su pantalla, o le ha pedido conectarse con AnyDesk (30/10/2026).
+  pantalla: salas.has(t.id) ? { tecnico: salas.get(t.id).tecnico || t.tecnico || '' } : null,
+  anydesk: t.anydesk && t.estado !== 'Cerrado' ? { numero: t.anydesk.numero || '' } : null,
 });
 
-const vistaTecnico = t => ({ ...t, horas: horas(t), activa: activa(t) || null });
+const vistaTecnico = t => ({ ...t, horas: horas(t), activa: activa(t) || null, pantalla: salas.has(t.id) });
+
+// ---------- Pantalla compartida y control remoto (30/10/2026) ----------
+// El usuario: «el meu escriptori s'hauria de compartir o poder controlar la seva pantalla». El técnico
+// enseña su pantalla en el portal del cliente (WebRTC, sin instalar nada): el portal pide verla (su
+// oferta), el panel le contesta con la pantalla y el tiempo cuenta solo mientras están conectados. Llevar
+// el ratón del cliente no se puede desde el navegador: para eso, AnyDesk (el cliente pasa su número y el
+// técnico se conecta). Las salas viven en memoria: si el servidor se reinicia, se vuelve a compartir.
+const salas = new Map(); // id del ticket → { tecnico, latido, visor, oferta, respuesta }
+const ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' },
+  ...(process.env.TURN_URL ? [{ urls: process.env.TURN_URL.split(',').map(x => x.trim()), username: process.env.TURN_USUARIO || '', credential: process.env.TURN_CLAVE || '' }] : [])] };
+const sdp = (d, tipo) => d && d.type === tipo && typeof d.sdp === 'string' && d.sdp.length < 30000 ? { type: d.type, sdp: d.sdp } : null;
+// Sin noticias del panel en un minuto (pestaña cerrada, sin conexión): se deja de compartir y de contar.
+async function barrerSalas() {
+  for (const [id, s] of salas) {
+    if (Date.now() - s.latido < 60000) continue;
+    salas.delete(id);
+    const t = await porId(id);
+    if (!t) continue;
+    if (activa(t)?.tipo === 'pantalla') pararSesion(t);
+    t.mensajes.push({ de: 'sistema', texto: 'Se ha dejado de compartir la pantalla.', fecha: ahora() });
+    await store.guardar(t);
+  }
+}
 // Para el panel tras una acción: con el servicio y el origen de la ficha, como en la lista.
 const vistaPanel = async t => { const cli = require('./clientes'); return { ...vistaTecnico(t), ...cli.clasificar(t, await cli.fichas()) }; };
 
@@ -209,6 +235,22 @@ async function respuestaEquipo(r) {
   await adjuntar(t, r.adjuntos, 'correo', 'tecnico');
   await store.guardar(t);
   if (texto) avisar(t, 'mensaje', { texto, tecnico });
+  return t;
+}
+
+// Lo que el equipo contesta desde la app WhatsApp Business del móvil (coexistencia, 30/10/2026): entra en el
+// chat del ticket abierto de ese cliente como respuesta del técnico, sin volver a enviárselo (ya le ha
+// llegado). Si no tiene ninguno abierto, no se abre ticket: es una conversación que empezamos nosotros.
+async function desdeMovil(r) {
+  const todos = await store.todos();
+  if (r.idExterno && todos.some(t => t.mensajes.some(m => m.idExterno === r.idExterno))) return null;
+  const t = todos.filter(x => !x.archivado && x.estado !== 'Cerrado' && x.telefono && telefonoWa(x.telefono) === telefonoWa(r.telefono))
+    .sort((a, b) => b.entrada.localeCompare(a.entrada))[0];
+  const texto = String(r.texto || '').trim().slice(0, 5000);
+  if (!t || !texto) return null;
+  ACCIONES.mensaje(t, { texto, tecnico: require('./auth').TECNICO });
+  Object.assign(t.mensajes.at(-1), { idExterno: r.idExterno, desdeMovil: true });
+  await store.guardar(t);
   return t;
 }
 
@@ -393,6 +435,43 @@ const ACCIONES = {
   // Boletines o avisos que entraron por el correo: fuera de la bandeja, de clientes y de las
   // métricas, sin avisar a nadie. Se archiva, no se borra.
   descartar(t, b) { pararSesion(t); t.archivado = `No es una incidencia (${b.tecnico || 'panel'}, ${ahora()})`; },
+  // Pantalla compartida: «abrir» se la ofrece al cliente; «conectado» y «desconectado» los manda el panel
+  // cuando el cliente la está viendo o deja de verla (solo entonces cuenta el tiempo); «cerrar» la quita.
+  pantalla(t, b) {
+    const viendo = activa(t)?.tipo === 'pantalla';
+    if (b.paso === 'abrir') {
+      salas.set(t.id, { tecnico: b.tecnico || '', latido: Date.now() });
+      t.mensajes.push({ de: 'sistema', texto: `${b.tecnico || 'El técnico'} te está enseñando su pantalla. Pulsa «Ver su pantalla» para verla aquí mismo, sin instalar nada.`, fecha: ahora() });
+      if (!t.tecnico) t.tecnico = b.tecnico || '';
+    } else if (b.paso === 'conectado') {
+      if (!salas.has(t.id) || viendo) return;
+      pararSesion(t);
+      t.sesiones.push({ tipo: 'pantalla', tecnico: b.tecnico, inicio: ahora(), fin: null });
+      if (!t.primera_respuesta) t.primera_respuesta = ahora();
+      if (t.estado === 'Nuevo' || t.estado === 'Pendiente cliente') t.estado = 'En curso';
+    } else if (b.paso === 'desconectado') {
+      if (viendo) pararSesion(t);
+    } else if (b.paso === 'cerrar') {
+      if (viendo) pararSesion(t);
+      if (salas.delete(t.id)) t.mensajes.push({ de: 'sistema', texto: 'Se ha dejado de compartir la pantalla.', fecha: ahora() });
+    } else throw errorUso('Paso desconocido');
+  },
+  // Control remoto con AnyDesk: «pedir» le explica al cliente qué hacer, «conectar» (el técnico abre AnyDesk
+  // con su número) pone el tiempo en marcha y «quitar» lo retira.
+  anydesk(t, b) {
+    if (b.paso === 'pedir') {
+      t.anydesk = { pedido: ahora() };
+      t.mensajes.push({ de: 'sistema', texto: `${b.tecnico || 'El técnico'} quiere conectarse a tu ordenador con AnyDesk para ayudarte. Pulsa «Asistencia remota» y sigue los pasos.`, fecha: ahora() });
+      if (!t.primera_respuesta) t.primera_respuesta = ahora();
+      if (!t.tecnico) t.tecnico = b.tecnico || '';
+    } else if (b.paso === 'conectar') {
+      if (!t.anydesk?.numero) throw errorUso('El cliente aún no ha enviado su número de AnyDesk.');
+      if (activa(t)?.tipo !== 'remoto') { pararSesion(t); t.sesiones.push({ tipo: 'remoto', tecnico: b.tecnico, inicio: ahora(), fin: null }); }
+      t.mensajes.push({ de: 'nota', autor: b.tecnico, texto: `Conectado por AnyDesk a ${t.anydesk.numero}.`, fecha: ahora() });
+      if (t.estado === 'Nuevo' || t.estado === 'Pendiente cliente') t.estado = 'En curso';
+    } else if (b.paso === 'quitar') delete t.anydesk;
+    else throw errorUso('Paso desconocido');
+  },
 };
 
 function leerCuerpo(req) {
@@ -427,13 +506,43 @@ async function rutasPublicas(req, res, ruta) {
     avisar(t, 'nuevo');
     return json(res, { id: t.id, enlace: `/t/${t.token}` }, 201), true;
   }
-  const m = ruta.match(/^\/api\/soporte\/([a-f0-9]{32})(\/mensaje|\/nps|\/huecos|\/reservar|\/adjunto(?:\/(\d+))?)?$/);
+  const m = ruta.match(/^\/api\/soporte\/([a-f0-9]{32})(\/mensaje|\/nps|\/huecos|\/reservar|\/pantalla|\/anydesk|\/adjunto(?:\/(\d+))?)?$/);
   if (!m) return false;
   const t = await porToken(m[1]);
   if (!t) return json(res, { error: 'Ticket no encontrado' }, 404), true;
   // Si su empresa tiene cuenta en el portal, el enlace solo no basta: hay que entrar.
   if (!(await require('./cuentas').puedeVer(req, t))) return json(res, { error: 'Entra con tu cuenta para ver esta incidencia.', login: true }, 401), true;
   if (req.method === 'GET' && !m[2]) return json(res, vistaCliente(t)), true;
+
+  // Ver la pantalla del técnico: GET dice si la está compartiendo (y, con «visor», si ya ha contestado);
+  // POST manda la oferta del navegador del cliente y devuelve su «visor».
+  if (m[2] === '/pantalla') {
+    const sala = salas.get(t.id);
+    if (req.method === 'GET') {
+      const visor = new URL(req.url, 'http://x').searchParams.get('visor');
+      return json(res, { abierta: !!sala, ice: ICE, respuesta: sala && visor && sala.visor === visor ? sala.respuesta || null : null }), true;
+    }
+    if (req.method !== 'POST') return false;
+    const oferta = sdp((await leerCuerpo(req)).oferta, 'offer');
+    if (!sala) return json(res, { error: 'El técnico ya no está compartiendo su pantalla.' }, 409), true;
+    if (!oferta) return json(res, { error: 'No se ha podido conectar con la pantalla.' }, 400), true;
+    Object.assign(sala, { visor: crypto.randomBytes(8).toString('hex'), oferta, respuesta: null });
+    return json(res, { visor: sala.visor }), true;
+  }
+  // El número de AnyDesk del cliente, cuando el técnico se lo ha pedido.
+  if (m[2] === '/anydesk' && req.method === 'POST') {
+    if (!t.anydesk || t.estado === 'Cerrado') return json(res, { error: 'Ahora no hace falta: el técnico te lo pedirá si lo necesita.' }, 409), true;
+    const crudo = String((await leerCuerpo(req)).numero || '').trim();
+    const numero = /^[\d\s]+$/.test(crudo) ? crudo.replace(/\s+/g, '') : crudo;
+    if (!/^\d{9,12}$/.test(numero) && !/^[\w.-]{2,40}@[\w.-]{2,20}$/.test(numero)) return json(res, { error: 'Escribe el número que te sale en AnyDesk, en «Tu dirección» (9 o 10 cifras).' }, 400), true;
+    const texto = `Mi número de AnyDesk es ${numero}.`;
+    t.anydesk = { ...t.anydesk, numero, enviado: ahora() };
+    t.mensajes.push({ de: 'cliente', texto, fecha: ahora() });
+    if (t.estado === 'Pendiente cliente') t.estado = 'En curso';
+    await store.guardar(t);
+    avisarEquipo(t, 'mensaje', { texto });
+    return json(res, vistaCliente(t)), true;
+  }
 
   // Videollamada: el cliente elige día y hora. Con Google, del calendario de soporte y con su enlace
   // al momento; sin Google (o si falla), del horario laboral y queda pedida: el equipo la confirma.
@@ -653,6 +762,7 @@ function iniciarCierreAuto() {
   const vez = () => cerrarInactivos().catch(e => console.error('Cierre automático:', e.message));
   setTimeout(vez, 60000);
   setInterval(vez, 3600000);
+  setInterval(() => barrerSalas().catch(e => console.error('Pantalla compartida:', e.message)), 30000).unref();
 }
 
 function iniciarReuniones() {
@@ -735,6 +845,19 @@ async function rutasConsola(req, res, ruta, equipo) {
     }
     return json(res, { personas: r.personas, juntos: !!activa(f)?.juntos, ticket: await vistaPanel(f) }), true;
   }
+  // Pantalla compartida: el panel pregunta cada poco si el cliente quiere verla (su oferta sin contestar)…
+  if (m && req.method === 'GET' && m[2] === 'pantalla') {
+    const sala = salas.get(Number(m[1]));
+    if (!sala) return json(res, { abierta: false }), true;
+    sala.latido = Date.now();
+    return json(res, { abierta: true, ice: ICE, visor: sala.visor || null, oferta: sala.respuesta ? null : sala.oferta || null }), true;
+  }
+  // …y le contesta con su pantalla.
+  if (m && req.method === 'POST' && m[2] === 'senal') {
+    const sala = salas.get(Number(m[1])), b = await leerCuerpo(req), respuesta = sdp(b.respuesta, 'answer');
+    if (sala && respuesta && b.visor === sala.visor) Object.assign(sala, { respuesta, latido: Date.now() });
+    return json(res, { ok: !!sala }), true;
+  }
   if (!m || req.method !== 'POST') return false;
   let t = await porId(m[1]);
   if (!t) return json(res, { error: 'Ticket no encontrado' }, 404), true;
@@ -764,4 +887,4 @@ async function paraDashboard() {
   }));
 }
 
-module.exports = { archivar, desarchivar, avisosEquipo, respuestaEquipo, tituloCliente, abrirDesdePortal, iniciarCierreAuto, cerrarInactivos, DIAS_INACTIVIDAD, importarHistorico, cuando, iniciarReuniones, contabilizarReuniones, porId, rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };
+module.exports = { desdeMovil, barrerSalas, archivar, desarchivar, avisosEquipo, respuestaEquipo, tituloCliente, abrirDesdePortal, iniciarCierreAuto, cerrarInactivos, DIAS_INACTIVIDAD, importarHistorico, cuando, iniciarReuniones, contabilizarReuniones, porId, rutasPublicas, rutasConsola, paraDashboard, json, leerCuerpo, recibir, avisos, telefonoWa, ahora };

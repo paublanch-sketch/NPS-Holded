@@ -3094,6 +3094,49 @@ function responder(o) {
 }
 `;
 
+// SDK de Meta para su ventana de alta de WhatsApp (Embedded Signup, coexistencia). Se carga al abrir Canales:
+// si se cargara al pulsar, el navegador bloquearía la ventana.
+let sdkMeta = null;
+function cargarSdkMeta(appId) {
+  if (sdkMeta?.appId === appId) return sdkMeta.listo;
+  const iniciar = () => FB.init({ appId, autoLogAppEvents: true, xfbml: false, version: 'v21.0' });
+  const listo = window.FB ? Promise.resolve(iniciar()) : new Promise((ok, ko) => {
+    window.fbAsyncInit = () => { iniciar(); ok(); };
+    const s = document.createElement('script');
+    Object.assign(s, { src: 'https://connect.facebook.net/es_ES/sdk.js', async: true, crossOrigin: 'anonymous', onerror: () => ko(new Error('No se ha podido cargar Meta')) });
+    document.head.append(s);
+  });
+  sdkMeta = { appId, listo };
+  return listo;
+}
+// La ventana de Meta: se elige el número de la app WhatsApp Business y se confirma con el QR del móvil. Meta
+// devuelve un código (para el token) y, por mensaje, la cuenta y el número.
+function altaCoexistencia(w) {
+  if (!window.FB) return aviso('Meta aún se está cargando: vuelve a pulsar en un momento.', true);
+  let sesion = null;
+  const oir = e => {
+    if (!/^https:\/\/([\w-]+\.)?facebook\.com$/.test(e.origin)) return;
+    try { const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; if (d?.type === 'WA_EMBEDDED_SIGNUP') sesion = d; } catch {}
+  };
+  addEventListener('message', oir);
+  const terminar = async code => {
+    // El mensaje con el número a veces llega justo después del código.
+    for (let i = 0; i < 20 && code && !sesion?.data?.phone_number_id; i++) await new Promise(ok => setTimeout(ok, 250));
+    removeEventListener('message', oir);
+    if (!code) return aviso(sesion?.event === 'CANCEL' ? 'Has cerrado la ventana de Meta sin terminar.' : 'Meta no ha completado el alta.', true);
+    try {
+      const r2 = await api('/api/canales/whatsapp/coexistencia', { code, wabaId: sesion?.data?.waba_id, telefonoId: sesion?.data?.phone_number_id });
+      cargarCanales(r2);
+      aviso(`WhatsApp conectado con la app del móvil: ${r2.whatsapp.numero || 'número guardado'}.`);
+    } catch (err) { fallo(err); }
+  };
+  // FB.login no acepta funciones async: por eso el «terminar» aparte.
+  FB.login(resp => { terminar(resp?.authResponse?.code || null); }, {
+    config_id: w.configId, response_type: 'code', override_default_response_type: true,
+    extras: { setup: {}, featureType: 'whatsapp_business_app_onboarding', sessionInfoVersion: '3' },
+  });
+}
+
 async function cargarCanales(r) {
   try { r = r || await api('/api/canales'); } catch (e) { return fallo(e); }
   marcarCanales(r);
@@ -3166,25 +3209,42 @@ async function cargarCanales(r) {
         </div>` : ''}
       </section>
       <section class="tarjeta can">
-        ${cab(ICO_CAN.whatsapp, 'WhatsApp', 'Un número dedicado: todo lo que escriban entra como ticket y la conversación sigue en el mismo chat.', est(w.activo, !!(w.error || w.fallo)))}
+        ${cab(ICO_CAN.whatsapp, 'WhatsApp', 'El mismo número en la app WhatsApp Business del móvil y aquí (coexistencia): lo que escriben los clientes entra como ticket, y contestas desde el panel o desde el móvil.', est(w.activo, !!(w.error || w.fallo)))}
         ${w.activo ? `
           ${fila('Número', `<b>${esc(w.numero || '+' + w.publico)}</b>${w.nombre ? ` · ${esc(w.nombre)}` : ''}${w.origen === 'render' ? ' <span class="pl sin">Render</span>' : ''}`)}
+          ${fila('Modo', w.coexistencia ? 'Coexistencia: también contestas desde la app del móvil y entra en el chat' : 'Número solo para la web (sin la app del móvil)')}
           ${fila('Entrante', w.recibido ? `Último mensaje ${haceTxt(w.recibido)}` : 'Aún no ha llegado ninguno: si escribes al número y no entra, revisa el webhook en Meta')}
           ${fila('Saliente', w.fallo && (!w.enviado || w.fallo.cuando > w.enviado) ? `<span class="can-mal">No se puede enviar</span><small class="can-mal">${esc(w.fallo.error)}</small>` : w.enviado ? `Último envío ${haceTxt(w.enviado)}` : 'Listo para enviar')}
           ${fila('Fuera de 24 h', 'Los avisos salen con plantillas aprobadas por Meta')}` : ''}
         ${w.error ? `<p class="buzon-aviso">${esc(w.error)}</p>` : ''}
         ${w.origen === 'render' ? '' : `
-          <details class="wa-pasos"${w.activo ? '' : ' open'}><summary>${w.activo ? 'Datos de Meta y webhook' : 'Cómo dar de alta el número en Meta'}</summary>
+          <details class="wa-pasos"${w.activo ? '' : ' open'}><summary>${w.activo ? 'Datos de Meta y webhook' : 'Cómo conectar el WhatsApp Business del móvil'}</summary>
             ${w.activo ? '' : `<ol>
-              <li>En <b>developers.facebook.com</b>, crea una app de tipo <b>Empresa</b> y añádele el producto <b>WhatsApp</b>.</li>
-              <li>En WhatsApp → <b>Configuración de la API</b>, añade el número de soporte y verifícalo con el SMS. Copia el <b>Identificador del número de teléfono</b>.</li>
-              <li>En <b>business.facebook.com</b> → Usuarios del sistema, crea uno con permiso <b>whatsapp_business_messaging</b> y genera un <b>token permanente</b>.</li>
-              <li>En la app → Configuración → <b>Básica</b>, copia la <b>Clave secreta de la app</b>.</li>
-              <li>Pega los tres datos aquí abajo y pulsa «Conectar WhatsApp».</li>
-              <li>En WhatsApp → <b>Configuración</b> → Webhook, pon la dirección y el token de verificación de abajo y suscríbete a <b>messages</b>.</li>
+              <li>Ten el número de soporte en la app <b>WhatsApp Business</b> del móvil, versión <b>2.24.17</b> o superior (con WhatsApp normal no se puede).</li>
+              <li>En <b>business.facebook.com</b> → Configuración → Centro de seguridad, <b>verifica la empresa</b> de Interactivos.</li>
+              <li>En <b>developers.facebook.com</b>, crea una app de tipo <b>Empresa</b> con el producto <b>WhatsApp</b> y haz que Interactivos sea <b>Tech Provider</b>: en la revisión de la app, pide el acceso avanzado a <b>whatsapp_business_messaging</b> y <b>whatsapp_business_management</b>. Meta solo deja la coexistencia a los Tech Providers, y la revisión puede tardar días.</li>
+              <li>En la app → <b>Facebook Login para empresas</b> → Configuraciones, crea una de tipo <b>WhatsApp Embedded Signup</b> y copia su identificador. En Configuración de ese mismo producto, añade <b>${esc(location.host)}</b> a los dominios permitidos.</li>
+              <li>Copia el <b>identificador de la app</b> y, en Configuración → Básica, la <b>clave secreta</b>. Pega los tres datos abajo y pulsa «Guardar».</li>
+              <li>En WhatsApp → <b>Configuración</b> → Webhook, pon la dirección y el token de verificación de abajo y suscríbete a <b>messages</b> y a <b>smb_message_echoes</b> (lo que contestas desde el móvil).</li>
+              <li>Pulsa «Conectar el WhatsApp Business del móvil», elige el número y escanea con la app del móvil el QR que enseña Meta. Compartir el historial de chats no hace falta.</li>
             </ol>`}
             ${fila('Webhook', `<code>${esc(w.webhook)}</code> <button type="button" class="boton sec peq" data-copiar="${esc(w.webhook)}">Copiar</button>`)}
             ${fila('Token de verificación', `<code>${esc(w.verificar)}</code> <button type="button" class="boton sec peq" data-copiar="${esc(w.verificar)}">Copiar</button>`)}
+            <form class="buzon-nuevo" id="waApp" autocomplete="off">
+              <div class="buzon-campos">
+                <label>Identificador de la app<input class="campo" name="appId" inputmode="numeric" value="${esc(w.appId)}" placeholder="1234567890123456"></label>
+                <label>Identificador de la configuración<input class="campo" name="configId" inputmode="numeric" value="${esc(w.configId)}" placeholder="1234567890123456"></label>
+                <label>Clave secreta de la app<input class="campo" name="secreto" type="password" autocomplete="new-password" placeholder="${w.conSecreto ? 'Déjala vacía para no cambiarla' : '32 letras y números'}"></label>
+              </div>
+              <p class="buzon-ayuda">La clave se guarda cifrada. El token de la empresa lo da Meta al conectar.</p>
+              <div class="can-acc" style="margin-top:10px"><button class="boton sec" id="waAppGuardar">Guardar</button>${w.appId && w.configId ? `<button type="button" class="boton" id="waCoex">${w.activo && w.coexistencia ? 'Volver a conectar el móvil' : 'Conectar el WhatsApp Business del móvil'}</button>` : ''}${w.activo ? '<button type="button" class="boton sec" id="waQuitar">Desconectar</button>' : ''}</div>
+            </form>
+            <details class="wa-pasos" style="margin-top:14px"><summary>Sin coexistencia: un número solo para la web</summary>
+            <ol>
+              <li>En la app de Meta → WhatsApp → <b>Configuración de la API</b>, añade un número que <b>no</b> esté en ninguna app de WhatsApp y verifícalo con el SMS. Copia el <b>Identificador del número de teléfono</b>.</li>
+              <li>En <b>business.facebook.com</b> → Usuarios del sistema, crea uno con permiso <b>whatsapp_business_messaging</b> y genera un <b>token permanente</b>.</li>
+              <li>Pega el token, el identificador y la clave secreta aquí abajo y pulsa «Conectar WhatsApp». El webhook, como arriba (solo <b>messages</b>).</li>
+            </ol>
             <form class="buzon-nuevo" id="waForm" autocomplete="off">
               <div class="buzon-campos">
                 <label>Token permanente<input class="campo" name="token" type="password" autocomplete="new-password" placeholder="${w.activo ? 'Déjalo vacío para no cambiarlo' : 'EAAG…'}"></label>
@@ -3193,8 +3253,9 @@ async function cargarCanales(r) {
                 <label>Número que verán los clientes<input class="campo" name="publico" inputmode="tel" placeholder="${esc(w.publico ? '+' + w.publico : 'El del número de Meta')}"></label>
               </div>
               <p class="buzon-ayuda">Se comprueban con Meta antes de guardarlos. El token y la clave se guardan cifrados.</p>
-              <div class="can-acc" style="margin-top:10px"><button class="boton" id="waGuardar">${w.activo ? 'Guardar' : 'Conectar WhatsApp'}</button>${w.activo ? '<button type="button" class="boton sec" id="waQuitar">Desconectar</button>' : ''}</div>
+              <div class="can-acc" style="margin-top:10px"><button class="boton" id="waGuardar">${w.activo && !w.coexistencia ? 'Guardar' : 'Conectar WhatsApp'}</button></div>
             </form>
+            </details>
           </details>`}
       </section>
       <section class="tarjeta can">
@@ -3209,7 +3270,7 @@ async function cargarCanales(r) {
         : `<p class="can-pend">Pendiente de conectar Google. Mientras tanto, la videollamada se hace pegando un enlace de Meet.</p>`}
       </section>
       <section class="tarjeta can">
-        ${cab(ICO_CAN.portal, 'Portal del cliente', 'Los clientes abren y siguen sus incidencias sin login, y valoran el servicio al cerrar.', est(!!r.publica, false, 'Publicado'))}
+        ${cab(ICO_CAN.portal, 'Portal del cliente', 'Los clientes entran con su correo, abren y siguen sus incidencias, y valoran el servicio al cerrar.', est(!!r.publica, false, 'Publicado'))}
         ${r.publica ? `${fila('Dirección', `<a href="${esc(r.publica)}" target="_blank" rel="noopener">${esc(r.publica.replace(/^https?:\/\//, ''))}</a>`)}
           <div class="can-acc"><a class="boton sec" style="text-decoration:none" href="${esc(r.publica)}" target="_blank" rel="noopener">Abrir el portal ↗</a></div>`
         : '<p class="can-pend">Pendiente de publicar la dirección del portal.</p>'}
@@ -3244,6 +3305,20 @@ async function cargarCanales(r) {
     try { const r2 = await api('/api/canales/whatsapp', Object.fromEntries(new FormData(wf))); cargarCanales(r2); aviso(`WhatsApp conectado: ${r2.whatsapp.numero || 'número guardado'}.`); }
     catch (err) { fallo(err); bt.disabled = false; bt.textContent = txt; }
   };
+  // Coexistencia: los datos de la app de Meta y su ventana de alta (Embedded Signup) con el QR del móvil.
+  const wap = $('waApp');
+  if (wap) wap.onsubmit = async e => {
+    e.preventDefault();
+    const bt = $('waAppGuardar');
+    bt.disabled = true; bt.textContent = 'Guardando…';
+    try { cargarCanales(await api('/api/canales/whatsapp/app', Object.fromEntries(new FormData(wap)))); aviso('Datos de la app guardados. Ahora, «Conectar el WhatsApp Business del móvil».'); }
+    catch (err) { fallo(err); bt.disabled = false; bt.textContent = 'Guardar'; }
+  };
+  if ($('waCoex')) {
+    const wa = r.whatsapp;
+    cargarSdkMeta(wa.appId).catch(() => {});
+    $('waCoex').onclick = () => altaCoexistencia(wa);
+  }
   if ($('waQuitar')) $('waQuitar').onclick = async () => {
     if (!confirm('¿Desconectar WhatsApp? Dejarán de entrar los mensajes y no se podrá responder por WhatsApp hasta volver a conectarlo.')) return;
     try { cargarCanales(await api('/api/canales/whatsapp/quitar', {})); aviso('WhatsApp desconectado.'); } catch (err) { fallo(err); }
