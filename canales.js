@@ -269,7 +269,7 @@ async function rutasWhatsApp(req, res, ruta, url) {
   let cuerpo;
   try { cuerpo = JSON.parse(crudo); } catch { return tickets.json(res, { error: 'JSON no válido' }, 400), true; }
   for (const entry of cuerpo.entry || []) {
-    for (const { value = {} } of entry.changes || []) {
+    for (const { field, value = {} } of entry.changes || []) {
       const nombres = Object.fromEntries((value.contacts || []).map(c => [c.wa_id, c.profile?.name]));
       for (const m of value.messages || []) {
         waEstado.recibido = new Date().toISOString();
@@ -278,8 +278,9 @@ async function rutasWhatsApp(req, res, ruta, url) {
         await tickets.recibir({ canal: 'WhatsApp', telefono: m.from, nombre: nombres[m.from], texto, idExterno: 'wa:' + m.id });
       }
       // Coexistencia: lo que el equipo escribe desde la app del móvil (webhook smb_message_echoes) entra en
-      // el chat del ticket como respuesta del técnico.
-      for (const m of value.message_echoes || []) {
+      // el chat del ticket como respuesta del técnico. Solo ese campo: «message_echoes» (sin smb) son los ecos
+      // de lo que envía el propio panel, que saldrían repetidos.
+      for (const m of field === 'smb_message_echoes' ? value.message_echoes || [] : []) {
         const texto = m.text?.body ?? `[Enviado desde el móvil: ${TIPOS_SIN_TEXTO[m.type] || 'un mensaje'}${m[m.type]?.caption ? ': ' + m[m.type].caption : ''}]`;
         await tickets.desdeMovil({ telefono: m.to, texto, idExterno: 'wa:' + m.id });
       }
