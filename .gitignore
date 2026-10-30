@@ -6,5 +6,6 @@ data/adjuntos.json
 data/historico-sheet.csv
 data/alias-clientes.json
 data/ajustes.json
+data/cuentas.json
 capturas/
 .claude/

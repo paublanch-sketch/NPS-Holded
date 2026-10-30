@@ -608,12 +608,14 @@ cargaConfig.then(c => $('mOtros').classList.toggle('oculto', !canalesDe(c).lengt
 
 // ---------- Entrar ----------
 const claveToken = new URLSearchParams(location.search).get('clave');
-// Se entra en dos pasos (29/10/2026): primero el correo; luego la contraseña o, la primera vez, el
-// código que le llega al correo y la contraseña nueva.
+// Se entra en dos pasos (29/10/2026): primero el correo; luego la contraseña o, la primera vez, la
+// contraseña nueva (30/10/2026: sin código mientras el correo no sale de Render; con PORTAL_CODIGO=1,
+// antes el código que le llega al correo).
 let modo = 'correo', paso = {};
 const MODOS = {
   correo: ['Entra en tu soporte', 'Escribe el correo con el que te dimos acceso.', 'Continuar', ''],
   entrar: ['Entra en tu soporte', '', 'Entrar', '¿Has olvidado tu contraseña?'],
+  nueva: ['Elige tu contraseña', '', 'Guardar y entrar', ''],
   primera: ['Pon tu contraseña', '', 'Guardar y entrar', 'Enviarme otro código'],
   olvido: ['¿Has olvidado tu contraseña?', 'Escribe tu correo y te enviamos un enlace para poner una nueva.', 'Enviarme el enlace', '← Volver a entrar'],
   clave: ['Pon tu contraseña', 'Elige una contraseña de 8 caracteres o más. Con ella y tu correo entrarás siempre en tu soporte.', 'Guardar y entrar', 'Pedir un enlace nuevo'],
@@ -626,20 +628,21 @@ function modoEntrar(m) {
   $('eTitulo').textContent = t;
   $('eTexto').textContent = m === 'correo' && token ? 'Entra con tu cuenta para ver esta incidencia: escribe tu correo.'
     : m === 'entrar' ? `${hola}Escribe tu contraseña.`
+    : m === 'nueva' ? `Es la primera vez que entras con ${email}: elige una contraseña de 8 caracteres o más. Con ella y tu correo entrarás siempre.`
     : m === 'primera' ? (sinCodigo ? `${hola}Es la primera vez que entras, pero ahora no hemos podido enviarte el código a ${email}. Pide a tu técnico de Interactivos el enlace para poner tu contraseña, o vuelve a intentarlo en un rato.`
       : `${hola}Es la primera vez que entras: te hemos enviado un código de 6 cifras a ${email}. Escríbelo y elige tu contraseña (vale ${paso.minutos || 15} minutos).`)
     : p;
   $('btnEntrar').querySelector('span').textContent = b;
   $('olvido').textContent = enlace;
   $('olvido').classList.toggle('oculto', !enlace);
-  $('otroCorreo').classList.toggle('oculto', !['entrar', 'primera'].includes(m));
+  $('otroCorreo').classList.toggle('oculto', !['entrar', 'primera', 'nueva'].includes(m));
   $('campoEmail').classList.toggle('oculto', m === 'clave');
-  $('eEmail').readOnly = ['entrar', 'primera'].includes(m);
+  $('eEmail').readOnly = ['entrar', 'primera', 'nueva'].includes(m);
   $('campoCodigo').classList.toggle('oculto', m !== 'primera' || sinCodigo);
   $('campoClave').classList.toggle('oculto', ['correo', 'olvido'].includes(m) || sinCodigo);
-  $('campoClave2').classList.toggle('oculto', !['clave', 'primera'].includes(m) || sinCodigo);
-  $('etClave').textContent = ['clave', 'primera'].includes(m) ? 'Nueva contraseña' : 'Contraseña';
-  $('eClave').autocomplete = ['clave', 'primera'].includes(m) ? 'new-password' : 'current-password';
+  $('campoClave2').classList.toggle('oculto', !['clave', 'primera', 'nueva'].includes(m) || sinCodigo);
+  $('etClave').textContent = ['clave', 'primera', 'nueva'].includes(m) ? 'Nueva contraseña' : 'Contraseña';
+  $('eClave').autocomplete = ['clave', 'primera', 'nueva'].includes(m) ? 'new-password' : 'current-password';
   $('errEntrar').textContent = '';
   $('okEntrar').classList.add('oculto');
   $('btnEntrar').classList.toggle('oculto', sinCodigo);
@@ -654,8 +657,8 @@ function entrar(m = 'correo') {
 async function seguirCon(email) {
   paso = await api('/api/cuenta/inicio', { email });
   $('eClave').value = $('eClave2').value = $('eCodigo').value = '';
-  modoEntrar(paso.paso === 'clave' ? 'entrar' : 'primera');
-  setTimeout(() => (paso.paso === 'clave' ? $('eClave') : paso.enviado ? $('eCodigo') : $('olvido')).focus(), 50);
+  modoEntrar(paso.paso === 'clave' ? 'entrar' : paso.paso === 'nueva' ? 'nueva' : 'primera');
+  setTimeout(() => (['clave', 'nueva'].includes(paso.paso) ? $('eClave') : paso.enviado ? $('eCodigo') : $('olvido')).focus(), 50);
 }
 $('olvido').onclick = async () => {
   if (modo === 'primera') {
@@ -676,8 +679,8 @@ $('formEntrar').onsubmit = async e => {
   if (modo !== 'clave' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return err('Revisa el correo.'), $('eEmail').focus();
   if (modo === 'entrar' && !clave) return err('Escribe tu contraseña.'), $('eClave').focus();
   if (modo === 'primera' && codigo.length !== 6) return err('Escribe el código de 6 cifras que te hemos enviado.'), $('eCodigo').focus();
-  if (['clave', 'primera'].includes(modo) && clave.length < 8) return err('La contraseña tiene que tener 8 caracteres o más.'), $('eClave').focus();
-  if (['clave', 'primera'].includes(modo) && clave !== $('eClave2').value) return err('Las dos contraseñas no coinciden.'), $('eClave2').focus();
+  if (['clave', 'primera', 'nueva'].includes(modo) && clave.length < 8) return err('La contraseña tiene que tener 8 caracteres o más.'), $('eClave').focus();
+  if (['clave', 'primera', 'nueva'].includes(modo) && clave !== $('eClave2').value) return err('Las dos contraseñas no coinciden.'), $('eClave2').focus();
   $('btnEntrar').disabled = true;
   try {
     if (modo === 'correo') {
@@ -685,7 +688,7 @@ $('formEntrar').onsubmit = async e => {
       $('btnEntrar').disabled = false;
       return;
     }
-    if (modo === 'primera') {
+    if (modo === 'primera' || modo === 'nueva') {
       await api('/api/cuenta/primera', { email, codigo, clave });
       location.replace(token ? `/t/${token}` : '/' + (location.hash || ''));
       return;

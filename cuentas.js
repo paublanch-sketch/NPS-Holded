@@ -1,8 +1,9 @@
 // Cuentas del portal (28/10/2026): el portal es privado. Cada cliente Premium (y cada asesoría
 // partner) entra con su correo y contraseña y ve las incidencias de su empresa desde cualquier
 // dispositivo. Las cuentas las damos de alta nosotros desde el panel (Asesorías o la ficha del
-// cliente): al cliente le llega un correo para poner su contraseña. También puede pedir otra
-// si la olvida. Un ticket de un cliente con cuenta solo se abre entrando con esa cuenta.
+// cliente) y entra con su correo en la página principal: la primera vez elige su contraseña (30/10/2026;
+// antes, un enlace por correo). También puede pedir otra si la olvida. Un ticket de un cliente con
+// cuenta solo se abre entrando con esa cuenta.
 const crypto = require('crypto');
 const { cuentas, tickets: almacen } = require('./store');
 
@@ -12,6 +13,11 @@ const DIAS_INVITACION = 7;
 const HORAS_RECUPERAR = 2;
 const SECRETO = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const URL_PUBLICA = () => (process.env.PUBLIC_URL || '').replace(/\/$/, '');
+// 30/10/2026, el usuario: mientras estemos en Render (el correo no sale), dar de alta es apuntar el correo y
+// ya está: el cliente entra en la página principal con su correo y la primera vez elige la contraseña, sin
+// enlace ni código. Al salir de Render, PORTAL_CODIGO=1 vuelve a pedir el código de 6 cifras por correo (sin
+// él, quien sepa el correo de alguien dado de alta podría poner la contraseña antes que él).
+const CON_CODIGO = process.env.PORTAL_CODIGO === '1';
 
 const normal = e => String(e || '').trim().toLowerCase();
 const correoValido = e => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
@@ -101,12 +107,30 @@ async function darAcceso({ cliente, email, nombre }) {
   // Para que el panel diga qué ha pasado: acceso nuevo, ya tenía cuenta o ya estaba invitado.
   const nueva = !antes || antes.activa === false;
   Object.assign(c, { nombre: String(nombre || c.nombre || '').trim().slice(0, 120), activa: true });
+  // Sin código: no hay enlace que pasar; el panel da la dirección del portal y, si sale, va un correo de aviso.
+  if (!CON_CODIGO) {
+    delete c.enlace;
+    await cuentas.guardar(c);
+    let enviado = false;
+    try { enviado = await enviarBienvenida(c); } catch (e) { console.error('Cuentas (aviso):', e.message); }
+    return { id: c.id, email, nueva, conClave: !nueva && !!c.hash, enviado, sinEnlace: true, portal: URL_PUBLICA() || null };
+  }
   const url = nuevoEnlace(c, 'alta');
   await cuentas.guardar(c);
   let enviado = false;
   try { enviado = await enviarEnlace(c, url); } catch (e) { console.error('Cuentas (invitación):', e.message); }
   // Si el correo no sale, el panel enseña el enlace para pasarlo a mano.
   return { id: c.id, email, nueva, conClave: !nueva && !!c.hash, enviado, enlace: enviado ? null : url, correoCaido: !enviado && require('./correo').envioCaido() };
+}
+// Aviso de alta sin enlace: entra en la página principal con su correo y la primera vez elige la contraseña.
+async function enviarBienvenida(c) {
+  const correo = require('./correo');
+  if (!correo.hayCorreo() || !URL_PUBLICA()) return false;
+  const texto = `Hola${c.nombre ? ' ' + c.nombre.split(' ')[0] : ''}:\n\nYa tienes acceso al Soporte Holded de Interactivos. Desde allí abres tus incidencias y ves cómo van, desde cualquier dispositivo.\n\nEntra con tu correo (${c.email}). ${c.hash ? 'Usa tu contraseña de siempre.' : 'La primera vez eliges tu contraseña.'}`;
+  return correo.enviarSinEsperar({
+    to: c.email, subject: 'Tu acceso al Soporte Holded', text: `${texto}\n\nEntrar: ${URL_PUBLICA()}/`,
+    html: correo.plantilla({ titulo: 'Tu acceso al Soporte Holded', cuerpo: correo.parrafos(texto), boton: { texto: 'Entrar en el soporte', url: `${URL_PUBLICA()}/` }, pie: 'Correo enviado desde el Soporte Holded de Interactivos.' }),
+  });
 }
 
 // Primera vez que entra (tiene acceso pero aún no contraseña): un código de 6 cifras al correo para
@@ -161,8 +185,8 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
     abrirSesion(req, res, c);
     return json(res, { email: c.email, nombre: c.nombre, cliente: c.cliente }), true;
   }
-  // Entrar en dos pasos (29/10/2026): primero solo el correo. Si ya tiene contraseña, se le pide;
-  // si es la primera vez, le llega el código para ponerla (también para pedir otro).
+  // Entrar en dos pasos (29/10/2026): primero solo el correo. Si ya tiene contraseña, se le pide; si es la
+  // primera vez, elige la contraseña ahí mismo (o, con PORTAL_CODIGO=1, le llega antes un código al correo).
   if (req.method === 'POST' && ruta === '/api/cuenta/inicio') {
     const email = normal((await leerCuerpo(req)).email);
     if (frenar(req, 'inicio', 20, 15)) return json(res, { error: 'Demasiados intentos. Prueba dentro de un rato.' }, 429), true;
@@ -170,6 +194,7 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
     // 29/10/2026: sin decir si el correo tiene acceso ni de quién es (antes, «no tiene acceso» y el nombre):
     // sin cuenta se pide la contraseña como a cualquiera, y al entrar sale «correo o contraseña incorrectos».
     if (!c || c.hash) return json(res, { paso: 'clave' }), true;
+    if (!CON_CODIGO) return json(res, { paso: 'nueva' }), true;
     if (frenar(req, 'codigo:' + email, 5, 15, { porIp: false })) return json(res, { error: 'Ya te hemos enviado varios códigos. Prueba dentro de un rato.' }, 429), true;
     return json(res, { paso: 'codigo', minutos: MIN_CODIGO, ...(await enviarCodigo(c)) }), true;
   }
@@ -179,8 +204,10 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
     if (frenar(req, 'primera:' + email, 10, 15)) return json(res, { error: 'Demasiados intentos. Prueba dentro de un rato.' }, 429), true;
     if (clave.length < 8) return json(res, { error: 'La contraseña tiene que tener 8 caracteres o más.' }, 400), true;
     const c = (await cuentas.todos()).find(x => x.email === email && x.activa !== false && !x.hash);
-    if (!c?.codigo || c.codigo.caduca < Date.now() || c.codigo.intentos >= 5) return json(res, { error: 'El código ha caducado. Pide otro.' }, 400), true;
-    if (sha(codigo) !== c.codigo.hash) {
+    if (!CON_CODIGO) {
+      if (!c) return json(res, { error: 'No hemos podido poner la contraseña. Vuelve a escribir tu correo.' }, 400), true;
+    } else if (!c?.codigo || c.codigo.caduca < Date.now() || c.codigo.intentos >= 5) return json(res, { error: 'El código ha caducado. Pide otro.' }, 400), true;
+    else if (sha(codigo) !== c.codigo.hash) {
       c.codigo.intentos++;
       await cuentas.guardar(c);
       return json(res, { error: 'El código no es correcto. Revisa el último correo que te hemos enviado.' }, 400), true;

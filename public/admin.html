@@ -481,7 +481,7 @@
   .mk-desplegar:hover { background: #f5f8ff; }
   .mk-desplegar[aria-expanded="true"] .mk-flecha { transform: rotate(180deg); }
   .mk-tipos-det { margin-top: 14px; padding: 16px; border: 1px solid var(--linea); border-radius: 12px; background: var(--blanco); }
-  .mk-premium { display: flex; gap: 8px; flex-wrap: wrap; margin: -4px 0 16px; }
+  .mk-premium { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 16px; }
   .mk-premium span { background: var(--blanco); border: 1px solid var(--linea); border-radius: 99px; padding: 5px 12px; font-size: 13px; color: var(--bruma); }
   .mk-premium b { color: var(--pizarra); }
   .mk-premium .tot { background: var(--azul-f); border-color: var(--azul-f); color: var(--azul-h); }
@@ -2877,7 +2877,17 @@ const correoOk = e => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
 // Siempre dice qué ha pasado (acceso nuevo, ya tenía cuenta o ya estaba invitado). Si el correo ha
 // salido, basta un aviso; si no, el panel da el enlace para pasarlo a mano.
 function avisoAcceso(r, email) {
-  const que = r.nueva ? `Acceso creado para ${email}` : r.conClave ? `${email} ya tenía acceso` : `${email} ya estaba invitado`;
+  const que = r.nueva ? `Acceso creado para ${email}` : r.conClave ? `${email} ya tenía acceso` : `${email} ya estaba dado de alta`;
+  // 30/10/2026: sin enlace. Entra en la página principal con su correo y la primera vez elige la contraseña.
+  if (r.sinEnlace) {
+    const portal = r.portal || location.origin;
+    if (r.enviado) return aviso(`${que}: le ha llegado un correo para entrar en ${portal} con su correo.`);
+    const texto = `Ya tienes acceso al Soporte Holded de Interactivos. Entra en ${portal} con tu correo (${email}). ${r.conClave ? 'Usa tu contraseña de siempre.' : 'La primera vez eliges tu contraseña.'}`;
+    return dialogo(`<h3>${esc(que)}</h3><p class="sub">Ya puede entrar en <b>${esc(portal)}</b> con su correo${r.conClave ? ' y su contraseña' : ': la primera vez elige su contraseña'}. Si quieres, pásale este mensaje:</p>
+      <textarea class="campo" name="texto" rows="3" readonly>${esc(texto)}</textarea>
+      <div class="pie"><button type="button" class="boton sec" data-cerrar>Cerrar</button><button type="submit" class="boton">Copiar mensaje</button></div>`,
+      async f => { try { await navigator.clipboard.writeText(f.texto.value); aviso('Mensaje copiado.'); } catch { f.texto.select(); return false; } });
+  }
   if (r.enviado) return aviso(`${que}: le ha llegado un correo para ${r.conClave ? 'entrar y, si quiere, cambiar la contraseña' : 'poner su contraseña'}.`);
   const url = r.enlace.startsWith('http') ? r.enlace : location.origin + r.enlace;
   dialogo(`<h3>${esc(que)}</h3><p class="sub">${r.correoCaido ? 'El correo no ha salido: Render, en el plan gratuito, no deja enviar correo.' : 'El correo no ha salido.'} Pásale este enlace a ${esc(email)} para que ponga su contraseña. Vale 7 días.</p>
@@ -2887,13 +2897,13 @@ function avisoAcceso(r, email) {
 }
 
 function tarjetaAcceso(cliente, cuentas) {
-  const estado = c => c.estado === 'Activa' ? (c.ultimoAcceso ? `último acceso hace ${hace(c.ultimoAcceso)}` : 'aún no ha entrado') : c.invitacionCaducada ? 'la invitación ha caducado' : 'invitación enviada, falta que ponga su contraseña';
+  const estado = c => c.estado === 'Activa' ? (c.ultimoAcceso ? `último acceso hace ${hace(c.ultimoAcceso)}` : 'aún no ha entrado') : c.invitacionCaducada ? 'la invitación ha caducado' : 'aún no ha entrado: la primera vez elige su contraseña';
   return `<section class="tarjeta" id="acceso" style="padding:16px 18px">
     <h2 style="font-size:16px;margin:0 0 4px">Acceso al portal</h2>
     <p class="acc-sub">Con su cuenta entra en el portal, abre tickets y ve los de su empresa desde cualquier dispositivo.</p>
     ${cuentas.map(c => `<div class="acc-fila"><div><b>${esc(c.nombre || c.email)}</b><small>${c.nombre ? esc(c.email) + ' · ' : ''}${estado(c)}</small></div>
       <span class="pl ${c.estado === 'Activa' ? 'acc-activa' : 'acc-inv'}">${c.estado}</span>
-      <button type="button" class="boton sec peq" data-reenviar="${esc(c.email)}" data-nombre="${esc(c.nombre || '')}" title="Le llega otro correo para poner la contraseña">Reenviar</button>
+      <button type="button" class="boton sec peq" data-reenviar="${esc(c.email)}" data-nombre="${esc(c.nombre || '')}" title="Le llega otro aviso para entrar (o te da el mensaje para pasárselo)">Reenviar</button>
       <button type="button" class="boton sec peq" data-quitar-acc="${c.id}">Quitar</button></div>`).join('') || '<p class="acc-vacio">Todavía no tiene acceso al portal.</p>'}
     <form class="acc-nuevo" novalidate>
       <input class="campo" name="email" type="email" placeholder="correo@empresa.com" aria-label="Correo">
