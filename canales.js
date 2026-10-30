@@ -283,6 +283,13 @@ async function rutasWhatsApp(req, res, ruta, url) {
         const texto = m.text?.body ?? `[Enviado desde el móvil: ${TIPOS_SIN_TEXTO[m.type] || 'un mensaje'}${m[m.type]?.caption ? ': ' + m[m.type].caption : ''}]`;
         await tickets.desdeMovil({ telefono: m.to, texto, idExterno: 'wa:' + m.id });
       }
+      // Avisos de entrega (30/10/2026): si Meta no ha podido entregar un mensaje, Canales dice por qué.
+      for (const s of value.statuses || []) {
+        if (s.status !== 'failed') continue;
+        const e = s.errors?.[0] || {};
+        waEstado.fallo = { cuando: new Date().toISOString(), error: `No ha llegado a +${s.recipient_id || '?'}: ${e.title || e.message || 'Meta no lo ha entregado'}${e.code ? ` (código ${e.code})` : ''}${e.error_data?.details ? ` · ${e.error_data.details}` : ''}` };
+        console.error('WhatsApp (entrega):', waEstado.fallo.error);
+      }
     }
   }
   // Meta reintenta si no recibe 200; los duplicados se descartan por idExterno.
