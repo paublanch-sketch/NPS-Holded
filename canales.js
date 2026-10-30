@@ -11,7 +11,7 @@ const enlace = t => `${URL_PUBLICA}/t/${t.token}`;
 const WA = {
   token: env.WA_TOKEN, telefonoId: env.WA_PHONE_ID,
   verificar: env.WA_VERIFY_TOKEN, secreto: env.WA_APP_SECRET,
-  base: (env.WA_GRAPH_BASE || 'https://graph.facebook.com/v21.0').replace(/\/$/, ''),
+  base: (env.WA_GRAPH_BASE || 'https://graph.facebook.com/v25.0').replace(/\/$/, ''),
   idioma: env.WA_PLANTILLA_IDIOMA || 'es',
 };
 const waActivo = () => WA.token && WA.telefonoId;

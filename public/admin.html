@@ -3195,7 +3195,7 @@ function responder(o) {
 let sdkMeta = null;
 function cargarSdkMeta(appId) {
   if (sdkMeta?.appId === appId) return sdkMeta.listo;
-  const iniciar = () => FB.init({ appId, autoLogAppEvents: true, xfbml: false, version: 'v21.0' });
+  const iniciar = () => FB.init({ appId, autoLogAppEvents: true, xfbml: false, version: 'v25.0' });
   const listo = window.FB ? Promise.resolve(iniciar()) : new Promise((ok, ko) => {
     window.fbAsyncInit = () => { iniciar(); ok(); };
     const s = document.createElement('script');
