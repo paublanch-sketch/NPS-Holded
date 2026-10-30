@@ -3309,6 +3309,7 @@ async function cargarCanales(r) {
         ${w.activo ? `
           ${fila('Número', `<b>${esc(w.numero || '+' + w.publico)}</b>${w.nombre ? ` · ${esc(w.nombre)}` : ''}${w.origen === 'render' ? ' <span class="pl sin">Render</span>' : ''}`)}
           ${fila('Modo', w.coexistencia ? 'Coexistencia: también contestas desde la app del móvil y entra en el chat' : 'Número solo para la web (sin la app del móvil)')}
+          ${w.coexistencia ? fila('Token', w.tokenCaduca ? `<span class="can-mal">Caduca el ${esc(fechaLarga(w.tokenCaduca))}</span><small>Cámbialo por el permanente de un usuario del sistema (abajo, «Token permanente»).</small>` : 'Permanente') : ''}
           ${fila('Entrante', w.recibido ? `Último mensaje ${haceTxt(w.recibido)}` : 'Aún no ha llegado ninguno: si escribes al número y no entra, revisa el webhook en Meta')}
           ${fila('Saliente', w.fallo && (!w.enviado || w.fallo.cuando > w.enviado) ? `<span class="can-mal">No se puede enviar</span><small class="can-mal">${esc(w.fallo.error)}</small>` : w.enviado ? `Último envío ${haceTxt(w.enviado)}` : 'Listo para enviar')}
           ${fila('Fuera de 24 h', 'Los avisos salen con plantillas aprobadas por Meta')}` : ''}
@@ -3323,6 +3324,7 @@ async function cargarCanales(r) {
               <li>Copia el <b>identificador de la app</b> y, en Configuración → Básica, la <b>clave secreta</b>. Pega los tres datos abajo y pulsa «Guardar».</li>
               <li>En WhatsApp → <b>Configuración</b> → Webhook, pon la dirección y el token de verificación de abajo y suscríbete a <b>messages</b> y a <b>smb_message_echoes</b> (lo que contestas desde el móvil).</li>
               <li>Pulsa «Conectar el WhatsApp Business del móvil», elige el número y escanea con la app del móvil el QR que enseña Meta. Compartir el historial de chats no hace falta.</li>
+              <li>El token que da Meta caduca a los 60 días. En <b>business.facebook.com</b> → Usuarios del sistema, crea uno de tipo administrador, asígnale la app y la cuenta de WhatsApp, genera un token <b>sin caducidad</b> con <b>whatsapp_business_messaging</b> y <b>whatsapp_business_management</b>, y pégalo en «Token permanente».</li>
             </ol>`}
             ${fila('Webhook', `<code>${esc(w.webhook)}</code> <button type="button" class="boton sec peq" data-copiar="${esc(w.webhook)}">Copiar</button>`)}
             ${fila('Token de verificación', `<code>${esc(w.verificar)}</code> <button type="button" class="boton sec peq" data-copiar="${esc(w.verificar)}">Copiar</button>`)}
@@ -3335,6 +3337,10 @@ async function cargarCanales(r) {
               <p class="buzon-ayuda">La clave se guarda cifrada. El token de la empresa lo da Meta al conectar.</p>
               <div class="can-acc" style="margin-top:10px"><button class="boton sec" id="waAppGuardar">Guardar</button>${w.appId && w.configId ? `<button type="button" class="boton" id="waCoex">${w.activo && w.coexistencia ? 'Volver a conectar el móvil' : 'Conectar el WhatsApp Business del móvil'}</button>` : ''}${w.activo ? '<button type="button" class="boton sec" id="waQuitar">Desconectar</button>' : ''}</div>
             </form>
+            ${w.activo && w.coexistencia ? `<form class="buzon-nuevo" id="waToken" autocomplete="off" style="margin-top:12px">
+              <div class="buzon-campos"><label>Token permanente (usuario del sistema)<input class="campo" name="token" type="password" autocomplete="new-password" placeholder="${w.tokenCaduca ? 'EAAG… (sin caducidad)' : 'Ya es permanente: solo para cambiarlo'}"></label></div>
+              <div class="can-acc" style="margin-top:10px"><button class="boton sec" id="waTokenGuardar">Guardar token</button></div>
+            </form>` : ''}
             <details class="wa-pasos" style="margin-top:14px"><summary>Sin coexistencia: un número solo para la web</summary>
             <ol>
               <li>En la app de Meta → WhatsApp → <b>Configuración de la API</b>, añade un número que <b>no</b> esté en ninguna app de WhatsApp y verifícalo con el SMS. Copia el <b>Identificador del número de teléfono</b>.</li>
@@ -3409,6 +3415,14 @@ async function cargarCanales(r) {
     bt.disabled = true; bt.textContent = 'Guardando…';
     try { cargarCanales(await api('/api/canales/whatsapp/app', Object.fromEntries(new FormData(wap)))); aviso('Datos de la app guardados. Ahora, «Conectar el WhatsApp Business del móvil».'); }
     catch (err) { fallo(err); bt.disabled = false; bt.textContent = 'Guardar'; }
+  };
+  const wt = $('waToken');
+  if (wt) wt.onsubmit = async e => {
+    e.preventDefault();
+    const bt = $('waTokenGuardar');
+    bt.disabled = true; bt.textContent = 'Comprobando con Meta…';
+    try { cargarCanales(await api('/api/canales/whatsapp/token', { token: wt.token.value })); aviso('Token permanente guardado: ya no caduca.'); }
+    catch (err) { fallo(err); bt.disabled = false; bt.textContent = 'Guardar token'; }
   };
   if ($('waCoex')) {
     const wa = r.whatsapp;

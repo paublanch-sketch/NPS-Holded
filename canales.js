@@ -42,7 +42,7 @@ async function cargarWa() {
   let d = (await ajustes.donde('clave', 'whatsapp'))[0];
   if (!d && !env.WA_VERIFY_TOKEN) d = await ajustes.guardar({ clave: 'whatsapp', verificar: crypto.randomBytes(16).toString('hex') });
   if (!env.WA_VERIFY_TOKEN && d?.verificar) WA.verificar = d.verificar;
-  Object.assign(waEstado, { publico: d?.publico || '', app: d?.app || null, coexistencia: !!d?.coexistencia });
+  Object.assign(waEstado, { publico: d?.publico || '', app: d?.app || null, coexistencia: !!d?.coexistencia, tokenCaduca: d?.tokenCaduca || null });
   if (waEstado.origen === 'render' || !d?.cifrado) return;
   try {
     const { token, secreto } = JSON.parse(correo.descifrar(d.cifrado));
@@ -63,7 +63,7 @@ const numeroPublico = () => String(env.WA_NUMERO_PUBLICO || waEstado.publico || 
 const estadoWa = () => ({
   activo: !!waActivo(), origen: waEstado.origen, numero: waEstado.info?.numero || '', nombre: waEstado.info?.nombre || '', publico: numeroPublico(),
   webhook: `${URL_PUBLICA}/whatsapp/webhook`, verificar: WA.verificar || '', conSecreto: !!WA.secreto,
-  appId: waEstado.app?.id || '', configId: waEstado.app?.config || '', coexistencia: !!waEstado.coexistencia,
+  appId: waEstado.app?.id || '', configId: waEstado.app?.config || '', coexistencia: !!waEstado.coexistencia, tokenCaduca: waEstado.tokenCaduca || null,
   recibido: waEstado.recibido, enviado: waEstado.enviado, fallo: waEstado.fallo,
   error: waEstado.error || (waActivo() && !WA.secreto ? 'Falta la clave secreta de la app de Meta (WA_APP_SECRET en Render): por seguridad, los mensajes que llegan se rechazan.' : null),
 });
@@ -74,7 +74,7 @@ async function rutasPanel(req, res, ruta, { json, leerCuerpo }) {
   const d = (await ajustes.donde('clave', 'whatsapp'))[0] || { clave: 'whatsapp', verificar: WA.verificar || crypto.randomBytes(16).toString('hex') };
   if (waEstado.origen === 'render') return json(res, { error: 'WhatsApp está en las variables de Render' }, 400), true;
   if (ruta === '/api/canales/whatsapp/quitar') {
-    for (const k of ['cifrado', 'telefonoId', 'wabaId', 'info', 'publico', 'coexistencia']) delete d[k];
+    for (const k of ['cifrado', 'telefonoId', 'wabaId', 'info', 'publico', 'coexistencia', 'tokenCaduca']) delete d[k];
     await ajustes.guardar(d);
     Object.assign(WA, { token: '', telefonoId: '', secreto: env.WA_APP_SECRET || '' });
     Object.assign(waEstado, { origen: null, info: null, publico: '', coexistencia: false });
@@ -105,21 +105,39 @@ async function rutasPanel(req, res, ruta, { json, leerCuerpo }) {
     const telefonoId = String(b.telefonoId || '').replace(/\D/g, ''), wabaId = String(b.wabaId || '').replace(/\D/g, '');
     if (!d.app?.id || !antes.secreto) return json(res, { error: 'Guarda antes los datos de la app de Meta' }, 400), true;
     if (!b.code || !telefonoId || !wabaId) return json(res, { error: 'Meta no ha devuelto el número: vuelve a intentarlo y termina todos los pasos de la ventana' }, 400), true;
-    let token, info;
+    let token, info, caduca;
     try {
       // El código de la ventana de Meta se cambia por el token de la empresa…
       const r = await fetch(`${WA.base}/oauth/access_token?${new URLSearchParams({ client_id: d.app.id, client_secret: antes.secreto, code: String(b.code) })}`);
       const t = await r.json().catch(() => ({}));
       if (!r.ok || !t.access_token) throw new Error(t.error?.message || `Meta respondió ${r.status}`);
       token = t.access_token;
+      // La plantilla de Meta da un token de 60 días: Canales avisa para cambiarlo por uno permanente.
+      caduca = new Date(Date.now() + (Number(t.expires_in) || 60 * 86400) * 1000).toISOString();
       // …se suscribe la app a su cuenta de WhatsApp Business (para que lleguen los mensajes al webhook)…
       const s = await fetch(`${WA.base}/${wabaId}/subscribed_apps`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
       if (!s.ok) throw new Error((await s.json().catch(() => ({}))).error?.message || `Meta respondió ${s.status} al suscribir la app`);
       // …y se comprueba el número.
       info = await infoNumero(token, telefonoId);
     } catch (e) { return json(res, { error: 'Meta no ha completado el alta: ' + e.message }, 400), true; }
-    Object.assign(d, { cifrado: correo.cifrar(JSON.stringify({ token, secreto: antes.secreto })), telefonoId, wabaId, info, coexistencia: true,
+    Object.assign(d, { cifrado: correo.cifrar(JSON.stringify({ token, secreto: antes.secreto })), telefonoId, wabaId, info, coexistencia: true, tokenCaduca: caduca,
       publico: String(b.publico || '').replace(/\D/g, '') || d.publico || info.numero.replace(/\D/g, ''), actualizado: new Date().toISOString() });
+    await ajustes.guardar(d);
+    await cargarWa();
+    return json(res, correo.resumen()), true;
+  }
+  // Token permanente (de un usuario del sistema de business.facebook.com) en lugar del de 60 días, sin
+  // tocar el número ni la coexistencia. Se comprueba con Meta antes de guardarlo.
+  if (ruta === '/api/canales/whatsapp/token') {
+    const token = String((await leerCuerpo(req)).token || '').trim();
+    let antes = {};
+    try { if (d.cifrado) antes = JSON.parse(correo.descifrar(d.cifrado)); } catch {}
+    if (!d.telefonoId) return json(res, { error: 'Conecta antes el WhatsApp Business del móvil' }, 400), true;
+    if (!token) return json(res, { error: 'Pega el token del usuario del sistema' }, 400), true;
+    let info;
+    try { info = await infoNumero(token, d.telefonoId); } catch (e) { return json(res, { error: 'Meta no acepta ese token: ' + e.message }, 400), true; }
+    Object.assign(d, { cifrado: correo.cifrar(JSON.stringify({ token, secreto: antes.secreto })), info, actualizado: new Date().toISOString() });
+    delete d.tokenCaduca;
     await ajustes.guardar(d);
     await cargarWa();
     return json(res, correo.resumen()), true;
@@ -137,7 +155,7 @@ async function rutasPanel(req, res, ruta, { json, leerCuerpo }) {
   if (!secreto) return json(res, { error: 'Falta la clave secreta de la app (Configuración → Básica en developers.facebook.com)' }, 400), true;
   let info;
   try { info = await infoNumero(token, telefonoId); } catch (e) { return json(res, { error: 'Meta no acepta esos datos: ' + e.message }, 400), true; }
-  Object.assign(d, { cifrado: correo.cifrar(JSON.stringify({ token, secreto })), telefonoId, info, coexistencia: false,
+  Object.assign(d, { cifrado: correo.cifrar(JSON.stringify({ token, secreto })), telefonoId, info, coexistencia: false, tokenCaduca: null,
     publico: String(b.publico || '').replace(/\D/g, '') || info.numero.replace(/\D/g, ''), actualizado: new Date().toISOString() });
   await ajustes.guardar(d);
   await cargarWa();
