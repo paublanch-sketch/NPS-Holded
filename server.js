@@ -183,6 +183,7 @@ http.createServer(async (req, res) => {
     }
     if (await clientes.rutas(req, res, ruta, { json, leerCuerpo })) return;
     if (await comercial.rutas(req, res, ruta, { json, leerCuerpo })) return;
+    if (await require('./ia').rutas(req, res, ruta, { json, leerCuerpo })) return;
     if (await cuentas.rutasPanel(req, res, ruta, { json, leerCuerpo })) return;
     if (await ejemplo.rutas(req, res, ruta, { json, leerCuerpo })) return;
     if (await canales.rutasPanel(req, res, ruta, { json, leerCuerpo })) return;

@@ -424,6 +424,16 @@
   .mk-chip { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--bruma); padding: 8px 14px; border-radius: 10px; border: 1px solid var(--linea); background: var(--blanco); white-space: nowrap; box-shadow: var(--sombra-b); }
   .mk-chip svg, .mk-cab .boton svg { color: var(--bruma); }
   .mk-chips .periodo-panel { left: auto; right: 0; }
+  .ia-btn { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #2563eb, #7c3aed); border: 0; }
+  dialog h3 svg { vertical-align: -3px; color: #7c3aed; }
+  .ia-sug { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .ia-chip { border: 1px solid var(--linea2); background: var(--blanco); border-radius: 99px; padding: 5px 11px; font: inherit; font-size: 12.5px; color: var(--bruma); cursor: pointer; }
+  .ia-chip:hover { border-color: #7c3aed; color: #5b21b6; background: #f5f3ff; }
+  .ia-resp { margin-top: 14px; padding: 14px 16px; border-radius: 12px; background: #f8f7ff; border: 1px solid #e4defc; font-size: 14px; line-height: 1.55; max-height: 50vh; overflow: auto; }
+  .ia-resp p { margin: 0 0 8px; } .ia-resp ul { margin: 0 0 8px; padding-left: 20px; } .ia-resp li { margin: 2px 0; }
+  .ia-q { font-size: 12.5px; font-weight: 600; color: #5b21b6; margin-bottom: 8px; }
+  .ia-pensando { color: var(--bruma); animation: ia-lat 1.2s ease-in-out infinite; }
+  @keyframes ia-lat { 50% { opacity: .45; } }
   .mk-leyenda { display: flex; gap: 22px; flex-wrap: wrap; align-items: center; background: var(--blanco); border: 1px solid var(--linea); border-radius: 12px; padding: 12px 18px; font-size: 13px; color: var(--bruma); }
   .mk-leyenda .tit { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--muted); }
   .mk-leyenda b { color: var(--pizarra); }
@@ -1835,6 +1845,48 @@ function rango() {
   return (PERIODOS[fm.periodo] || PERIODOS.mes)[1]();
 }
 
+// Preguntar a la IA (30/10/2026): Gemini responde con los datos del soporte (ia.js).
+const ICO_IA = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18.5 9.4 13.8 11.2 12 16l-1.8-4.8L5.5 9.4l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>';
+const IA_SUGERENCIAS = ['Resume cómo va el soporte esta semana', '¿Qué clientes tienen más incidencias abiertas?', '¿Cuántas incidencias se han respondido fuera de SLA este mes y de quién?', '¿Qué tipo de incidencia se repite más?', '¿Qué clientes Premium han valorado peor?'];
+// Lo justo de Markdown para leer la respuesta: negritas, listas y párrafos.
+const iaHtml = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').split(/\n{2,}/).map(p => {
+  const l = p.split('\n');
+  return l.every(x => /^\s*([-*•]|\d+[.)])\s+/.test(x)) ? `<ul>${l.map(x => `<li>${x.replace(/^\s*([-*•]|\d+[.)])\s+/, '')}</li>`).join('')}</ul>` : `<p>${l.join('<br>')}</p>`;
+}).join('');
+async function preguntarIA() {
+  let est;
+  try { est = await api('/api/ia'); } catch (e) { return fallo(e); }
+  const d = $('dlg');
+  if (!est.configurada) {
+    dialogo(`<h3>Preguntar a la IA</h3><p class="sub">Pega la clave de API de Gemini (Google AI Studio). Se guarda cifrada.</p>
+      <label>Clave de API</label><input class="campo" name="clave" type="password" autocomplete="off" placeholder="AQ.… o AIza…">
+      <div class="pie"><button type="button" class="boton sec" data-cerrar>Cancelar</button><button type="submit" class="boton">Guardar</button></div>`,
+      async f => { await api('/api/ia/clave', { clave: f.clave.value }); aviso('Clave de Gemini guardada.'); setTimeout(preguntarIA, 50); });
+    return;
+  }
+  dialogo(`<h3>${ICO_IA} Preguntar a la IA</h3><p class="sub">Responde con los datos del soporte: incidencias, clientes, SLA, horas y valoraciones.</p>
+    <div class="ia-sug">${IA_SUGERENCIAS.map(s => `<button type="button" class="ia-chip">${esc(s)}</button>`).join('')}</div>
+    <textarea class="campo" name="pregunta" rows="3" placeholder="Escribe tu pregunta…"></textarea>
+    <div class="ia-resp oculto" id="iaResp"></div>
+    <div class="pie"><button type="button" class="boton sec" data-cerrar>Cerrar</button><button type="submit" class="boton">Preguntar</button></div>`,
+    async f => {
+      const p = f.pregunta.value.trim();
+      if (!p) { aviso('Escribe la pregunta.', true); return false; }
+      const caja = $('iaResp'), b = f.querySelector('button[type=submit]');
+      caja.classList.remove('oculto'); caja.innerHTML = '<p class="ia-pensando">Pensando…</p>';
+      b.textContent = 'Pensando…';
+      try { const r = await api('/api/ia', { pregunta: p }); caja.innerHTML = `<div class="ia-q">${esc(p)}</div>${iaHtml(r.respuesta)}`; }
+      catch (e) { caja.innerHTML = `<p class="can-mal">${esc(e.message)}</p>`; }
+      b.textContent = 'Preguntar';
+      return false;
+    });
+  d.classList.add('ancho');
+  d.addEventListener('close', () => d.classList.remove('ancho'), { once: true });
+  const f = d.querySelector('form');
+  d.querySelectorAll('.ia-chip').forEach(c => c.onclick = () => { f.pregunta.value = c.textContent; f.requestSubmit(); });
+  f.pregunta.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); f.requestSubmit(); } };
+}
+
 function vistaMetricas() {
   const [d, h] = rango();
   $('vista').innerHTML = `
@@ -1844,10 +1896,12 @@ function vistaMetricas() {
         <div><h1>Servicio Holded</h1><p>Dashboard operativo — Implementación y Soporte Premium</p></div>
         <div class="mk-chips">
         ${periodoHtml('met', d, h)}
-        <a class="boton sec" id="csv">${ICO.descarga}Descargar horas (CSV)</a></div>
+        <a class="boton sec" id="csv">${ICO.descarga}Descargar horas (CSV)</a>
+        <button type="button" class="boton ia-btn" id="iaBtn">${ICO_IA}Preguntar a la IA</button></div>
       </div>
       <div class="contenido" id="met"><div class="vacio">Cargando métricas…</div></div>
     </div>`;
+  $('iaBtn').onclick = preguntarIA;
   pararVista = montarPeriodo('met', fm, rango, () => { escribir('filtrosMetricas', { ...fm, tecnico: '' }); cargarMetricas(); });
   cargarMetricas();
 }
