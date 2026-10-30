@@ -7,7 +7,7 @@ const clientes = require('./clientes');
 const { ajustes } = require('./store');
 
 // Los que respondían el 30/10/2026; si uno está saturado o tarda, se prueba el siguiente.
-const MODELOS = ['gemini-flash-lite-latest', 'gemini-3.8-flash', 'gemini-flash-latest'];
+const MODELOS = ['gemini-3.8-flash', 'gemini-flash-lite-latest', 'gemini-flash-latest'];
 let guardada = null;
 async function clave() {
   if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY.trim();
@@ -26,7 +26,17 @@ async function contexto() {
     return [t.id, t.entrada?.slice(0, 16), t.cliente, c.servicio, c.tipo_cliente, t.tipo_incidencia, t.estado, t.canal,
       t.primera_respuesta?.slice(0, 16) || '', t.cierre?.slice(0, 16) || '', t.horas ?? '', t.nps ?? '', String(t.titulo || '').replace(/\s+/g, ' ').slice(0, 120)].join(' | ');
   });
+  // Recuentos ya hechos: los modelos rápidos cuentan mal en una lista larga.
+  const vivos = l.filter(t => !t.interno), abiertas = vivos.filter(t => t.estado !== 'Cerrado');
+  const contar = (lista, f) => Object.entries(lista.reduce((m, t) => (m[f(t)] = (m[f(t)] || 0) + 1, m), {})).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k}: ${n}`).join('; ');
+  const resumen = `Resumen calculado (fiable, úsalo para contar):
+- Total incidencias: ${vivos.length}; abiertas (no cerradas): ${abiertas.length}.
+- Por estado: ${contar(vivos, t => t.estado)}.
+- Abiertas por cliente: ${contar(abiertas, t => t.cliente)}.
+- Abiertas por servicio: ${contar(abiertas, t => clientes.clasificar(t, mapa).servicio)}.
+- Por tipo de incidencia: ${contar(vivos, t => t.tipo_incidencia || 'Sin tipo')}.`;
   return `Hoy es ${hoy()}.
+${resumen}
 Normas del servicio: la primera respuesta debe llegar en 1 hora laborable (L-V de 9 a 18); fuera de eso, «fuera de SLA».
 Soporte Premium: 42 €/mes por cliente; las asesorías partner lo tienen gratis. Servicios: Premium, Implementación, Kit Digital 1.
 Estados: Nuevo, En curso, Pendiente cliente (stand-by), Cerrado. NPS de 0 a 10. Horas = tiempo de soporte dedicado.
@@ -37,7 +47,8 @@ ${filas.join('\n')}`;
 }
 
 const SISTEMA = `Eres el asistente del equipo de soporte de Holded de Interactivos. Respondes en castellano, claro y breve,
-con cifras concretas sacadas SOLO de los datos que te pasan (cuenta bien). Si algo no está en los datos, dilo.
+con cifras concretas sacadas SOLO de los datos que te pasan. Para contar usa el «Resumen calculado»; no enseñes
+cálculos ni te corrijas: da directamente la respuesta final. Si algo no está en los datos, dilo.
 Usa listas cortas con guiones y **negrita** para lo importante. Nunca hables de «gestorías»: son «asesorías».`;
 
 async function preguntar(pregunta) {
@@ -52,7 +63,7 @@ async function preguntar(pregunta) {
   for (const modelo of MODELOS) {
     try {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': k }, body: cuerpo, signal: AbortSignal.timeout(25000),
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': k }, body: cuerpo, signal: AbortSignal.timeout(modelo === MODELOS[0] ? 12000 : 25000),
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) {
