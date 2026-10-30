@@ -164,9 +164,10 @@ function cambiarEtapa(f, etapa, autor = '') {
   f.partner = { ...(f.partner || {}), etapa, cambios: [...(f.partner?.cambios || []), { fecha: new Date().toISOString(), etapa }] };
   f.tipo_cliente = 'Asesoría';
   // Con el convenio firmado es partner: soporte Premium gratis.
-  if (FIRMADAS.includes(etapa)) f.servicio = 'Premium';
+  // Con cli.ponerServicio, para que lo de antes del cambio siga en el servicio de antes (30/10/2026).
+  if (FIRMADAS.includes(etapa)) cli.ponerServicio(f, 'Premium');
   // Si vuelve atrás (o se descarta), deja de serlo: su Premium era el gratis del convenio (29/10/2026).
-  else if (FIRMADAS.includes(antes) && f.servicio === 'Premium') f.servicio = 'Sin clasificar';
+  else if (FIRMADAS.includes(antes) && f.servicio === 'Premium') cli.ponerServicio(f, 'Sin clasificar');
   if (etapa === 'Partner activa' && !f.partner.onboarding) f.partner.onboarding = new Date().toISOString();
   if (etapa !== 'Partner activa' && antes === 'Partner activa') f.partner.onboarding = null;
   if (antes !== etapa) nota(f, 'Nota', `Etapa: ${antes || 'nueva'} → ${etapa}`, autor || 'Panel');

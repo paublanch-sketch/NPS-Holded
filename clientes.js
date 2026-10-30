@@ -19,11 +19,29 @@ async function fichas() {
   return new Map((await clientes.todos()).map(c => [c.nombre, c]));
 }
 
-// Servicio y origen efectivos de un ticket: los de la ficha del cliente si existe.
+// Hora local sin zona, como las fechas de los tickets.
+const ahoraLocal = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 19); };
+
+// 30/10/2026, el usuario: si un cliente pasa de Kit Digital 1 a Premium, sus horas de antes no cuentan como
+// Premium. Cada cambio entre servicios se apunta en la ficha (cambiosServicio) y cada ticket va al servicio
+// que tenía el cliente cuando entró. Salir de «Sin clasificar» vale para todo: es clasificarlo, no cambiarlo.
+function ponerServicio(c, nuevo) {
+  const antes = servicioNuevo(c.servicio);
+  if (antes && antes !== nuevo && antes !== 'Sin clasificar') (c.cambiosServicio ||= []).push({ de: antes, a: nuevo, fecha: ahoraLocal() });
+  c.servicio = nuevo;
+}
+const servicioEn = (c, fecha) => {
+  let s = c.servicio;
+  for (const x of [...(c.cambiosServicio || [])].reverse()) { if (fecha && fecha < x.fecha) s = x.de; else break; }
+  return s;
+};
+
+// Servicio y origen efectivos de un ticket: los de la ficha del cliente si existe (el servicio, el que tenía
+// cuando entró el ticket).
 function clasificar(t, mapa) {
   const c = mapa.get(t.cliente);
   return {
-    servicio: servicioNuevo(c?.servicio) || (SERVICIOS.includes(servicioNuevo(t.servicio)) ? servicioNuevo(t.servicio) : 'Sin clasificar'),
+    servicio: servicioNuevo(c && servicioEn(c, t.entrada)) || (SERVICIOS.includes(servicioNuevo(t.servicio)) ? servicioNuevo(t.servicio) : 'Sin clasificar'),
     tipo_cliente: origenNuevo(c?.tipo_cliente) || (ORIGENES.includes(origenNuevo(t.tipo_cliente)) ? origenNuevo(t.tipo_cliente) : 'Sin clasificar'),
   };
 }
@@ -31,7 +49,7 @@ function clasificar(t, mapa) {
 async function guardarFicha(nombre, cambios) {
   const l = await clientes.todos();
   const c = l.find(x => x.nombre === nombre) || { nombre, servicio: 'Sin clasificar', tipo_cliente: 'Sin clasificar' };
-  if (SERVICIOS.includes(servicioNuevo(cambios.servicio))) c.servicio = servicioNuevo(cambios.servicio);
+  if (SERVICIOS.includes(servicioNuevo(cambios.servicio))) ponerServicio(c, servicioNuevo(cambios.servicio));
   if (ORIGENES.includes(cambios.tipo_cliente)) c.tipo_cliente = cambios.tipo_cliente;
   if (typeof cambios.notas === 'string') c.notas = cambios.notas.slice(0, 2000);
   // Contacto de la ficha, para los clientes dados de alta a mano (los demás lo sacan de sus tickets).
@@ -202,7 +220,7 @@ async function fusionar(de, a) {
     else await guardarFicha(a, { servicio: fa.servicio === 'Sin clasificar' ? fd.servicio : undefined, tipo_cliente: fa.tipo_cliente === 'Sin clasificar' ? fd.tipo_cliente : undefined, kitDigital: fa.kitDigital ? undefined : fd.kitDigital });
     // La parte comercial también pasa: licencia, Super Gemas, asesoría y el seguimiento de los dos.
     const nueva = (await clientes.todos()).find(x => x.nombre === a);
-    for (const k of ['holded', 'gemas', 'partner', 'asesoria']) if (fd[k] && !nueva[k]) nueva[k] = fd[k];
+    for (const k of ['holded', 'gemas', 'partner', 'asesoria', 'cambiosServicio']) if (fd[k] && !nueva[k]) nueva[k] = fd[k];
     if (fd.seguimiento?.length) nueva.seguimiento = [...(nueva.seguimiento || []), ...fd.seguimiento].sort((x, y) => x.fecha.localeCompare(y.fecha));
     await clientes.guardar(nueva);
     await clientes.borrar(fd.id);
@@ -251,6 +269,7 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
       ...c, horas: Math.round(c.horas * 10) / 10, emails: [...c.emails], telefonos: [...c.telefonos],
       ...clasificar({ cliente: c.nombre }, mapa), notas: mapa.get(c.nombre)?.notas || '', kitDigital: mapa.get(c.nombre)?.kitDigital || null,
       codigo: mapa.get(c.nombre)?.id ? 'CL-' + String(mapa.get(c.nombre).id).padStart(4, '0') : '',
+      cambiosServicio: mapa.get(c.nombre)?.cambiosServicio || [],
       ejemplo: !!mapa.get(c.nombre)?.ejemplo, ...vistaFicha(mapa.get(c.nombre) || {}),
     })).sort((a, b) => b.ultimo.localeCompare(a.ultimo));
     return json(res, { clientes: l, servicios: SERVICIOS, origenes: ORIGENES }), true;
@@ -278,4 +297,4 @@ async function rutas(req, res, ruta, { json, leerCuerpo }) {
   return false;
 }
 
-module.exports = { rutas, fichas, clasificar, guardarFicha, fusionar, aplicarUnaVez, importarKitDigital, parecido, SERVICIOS, ORIGENES };
+module.exports = { rutas, fichas, clasificar, ponerServicio, guardarFicha, fusionar, aplicarUnaVez, importarKitDigital, parecido, SERVICIOS, ORIGENES };

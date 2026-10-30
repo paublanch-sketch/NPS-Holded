@@ -2310,6 +2310,7 @@ async function vistaFicha(nombre) {
             <label style="font-size:12px;color:var(--bruma)">Origen<br>${sel('tipo_cliente', c.origenes, x.tipo_cliente)}</label>
           </div>
         </div>
+        ${(x.cambiosServicio || []).length ? `<p style="margin:10px 0 0;font-size:12px;color:var(--bruma)">${x.cambiosServicio.map(k => `${esc(k.a)} desde el ${fechaLarga(k.fecha)} (antes, ${esc(k.de)})`).reverse().join(' · ')}. Sus incidencias de antes de cada cambio siguen en el servicio de entonces.</p>` : ''}
         <div class="ficha-datos" style="margin-top:16px">
           <div class="ficha-dato"><b>${l.length}</b><span>Incidencias</span></div>
           <div class="ficha-dato"><b>${l.filter(t => t.estado !== 'Cerrado').length}</b><span>Abiertas ahora</span></div>
