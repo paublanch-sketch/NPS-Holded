@@ -3215,11 +3215,19 @@ function altaCoexistencia(w) {
     try { const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; if (d?.type === 'WA_EMBEDDED_SIGNUP') sesion = d; } catch {}
   };
   addEventListener('message', oir);
-  const terminar = async code => {
+  const terminar = async (code, resp) => {
     // El mensaje con el número a veces llega justo después del código.
     for (let i = 0; i < 20 && code && !sesion?.data?.phone_number_id; i++) await new Promise(ok => setTimeout(ok, 250));
     removeEventListener('message', oir);
-    if (!code) return aviso(sesion?.event === 'CANCEL' ? 'Has cerrado la ventana de Meta sin terminar.' : 'Meta no ha completado el alta.', true);
+    // Sin código: se dice por qué (30/10/2026), con lo que cuenta Meta. «La aplicación no está activa» en su
+    // ventana es que la app de Meta está sin publicar o que el Facebook de este navegador no tiene rol en ella.
+    if (!code) {
+      console.warn('Meta (alta de WhatsApp):', resp, sesion);
+      const paso = sesion?.data?.current_step ? ` (en el paso «${sesion.data.current_step}»)` : '';
+      return aviso(sesion?.event === 'CANCEL' ? `Has cerrado la ventana de Meta sin terminar${paso}.`
+        : sesion?.data?.error_message ? `Meta no ha completado el alta: ${sesion.data.error_message}`
+        : 'Meta no ha completado el alta. Si su ventana decía «La aplicación no está activa», publica la app de Meta (o entra en Facebook con la cuenta que la creó) y vuelve a probar.', true);
+    }
     try {
       const r2 = await api('/api/canales/whatsapp/coexistencia', { code, wabaId: sesion?.data?.waba_id, telefonoId: sesion?.data?.phone_number_id });
       cargarCanales(r2);
@@ -3227,7 +3235,7 @@ function altaCoexistencia(w) {
     } catch (err) { fallo(err); }
   };
   // FB.login no acepta funciones async: por eso el «terminar» aparte.
-  FB.login(resp => { terminar(resp?.authResponse?.code || null); }, {
+  FB.login(resp => { terminar(resp?.authResponse?.code || null, resp); }, {
     config_id: w.configId, response_type: 'code', override_default_response_type: true,
     extras: { setup: {}, featureType: 'whatsapp_business_app_onboarding', sessionInfoVersion: '3' },
   });
