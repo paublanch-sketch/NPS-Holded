@@ -409,6 +409,7 @@
       </form>
     </div>
     <div class="sin-cuenta"><b>¿Aún no tienes cuenta?</b> Pídesela a tu técnico de Interactivos.<div class="otros" id="otrosEntrar"></div></div>
+    <p style="text-align:center;font-size:12px;margin:16px 0 0"><a href="/privacidad" style="color:var(--bruma)">Política de privacidad</a></p>
   </section>
 
   <!-- Mis tickets -->
@@ -1098,7 +1099,7 @@ function iniciarTicket() {
     document.querySelectorAll('[data-pie]').forEach(p => {
       if (!p.innerHTML) p.innerHTML = `<p>Te lo pedimos por ser cliente del Soporte Holded de Interactivos.</p>
         <p class="contacto">${esc(config.email || 'holded@interactivos.net')} &nbsp;·&nbsp; ${esc(config.telefono || '665 405 148')} &nbsp;·&nbsp; www.interactivos.net</p>
-        <p class="copy">© ${new Date().getFullYear()} Interactivos. Todos los derechos reservados.</p>`;
+        <p class="copy">© ${new Date().getFullYear()} Interactivos. Todos los derechos reservados. · <a href="/privacidad" style="color:inherit">Política de privacidad</a></p>`;
     });
     // El chat como en el diseño: el equipo a la izquierda (con su cara y su nombre), el cliente a la
     // derecha con sus iniciales y el doble visto en azul cuando el equipo ya ha respondido después.

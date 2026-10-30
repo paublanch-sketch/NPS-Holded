@@ -128,6 +128,8 @@ http.createServer(async (req, res) => {
     if (ruta === '/salud') { res.writeHead(200); return res.end(`ok ${(process.env.RENDER_GIT_COMMIT || '').slice(0, 7)}`.trim()); }
     if (/^\/img\/[a-z0-9-]+\.(png|svg|webp|jpg)$/.test(ruta)) return imagen(res, ruta.slice(5));
     if (ruta === '/' || /^\/t\/[a-f0-9]{32}$/.test(ruta)) return pagina(res, 'portal.html');
+    // Política de privacidad del soporte (la pide Meta para publicar la app de WhatsApp).
+    if (ruta === '/privacidad') return pagina(res, 'privacidad.html');
     if (ruta === '/soporte') return redirigir(res, /^[a-f0-9]{32}$/.test(url.searchParams.get('t') || '') ? `/t/${url.searchParams.get('t')}` : '/');
     if (ruta === '/api/portal') {
       const c = canales.correo.resumen().correo;
